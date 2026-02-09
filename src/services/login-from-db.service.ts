@@ -1,11 +1,10 @@
 import type { Logger } from "pino";
 import { AuthServiceApi } from "../api/authService";
 import { AccountRepository } from "../repo/AccountRepository";
-import { AccountEntity } from "../entities/Account.entity";
 import { maskPassword, maskToken } from "../utils/logMask";
 import { getDeviceId } from "../utils/device";
 import { buildHeaders } from "../utils/headers";
-import { getStoredTokens } from "../storage/tokenStore";
+import { getStoredTokens, setStoredTokens } from "../storage/tokenStore";
 import { getMeWithAutoAuth } from "./protectedApi";
 import { loginWithOtpFlow } from "./loginFlow";
 
@@ -47,6 +46,7 @@ export async function loginFromDb(api: AuthServiceApi, ctx: JobCtx): Promise<Log
             const rowNo = i + idx + 1;
             const phone = String(acc.phone || "").replace(/\D/g, "");
             const password = String(acc.password || "");
+            const activeDeviceId = acc.deviceId || deviceId;
 
             const l = logger.child({ row: rowNo, accId: acc.id, phone });
             l.debug({ password: maskPassword(password) }, "ACCOUNT_START");
@@ -57,7 +57,9 @@ export async function loginFromDb(api: AuthServiceApi, ctx: JobCtx): Promise<Log
               l.warn({}, "ACCOUNT_INVALID_SKIP");
               return;
             }
-
+            if (acc.accessToken && acc.refreshToken) {
+              setStoredTokens(phone, acc.accessToken, acc.refreshToken, activeDeviceId);
+            }
             const stored = getStoredTokens(phone);
             if (stored) {
               l.debug(
@@ -68,18 +70,24 @@ export async function loginFromDb(api: AuthServiceApi, ctx: JobCtx): Promise<Log
                 "TOKENS_FOUND"
               );
 
-              const me = await getMeWithAutoAuth(api, phone, deviceId, l);
+              const me = await getMeWithAutoAuth(api, phone, activeDeviceId, l);
               if (me.ok) {
                 summary.alreadyOk += 1;
                 await repo.markAttempt(acc.id, "OK", "session still valid");
                 l.debug({ me: me.data }, "SESSION_OK_SKIP_LOGIN");
+
+                const final = getStoredTokens(phone);
+                if (final) {
+                  await repo.updateTokens(acc.id, { accessToken: final.accessToken, refreshToken: final.refreshToken });
+                }
                 return;
               }
 
               l.debug({ reason: me.message }, "SESSION_NOT_OK_WILL_LOGIN");
             }
 
-            const headers = buildHeaders(deviceId);
+
+            const headers = buildHeaders(activeDeviceId);
             const lr = await loginWithOtpFlow(api, { phone, password }, headers, l);
             if (!lr.ok) {
               summary.fail += 1;
@@ -88,10 +96,20 @@ export async function loginFromDb(api: AuthServiceApi, ctx: JobCtx): Promise<Log
               return;
             }
 
+
             summary.success += 1;
             summary.relogin += stored ? 1 : 0;
+
+            const final = getStoredTokens(phone);
+            if (final) {
+              await repo.updateTokens(acc.id, { accessToken: final.accessToken, refreshToken: final.refreshToken });
+              if (!acc.deviceId) {
+                await repo.updateDeviceId(acc.id, activeDeviceId);
+              }
+            }
+
             await repo.markAttempt(acc.id, "OK", "login ok");
-            const me2 = await getMeWithAutoAuth(api, phone, deviceId, l);
+            const me2 = await getMeWithAutoAuth(api, phone, activeDeviceId, l);
             if (me2.ok) {
               l.debug({ me: me2.data }, "LOGIN_OK_ME_OK");
             } else {

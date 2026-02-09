@@ -10,7 +10,7 @@ export const AppDataSource = new DataSource({
     username: ENV.MYSQL_USER,
     password: ENV.MYSQL_PASSWORD,
     database: ENV.MYSQL_DATABASE,
-    synchronize: false, // Production safe
+    synchronize: false,
     logging: ENV.LOG_LEVEL === "debug" || ENV.LOG_VERBOSE,
     entities: [AccountEntity],
     migrations: [],

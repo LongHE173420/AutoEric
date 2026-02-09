@@ -1,16 +1,16 @@
 import pino, { Logger } from "pino";
 import { ENV } from "./env";
 
-// pino v9 includes multistream
+
 const multistream = (pino as any).multistream as (streams: any[]) => any;
 
 function baseOptions() {
   return {
     level: ENV.LOG_LEVEL,
-    base: undefined, // do NOT add pid/hostname
+    base: undefined,
     messageKey: "msg",
     timestamp: pino.stdTimeFunctions.isoTime,
-    // Never leak fileName/filePath or other paths accidentally
+
     redact: {
       paths: ["fileName", "filePath"],
       remove: true,
@@ -24,9 +24,6 @@ export function createFileLogger(filePath: string): Logger {
   const logger = pino(baseOptions(), multistream(streams));
   return logger as Logger;
 }
-
-// Backward-compatible alias: worker expects "dual" (stdout + file).
-// createFileLogger already writes to both stdout and file via multistream.
 export function createDualLogger(filePath: string): Logger {
   return createFileLogger(filePath);
 }

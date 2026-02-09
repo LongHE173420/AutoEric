@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
 import { ENV } from "../config/env";
 
 @Entity({ name: ENV.USERS_TABLE })
@@ -6,15 +6,45 @@ export class AccountEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column({ name: ENV.USERS_USERNAME_COL })
+    @Column({ unique: true })
     phone!: string;
 
-    @Column({ name: ENV.USERS_PASSWORD_COL })
+    @Column()
     password!: string;
 
-    constructor(id?: number, phone?: string, password?: string) {
-        if (id !== undefined) this.id = id;
-        if (phone !== undefined) this.phone = phone;
-        if (password !== undefined) this.password = password;
-    }
+    @Column({ name: "deviceId" })
+    deviceId!: string;
+
+    @Column({ nullable: true })
+    firstName?: string;
+
+    @Column({ nullable: true })
+    lastName?: string;
+
+    @Column({ type: "enum", enum: ["MALE", "FEMALE", "OTHER"], nullable: true })
+    gender?: string;
+
+    @Column({ type: "date", nullable: true })
+    dateOfBirth?: string;
+
+    @Column({ type: "tinyint", default: 1, width: 1 })
+    trustRequired!: boolean;
+
+    @Column({ type: "tinyint", default: 0, width: 1 })
+    revoked!: boolean;
+
+    @CreateDateColumn()
+    createdAt!: Date;
+
+    @UpdateDateColumn()
+    updatedAt!: Date;
+
+    @Column({ type: "text", nullable: true })
+    refreshToken?: string;
+
+    @Column({ type: "text", nullable: true })
+    accessToken?: string;
+
+    @Column({ type: "text", nullable: true })
+    trustedDevices?: string;
 }
