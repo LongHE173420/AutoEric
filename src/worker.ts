@@ -3,7 +3,7 @@ import { cleanupOldLogs, getTodayLogPath } from "./config/logFile";
 import { createDualLogger } from "./config/logger";
 import { AuthServiceApi } from "./api/authService";
 import { loginFromDb } from "./services/login-from-db.service";
-import { pingMysql } from "./config/database";
+import { AppDataSource } from "./config/data-source";
 
 let isRunning = false;
 let started = false;
@@ -48,13 +48,10 @@ async function runOnce(reason: string) {
       );
     }
 
-    try {
-      await pingMysql();
-      logger.debug({}, "DB_OK");
-    } catch (err: any) {
-      logger.error({ err: err?.message ?? String(err) }, "DB_PING_FAIL");
-      throw err;
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
     }
+    logger.debug({}, "DB_OK");
 
     logger.debug({ reason }, "JOB_START");
 
@@ -66,13 +63,9 @@ async function runOnce(reason: string) {
       `LOGIN summary: success=${summary.success} alreadyOk=${summary.alreadyOk} relogin=${summary.relogin} fail=${summary.fail}`
     );
   } catch (err: any) {
-    try {
-      const { filePath } = getTodayLogPath();
-      const logger = createDualLogger(filePath).child({ job: "login" });
-      logger.error({ reason, err: err?.message ?? String(err) }, "JOB_CRASH");
-    } catch {
-      // ignore
-    }
+    const { filePath } = getTodayLogPath();
+    const logger = createDualLogger(filePath).child({ job: "login" });
+    logger.error({ reason, err: err?.message ?? String(err) }, "JOB_CRASH");
     console.log("LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=0");
   } finally {
     isRunning = false;
@@ -80,9 +73,14 @@ async function runOnce(reason: string) {
 }
 
 export async function startWorker() {
-  await runOnce("startup");
+  try {
+    if (!AppDataSource.isInitialized) await AppDataSource.initialize();
+    await runOnce("startup");
 
-  if (ENV.RUN_ONCE) return;
-
-  setInterval(() => runOnce("interval"), ENV.INTERVAL_MS);
+    if (!ENV.RUN_ONCE) {
+      setInterval(() => runOnce("interval"), ENV.INTERVAL_MS);
+    }
+  } catch (e) {
+    console.error("Worker startup fail", e);
+  }
 }

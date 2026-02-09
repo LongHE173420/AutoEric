@@ -30,27 +30,27 @@ export class AuthServiceApi {
     });
   }
 
-  async login(username: string, password: string, deviceId: string) {
+  async login(phone: string, password: string, headers: any) {
     return this.http.post<ApiRes<LoginRes>>(
       "/auth/login",
-      { phone: username, password },
-      { headers: { "x-device-id": deviceId } }
+      { phone, password },
+      { headers }
     );
   }
 
-  async verifyLoginOtp(username: string, otp: string, deviceId: string) {
+  async verifyLoginOtp(phone: string, otp: string, headers: any) {
     return this.http.post<ApiRes<VerifyOtpRes>>(
       "/auth/verify-login-otp",
-      { phone: username, otp },
-      { headers: { "x-device-id": deviceId } }
+      { phone, otp },
+      { headers }
     );
   }
 
-  async resendLoginOtp(username: string, deviceId: string) {
+  async resendLoginOtp(phone: string, headers: any) {
     return this.http.post<ApiRes<any>>(
       "/auth/resend-otp-login",
-      { phone: username },
-      { headers: { "x-device-id": deviceId } }
+      { phone },
+      { headers }
     );
   }
 
@@ -65,9 +65,10 @@ export class AuthServiceApi {
   }
 
   // Requires AuthService DEBUG_OTP=true
-  async debugRedisOtp(phone: string, context: string = "LOGIN") {
+  async debugRedisOtp(phone: string, context: string = "LOGIN", headers?: any) {
     return this.http.get<ApiRes<any>>(ENV.OTP_DEBUG_PATH_REDIS, {
       params: { phone, context },
+      headers,
     });
   }
 }

@@ -19,6 +19,16 @@ export function getTodayLogPath() {
   return { fileName, filePath };
 }
 
+function tryDeleteLog(fp: string, cutoff: number) {
+  try {
+    const st = fs.statSync(fp);
+    if (!st.isFile()) return;
+    if (st.mtimeMs < cutoff) fs.rmSync(fp, { force: true });
+  } catch {
+    // ignore
+  }
+}
+
 export function cleanupOldLogs() {
   const dir = ensureLogDir();
   const days = ENV.LOG_RETENTION_DAYS;
@@ -27,13 +37,6 @@ export function cleanupOldLogs() {
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
 
   for (const name of fs.readdirSync(dir)) {
-    const fp = path.join(dir, name);
-    try {
-      const st = fs.statSync(fp);
-      if (!st.isFile()) continue;
-      if (st.mtimeMs < cutoff) fs.rmSync(fp, { force: true });
-    } catch {
-      // ignore
-    }
+    tryDeleteLog(path.join(dir, name), cutoff);
   }
 }
