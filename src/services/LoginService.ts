@@ -1,6 +1,6 @@
 import type { Logger } from "pino";
 import { AuthServiceApi } from "../api/authService";
-import { fetchEnabledAccounts, markAccountAttempt } from "../repo/accounts.repo";
+import { AccountRepository} from "../repo/AccountRepository";
 import { maskPassword, maskToken } from "../utils/logMask";
 
 import { getStoredTokens } from "../storage/tokenStore";
@@ -31,7 +31,7 @@ export class LoginService {
   private readonly api: AuthServiceApi;
   private readonly logger: Logger;
   private readonly deviceId: string;
-  
+  private readonly repo = new AccountRepository();
 private readonly service: AccountService;
 
   private readonly BATCH_SIZE = 5;
@@ -93,7 +93,7 @@ private readonly service: AccountService;
 
     if (!username || !password) {
       summary.fail += 1;
-      await markAccountAttempt(acc.id, "INVALID", "missing username/password");
+      await this.repo.markAttempt(acc.id, "INVALID", "missing username/password");
       log.warn({}, "ACCOUNT_INVALID_SKIP");
       return;
     }
@@ -125,7 +125,7 @@ private readonly service: AccountService;
       // summary.success += 1;
       // summary.relogin += stored ? 1 : 0;
 
-      await markAccountAttempt(acc.id, "OK", "login ok");
+      await this.repo.markAttempt(acc.id, "OK", "login ok");
 
       const me2 = await getMeWithAutoAuth(
         this.api,
