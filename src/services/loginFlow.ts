@@ -25,8 +25,19 @@ async function doVerify(
   const res = await api.verifyLoginOtp(phone, otp, headers);
   const body = res.data;
 
-  if (body?.isSucceed && body?.data?.tokens) {
-    return { ok: true, tokens: body.data.tokens as Tokens };
+  if (body?.isSucceed) {
+    if (body.data?.tokens) {
+      return { ok: true, tokens: body.data.tokens as Tokens };
+    }
+    if (body.data?.accessToken && body.data?.refreshToken) {
+      return {
+        ok: true,
+        tokens: {
+          accessToken: body.data.accessToken,
+          refreshToken: body.data.refreshToken,
+        },
+      };
+    }
   }
   return { ok: false, msg: String(body?.message ?? "VERIFY_FAIL") };
 }
@@ -47,8 +58,19 @@ async function startLoginAttempt(
   }
 
   const data = body.data as any;
-  if (data?.needOtp === false && data?.tokens) {
-    return { needOtp: false, tokens: data.tokens as Tokens };
+  if (data?.needOtp === false || data?.otpRequired === false) {
+    if (data?.tokens) {
+      return { needOtp: false, tokens: data.tokens as Tokens };
+    }
+    if (data?.accessToken && data?.refreshToken) {
+      return {
+        needOtp: false,
+        tokens: {
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        },
+      };
+    }
   }
 
   return { needOtp: true, msg: "NEED_OTP", otpSample: data?.otpSample };

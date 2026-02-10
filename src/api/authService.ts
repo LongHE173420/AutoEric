@@ -15,9 +15,18 @@ export type Tokens = {
   trust?: boolean;
 };
 
-export type LoginRes = { needOtp: boolean; otpSample?: string; tokens?: Tokens };
-export type VerifyOtpRes = { tokens: Tokens };
-export type RefreshRes = { tokens: Tokens };
+export type LoginRes = {
+  needOtp?: boolean;
+  otpRequired?: boolean;
+  otpSample?: string;
+  otpDeliveryMessage?: string | null;
+  otpDestination?: string | null;
+  accessToken?: string;
+  refreshToken?: string;
+  tokens?: Tokens;
+};
+export type VerifyOtpRes = { tokens?: Tokens; accessToken?: string; refreshToken?: string };
+export type RefreshRes = { tokens?: Tokens; accessToken?: string; refreshToken?: string };
 
 export class AuthServiceApi {
   private http: AxiosInstance;

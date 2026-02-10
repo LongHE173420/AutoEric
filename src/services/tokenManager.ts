@@ -54,19 +54,31 @@ export async function ensureValidAccessToken(
     const headers = buildHeaders(deviceId);
     const res = await api.refreshToken(refreshToken, headers);
     const body = res.data;
+    const bodyData = body?.data;
 
-    if (body?.isSucceed && body?.data?.tokens) {
-      const t = body.data.tokens as Tokens;
-      setStoredTokens(phone, t.accessToken, t.refreshToken, deviceId);
+    let newTokens: Tokens | undefined;
+    if (body?.isSucceed) {
+      if (bodyData?.tokens) {
+        newTokens = bodyData.tokens as Tokens;
+      } else if (bodyData?.accessToken && bodyData?.refreshToken) {
+        newTokens = {
+          accessToken: bodyData.accessToken,
+          refreshToken: bodyData.refreshToken
+        };
+      }
+    }
+
+    if (newTokens) {
+      setStoredTokens(phone, newTokens.accessToken, newTokens.refreshToken, deviceId);
       logger?.info(
         {
           phone,
-          accessToken: maskToken(t.accessToken),
-          refreshToken: maskToken(t.refreshToken),
+          accessToken: maskToken(newTokens.accessToken),
+          refreshToken: maskToken(newTokens.refreshToken),
         },
         "REFRESH_OK"
       );
-      return { ok: true, accessToken: t.accessToken, refreshed: true, reason: "REFRESH_OK" };
+      return { ok: true, accessToken: newTokens.accessToken, refreshed: true, reason: "REFRESH_OK" };
     }
 
     const msg = String(body?.message ?? "REFRESH_FAIL");
