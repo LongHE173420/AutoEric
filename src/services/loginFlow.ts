@@ -2,7 +2,8 @@ import type { Logger } from "pino";
 import { AuthServiceApi, Tokens } from "../api/authService";
 import { ENV } from "../config/env";
 import { waitForOtpFromAuthService, promptOtpOnce } from "../utils/otp";
-import { setStoredTokens, clearTokensForUser } from "../storage/tokenStore";
+import { setStoredTokens, clearTokensForUser, getStoredTokens } from "../storage/tokenStore";
+import { getMeWithAutoAuth } from "./protectedApi";
 import { maskPassword, maskOtp, maskToken } from "../utils/logMask";
 
 export type Account = { phone: string; password: string };
@@ -13,6 +14,55 @@ export type LoginFlowResult = {
   tokens?: Tokens;
   usedOtp?: string;
 };
+
+export type EnsureLoginResult = {
+  ok: boolean;
+  tokens?: Tokens;
+  reason?: string;
+  method: "ALREADY_VALID" | "REFRESHED" | "LOGIN_PASS" | "LOGIN_OTP" | "FAIL";
+  usedOtp?: string;
+};
+
+export async function ensureLogin(
+  api: AuthServiceApi,
+  acc: Account,
+  activeDeviceId: string,
+  headers: any,
+  logger?: Logger
+): Promise<EnsureLoginResult> {
+  const phone = String(acc.phone || "").replace(/\D/g, "");
+
+  // 1. Check existing tokens
+  const stored = getStoredTokens(phone);
+  if (stored) {
+    const me = await getMeWithAutoAuth(api, phone, activeDeviceId, logger);
+    if (me.ok) {
+      // If we refreshed, update the stored tokens is already done by ensureValidAccessToken/setStoredTokens
+      // But we might want to return the latest tokens
+      const final = getStoredTokens(phone);
+      logger?.debug({ me: me.data }, "SESSION_OK_SKIP_LOGIN");
+      return {
+        ok: true,
+        tokens: final || undefined,
+        method: "ALREADY_VALID"
+      };
+    }
+    logger?.debug({ reason: me.message }, "SESSION_NOT_OK_WILL_LOGIN");
+  }
+
+  // 2. Login with Password/OTP
+  const res = await loginWithOtpFlow(api, acc, headers, logger);
+  if (res.ok && res.tokens) {
+    return {
+      ok: true,
+      tokens: res.tokens,
+      method: res.usedOtp ? "LOGIN_OTP" : "LOGIN_PASS",
+      usedOtp: res.usedOtp
+    };
+  }
+
+  return { ok: false, reason: res.reason, method: "FAIL" };
+}
 
 async function doVerify(
   api: AuthServiceApi,
