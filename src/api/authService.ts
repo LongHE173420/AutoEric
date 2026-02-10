@@ -54,8 +54,8 @@ export class AuthServiceApi {
     );
   }
 
-  async refreshToken(refreshToken: string) {
-    return this.http.post<ApiRes<RefreshRes>>("/auth/refresh-token", { refreshToken });
+  async refreshToken(refreshToken: string, headers: any) {
+    return this.http.post<ApiRes<RefreshRes>>("/auth/refresh-token", { refreshToken }, { headers });
   }
 
   async getMe(accessToken: string) {

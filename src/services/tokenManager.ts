@@ -3,6 +3,7 @@ import { AuthServiceApi, Tokens } from "../api/authService";
 import { getStoredTokens, setStoredTokens, clearAllData, clearTokensForUser } from "../storage/tokenStore";
 import { isAccessExpired, isRefreshExpired } from "../utils/tokenUtils";
 import { maskToken } from "../utils/logMask";
+import { buildHeaders } from "../utils/headers";
 
 export type EnsureTokenResult = {
   ok: boolean;
@@ -50,7 +51,8 @@ export async function ensureValidAccessToken(
     }
 
     logger?.debug({ phone }, "REFRESH_TRY");
-    const res = await api.refreshToken(refreshToken);
+    const headers = buildHeaders(deviceId);
+    const res = await api.refreshToken(refreshToken, headers);
     const body = res.data;
 
     if (body?.isSucceed && body?.data?.tokens) {
