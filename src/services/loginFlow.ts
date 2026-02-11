@@ -4,7 +4,10 @@ import { ENV } from "../config/env";
 import { waitForOtpFromAuthService, promptOtpOnce } from "../utils/otp";
 import { setStoredTokens, clearTokensForUser, getStoredTokens } from "../storage/tokenStore";
 import { getMeWithAutoAuth } from "./protectedApi";
-import { maskPassword, maskOtp, maskToken } from "../utils/logMask";
+import { maskToken } from "../utils/logMask";
+import { isAccessExpired, isRefreshExpired } from "../utils/tokenUtils";
+import { clearAllData } from "../storage/tokenStore";
+import { buildHeaders } from "../utils/headers";
 
 export type Account = { phone: string; password: string };
 
@@ -14,7 +17,6 @@ export type LoginFlowResult = {
   tokens?: Tokens;
   usedOtp?: string;
 };
-
 export type EnsureLoginResult = {
   ok: boolean;
   tokens?: Tokens;
@@ -22,7 +24,6 @@ export type EnsureLoginResult = {
   method: "ALREADY_VALID" | "REFRESHED" | "LOGIN_PASS" | "LOGIN_OTP" | "FAIL";
   usedOtp?: string;
 };
-
 export async function ensureLogin(
   api: AuthServiceApi,
   acc: Account,
@@ -31,14 +32,11 @@ export async function ensureLogin(
   logger?: Logger
 ): Promise<EnsureLoginResult> {
   const phone = String(acc.phone || "").replace(/\D/g, "");
-
-  // 1. Check existing tokens
   const stored = getStoredTokens(phone);
   if (stored) {
     const me = await getMeWithAutoAuth(api, phone, activeDeviceId, logger);
     if (me.ok) {
-      // If we refreshed, update the stored tokens is already done by ensureValidAccessToken/setStoredTokens
-      // But we might want to return the latest tokens
+
       const final = getStoredTokens(phone);
       logger?.debug({ me: me.data }, "SESSION_OK_SKIP_LOGIN");
       return {
@@ -49,8 +47,6 @@ export async function ensureLogin(
     }
     logger?.debug({ reason: me.message }, "SESSION_NOT_OK_WILL_LOGIN");
   }
-
-  // 2. Login with Password/OTP
   const res = await loginWithOtpFlow(api, acc, headers, logger);
   if (res.ok && res.tokens) {
     return {
@@ -242,5 +238,92 @@ export async function loginWithOtpFlow(
       logger?.error({ err: err?.message ?? String(err) }, "LOGIN_FLOW_EXCEPTION");
       await new Promise((r) => setTimeout(r, 2000));
     }
+  }
+}
+export type EnsureTokenResult = {
+  ok: boolean;
+  accessToken?: string;
+  reason?: string;
+  refreshed?: boolean;
+};
+
+export async function ensureValidAccessToken(
+  api: AuthServiceApi,
+  phone: string,
+  deviceId: string,
+  logger?: Logger
+): Promise<EnsureTokenResult> {
+  try {
+    const stored = getStoredTokens(phone);
+    if (!stored) {
+      return { ok: false, reason: "NO_TOKENS" };
+    }
+
+    const { accessToken, refreshToken } = stored;
+
+    const accessExpired = isAccessExpired(accessToken);
+    const refreshExpired = isRefreshExpired(refreshToken);
+
+    logger?.debug(
+      {
+        phone,
+        accessExpired,
+        refreshExpired,
+        accessToken: maskToken(accessToken),
+        refreshToken: maskToken(refreshToken),
+      },
+      "TOKEN_STATUS"
+    );
+
+    if (!accessExpired) {
+      return { ok: true, accessToken, reason: "ACCESS_OK" };
+    }
+
+    if (refreshExpired) {
+      logger?.debug({ phone }, "REFRESH_EXPIRED_CLEAR_ALL");
+      clearAllData();
+      return { ok: false, reason: "REFRESH_EXPIRED" };
+    }
+
+    logger?.debug({ phone }, "REFRESH_TRY");
+    const headers = buildHeaders(deviceId);
+    const res = await api.refreshToken(refreshToken, headers);
+    const body = res.data;
+    const bodyData = body?.data;
+
+    let newTokens: Tokens | undefined;
+    if (body?.isSucceed) {
+      if (bodyData?.tokens) {
+        newTokens = bodyData.tokens as Tokens;
+      } else if (bodyData?.accessToken && bodyData?.refreshToken) {
+        newTokens = {
+          accessToken: bodyData.accessToken,
+          refreshToken: bodyData.refreshToken
+        };
+      }
+    }
+
+    if (newTokens) {
+      setStoredTokens(phone, newTokens.accessToken, newTokens.refreshToken, deviceId);
+      logger?.info(
+        {
+          phone,
+          accessToken: maskToken(newTokens.accessToken),
+          refreshToken: maskToken(newTokens.refreshToken),
+        },
+        "REFRESH_OK"
+      );
+      return { ok: true, accessToken: newTokens.accessToken, refreshed: true, reason: "REFRESH_OK" };
+    }
+
+    const msg = String(body?.message ?? "REFRESH_FAIL");
+    logger?.debug({ phone, msg }, "REFRESH_FAIL_LOGOUT");
+    clearTokensForUser(phone);
+    return { ok: false, reason: msg };
+
+  } catch (err: any) {
+    logger?.error({ phone, err: err?.message ?? String(err) }, "REFRESH_ERR_LOGOUT");
+    clearTokensForUser(phone);
+    return { ok: false, reason: "REFRESH_ERROR" };
   }
 }

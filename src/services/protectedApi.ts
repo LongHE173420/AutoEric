@@ -1,6 +1,6 @@
 import type { Logger } from "pino";
 import { AuthServiceApi } from "../api/authService";
-import { ensureValidAccessToken } from "./tokenManager";
+import { ensureValidAccessToken } from "./loginFlow";
 import { clearTokensForUser } from "../storage/tokenStore";
 
 export async function getMeWithAutoAuth(
