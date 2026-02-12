@@ -1,8 +1,8 @@
-import { AuthServiceApi } from "../vn.com.nasa.connection.api/authService";
-import { AccountRepository } from "../vn.com.nasa.repo/AccountRepository";
-import { getDeviceId } from "../vn.com.nasa.utils/device";
+import { AuthServiceApi } from "../connection/api/authService";
+import { AccountRepository } from "../repo/AccountRepository";
+import { getDeviceId } from "../utils/device";
 import { UserWorker } from "./UserWorker";
-import { Log } from "../vn.com.nasa.utils/log";
+import { Log } from "../utils/log";
 
 export type LoginSummary = {
     success: number;

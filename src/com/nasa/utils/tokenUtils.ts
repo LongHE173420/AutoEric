@@ -1,4 +1,4 @@
-import { ENV } from "../vn.com.nasa.config/env";
+import { ENV } from "../config/env";
 
 export function tokenIssuedAt(token: string): number {
   const parts = String(token || "").split(".");

@@ -1,8 +1,8 @@
-import { ENV } from "./vn.com.nasa.config/env";
-import { cleanupOldLogs, getTodayLogPath, Log } from "./vn.com.nasa.utils/log";
-import { AuthServiceApi } from "./vn.com.nasa.connection.api/authService";
-import { MasterWorker } from "./vn.com.nasa.service/MasterWorker";
-import { AppDataSource } from "./vn.com.nasa.config/data-source";
+import { ENV } from "./com/nasa/config/env";
+import { cleanupOldLogs, getTodayLogPath, Log } from "./com/nasa/utils/log";
+import { AuthServiceApi } from "./com/nasa/connection/api/authService";
+import { MasterWorker } from "./com/nasa/service/MasterWorker";
+import { AppDataSource } from "./com/nasa/config/data-source";
 
 let isRunning = false;
 let started = false;

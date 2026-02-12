@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { ENV } from "../vn.com.nasa.config/env";
+import { ENV } from "../../config/env";
 
 export type ApiRes<T> = {
   isSucceed: boolean;

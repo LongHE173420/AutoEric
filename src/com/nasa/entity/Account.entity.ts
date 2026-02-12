@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import { ENV } from "../vn.com.nasa.config/env";
+import { ENV } from "../config/env";
 
 @Entity({ name: ENV.USERS_TABLE })
 export class AccountEntity {

@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import { ENV } from "../vn.com.nasa.config/env";
+import { ENV } from "../config/env";
 
 const DEVICE_FILE = path.resolve(process.cwd(), "data", "device.json");
 

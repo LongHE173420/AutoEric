@@ -1,11 +1,11 @@
 
 import readline from "readline";
-import { AuthServiceApi, Tokens } from "../vn.com.nasa.connection.api/authService";
-import { ENV } from "../vn.com.nasa.config/env";
-import { setStoredTokens, clearTokensForUser, getStoredTokens, clearAllData } from "../vn.com.nasa.storage/tokenStore";
-import { maskToken, maskOtp, Log } from "../vn.com.nasa.utils/log";
-import { isAccessExpired, isRefreshExpired } from "../vn.com.nasa.utils/tokenUtils";
-import { buildHeaders } from "../vn.com.nasa.utils/headers";
+import { AuthServiceApi, Tokens } from "../api/authService";
+import { ENV } from "../../config/env";
+import { setStoredTokens, clearTokensForUser, getStoredTokens, clearAllData } from "../../storage/tokenStore";
+import { maskToken, maskOtp, Log } from "../../utils/log";
+import { isAccessExpired, isRefreshExpired } from "../../utils/tokenUtils";
+import { buildHeaders } from "../../utils/headers";
 
 type AppLogger = ReturnType<typeof Log.getLogger>;
 export type Account = { phone: string; password: string };

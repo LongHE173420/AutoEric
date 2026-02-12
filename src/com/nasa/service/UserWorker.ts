@@ -1,10 +1,10 @@
-import { AuthServiceApi } from "../vn.com.nasa.connection.api/authService";
-import { AccountRepository } from "../vn.com.nasa.repo/AccountRepository";
-import { AccountEntity } from "../vn.com.nasa.entity/Account.entity";
-import { maskPassword, maskToken, Log } from "../vn.com.nasa.utils/log";
-import { buildHeaders } from "../vn.com.nasa.utils/headers";
-import { getStoredTokens, setStoredTokens } from "../vn.com.nasa.storage/tokenStore";
-import { getMeWithAutoAuth, loginWithOtpFlow } from "../vn.com.nasa.connection.service/loginFlow";
+import { AuthServiceApi } from "../connection/api/authService";
+import { AccountRepository } from "../repo/AccountRepository";
+import { AccountEntity } from "../entity/Account.entity";
+import { maskPassword, maskToken, Log } from "../utils/log";
+import { buildHeaders } from "../utils/headers";
+import { getStoredTokens, setStoredTokens } from "../storage/tokenStore";
+import { getMeWithAutoAuth, loginWithOtpFlow } from "../connection/service/loginFlow";
 
 
 export type UserWorkerResult = {
