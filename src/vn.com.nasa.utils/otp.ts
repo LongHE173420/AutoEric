@@ -1,8 +1,8 @@
 import readline from "readline";
 import type { Logger } from "pino";
-import { ENV } from "../config/env";
-import { AuthServiceApi } from "../api/authService";
-import { maskOtp } from "./logMask";
+import { ENV } from "../vn.com.nasa.config/env";
+import { AuthServiceApi } from "../vn.com.nasa.connection.api/authService";
+import { maskOtp } from "./log";
 
 export type WaitOtpOptions = {
     timeoutMs?: number;

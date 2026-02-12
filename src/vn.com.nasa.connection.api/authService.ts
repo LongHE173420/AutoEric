@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { ENV } from "../config/env";
+import { ENV } from "../vn.com.nasa.config/env";
 
 export type ApiRes<T> = {
   isSucceed: boolean;
@@ -73,7 +73,6 @@ export class AuthServiceApi {
     });
   }
 
-  // Requires AuthService DEBUG_OTP=true
   async debugRedisOtp(phone: string, context: string = "LOGIN", headers?: any) {
     return this.http.get<ApiRes<any>>(ENV.OTP_DEBUG_PATH_REDIS, {
       params: { phone, context },

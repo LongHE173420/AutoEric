@@ -58,7 +58,8 @@ export const ENV = {
   ACCESS_TTL_MS: num("ACCESS_TTL_MS", 60_000),
   REFRESH_TTL_MS: num("REFRESH_TTL_MS", 10 * 60_000),
 
-  LOG_LEVEL: str("LOG_LEVEL", "info"),
+  LOG_LEVEL: str("LOG_LEVEL", "debug"),
+  LOG_CONSOLE: bool("LOG_CONSOLE", false),
   LOG_VERBOSE: bool("LOG_VERBOSE", false),
   LOG_HTTP: bool("LOG_HTTP", false),
   LOG_DIR: str("LOG_DIR", "data/logs"),

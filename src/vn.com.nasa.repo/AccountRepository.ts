@@ -1,5 +1,5 @@
-import { AppDataSource } from "../config/data-source";
-import { AccountEntity } from "../entities/Account.entity";
+import { AppDataSource } from "../vn.com.nasa.config/data-source";
+import { AccountEntity } from "../vn.com.nasa.entity/Account.entity";
 
 export class AccountRepository {
     private get repo() {

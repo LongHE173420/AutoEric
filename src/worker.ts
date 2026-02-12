@@ -1,9 +1,8 @@
-import { ENV } from "./config/env";
-import { cleanupOldLogs, getTodayLogPath } from "./config/logFile";
-import { createDualLogger } from "./config/logger";
-import { AuthServiceApi } from "./api/authService";
-import { loginFromDb } from "./services/login-from-db.service";
-import { AppDataSource } from "./config/data-source";
+import { ENV } from "./vn.com.nasa.config/env";
+import { cleanupOldLogs, getTodayLogPath, Log } from "./vn.com.nasa.utils/log";
+import { AuthServiceApi } from "./vn.com.nasa.connection.api/authService";
+import { MasterWorker } from "./vn.com.nasa.service/MasterWorker";
+import { AppDataSource } from "./vn.com.nasa.config/data-source";
 
 let isRunning = false;
 let started = false;
@@ -12,16 +11,19 @@ async function runOnce(reason: string) {
   if (isRunning) return;
   isRunning = true;
 
+
   try {
     cleanupOldLogs();
 
     const { filePath } = getTodayLogPath();
-    const logger = createDualLogger(filePath).child({ job: "login" });
+    Log.init({ filePath });
+    const logger = Log.getLogger("LoginWorker");
     const api = new AuthServiceApi(ENV.BASE_URL);
 
     if (!started) {
       started = true;
       logger.debug(
+        "WORKER_CONFIG",
         {
           config: {
             BASE_URL: ENV.BASE_URL,
@@ -43,30 +45,33 @@ async function runOnce(reason: string) {
             LOG_LEVEL: ENV.LOG_LEVEL,
             LOG_VERBOSE: ENV.LOG_VERBOSE
           }
-        },
-        "WORKER_CONFIG"
+        }
       );
     }
 
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }
-    logger.debug({}, "DB_OK");
+    logger.debug("DB_OK");
 
-    logger.debug({ reason }, "JOB_START");
+    logger.debug("JOB_START", { reason });
 
-    const summary = await loginFromDb(api, { logger });
+    const master = new MasterWorker(api, logger);
+    const summary = await master.run();
 
-    logger.debug({ summary }, "JOB_DONE");
+    logger.debug("JOB_DONE", { summary });
 
-    console.log(
-      `LOGIN summary: success=${summary.success} alreadyOk=${summary.alreadyOk} relogin=${summary.relogin} fail=${summary.fail}`
-    );
+    const msg = `LOGIN summary: success=${summary.success} alreadyOk=${summary.alreadyOk} relogin=${summary.relogin} fail=${summary.fail}`;
+    logger.info(msg);
+    console.log(msg);
   } catch (err: any) {
     const { filePath } = getTodayLogPath();
-    const logger = createDualLogger(filePath).child({ job: "login" });
-    logger.error({ reason, err: err?.message ?? String(err) }, "JOB_CRASH");
-    console.log("LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=0");
+    Log.init({ filePath });
+    const logger = Log.getLogger("LoginWorker");
+    logger.error("JOB_CRASH", { reason, err: err?.message ?? String(err) });
+    const msg = "LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=0";
+    logger.info(msg);
+    console.log(msg);
   } finally {
     isRunning = false;
   }
