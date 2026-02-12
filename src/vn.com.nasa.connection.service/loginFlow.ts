@@ -1,13 +1,13 @@
+
+import readline from "readline";
 import { AuthServiceApi, Tokens } from "../vn.com.nasa.connection.api/authService";
 import { ENV } from "../vn.com.nasa.config/env";
-import { waitForOtpFromAuthService, promptOtpOnce } from "../vn.com.nasa.utils/otp";
-import { setStoredTokens, clearTokensForUser, getStoredTokens } from "../vn.com.nasa.storage/tokenStore";
-import { maskToken, Log } from "../vn.com.nasa.utils/log";
+import { setStoredTokens, clearTokensForUser, getStoredTokens, clearAllData } from "../vn.com.nasa.storage/tokenStore";
+import { maskToken, maskOtp, Log } from "../vn.com.nasa.utils/log";
 import { isAccessExpired, isRefreshExpired } from "../vn.com.nasa.utils/tokenUtils";
-import { clearAllData } from "../vn.com.nasa.storage/tokenStore";
 import { buildHeaders } from "../vn.com.nasa.utils/headers";
 
-
+type AppLogger = ReturnType<typeof Log.getLogger>;
 export type Account = { phone: string; password: string };
 
 export type LoginFlowResult = {
@@ -16,6 +16,7 @@ export type LoginFlowResult = {
   tokens?: Tokens;
   usedOtp?: string;
 };
+
 export type EnsureLoginResult = {
   ok: boolean;
   tokens?: Tokens;
@@ -24,7 +25,84 @@ export type EnsureLoginResult = {
   usedOtp?: string;
 };
 
-type AppLogger = ReturnType<typeof Log.getLogger>;
+// --- OTP HELPERS ---
+
+type WaitOtpOptions = {
+  timeoutMs?: number;
+  pollMs?: number;
+  sinceMs?: number;
+  context?: string;
+  logger?: AppLogger;
+  headers?: any;
+};
+
+function parseOtp(data: any): { otp: string | null; tsMs: number | null } {
+  if (!data) return { otp: null, tsMs: null };
+  // Try different paths for OTP
+  const direct = data.otp ?? data.smsOtp ?? data.otpKeyOtp;
+  const msgOtp = data.msg?.otp ?? data.smsLatest?.otp;
+  const otp = String(direct ?? msgOtp ?? "").trim();
+
+  // Try different paths for Timestamp
+  const tsRaw = data.msg?.timestamp ?? data.msg?.received_at ?? data.timestamp;
+  let tsMs: number | null = null;
+  if (tsRaw) {
+    const n = Number(tsRaw);
+    tsMs = Number.isFinite(n) ? n : Date.parse(String(tsRaw)) || null;
+  }
+
+  return { otp: otp.length >= 4 ? otp : null, tsMs };
+}
+
+async function waitForOtp(
+  api: AuthServiceApi,
+  phone: string,
+  opts: WaitOtpOptions = {}
+): Promise<string | null> {
+  const {
+    timeoutMs = ENV.OTP_TIMEOUT_MS,
+    pollMs = ENV.OTP_POLL_MS,
+    sinceMs = 0,
+    context = "LOGIN",
+    logger,
+    headers
+  } = opts;
+
+  const t0 = Date.now();
+  let lastOtp: string | null = null;
+
+  while (Date.now() - t0 < timeoutMs) {
+    try {
+      const res = await api.debugRedisOtp(phone, context, headers);
+      const { otp, tsMs } = parseOtp(res.data?.data);
+      const fresh = !sinceMs || (tsMs == null || tsMs >= sinceMs);
+
+      if (otp && fresh) {
+        if (otp !== lastOtp) {
+          logger?.debug("OTP_FOUND", { phone, otp: maskOtp(otp), tsMs });
+        }
+        return otp;
+      }
+    } catch (err: any) {
+
+    }
+
+    lastOtp = null;
+    await new Promise((r) => setTimeout(r, pollMs));
+  }
+
+  logger?.debug("OTP_TIMEOUT", { phone, timeoutMs });
+  return null;
+}
+
+async function promptOtp(phone: string, logger?: AppLogger): Promise<string> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const answer = await new Promise<string>(r => rl.question(`Nhập OTP cho ${phone}: `, r));
+  rl.close();
+  const otp = answer.trim();
+  logger?.info("OTP_USER_INPUT", { otp: maskOtp(otp) });
+  return otp;
+}
 
 export async function ensureLogin(
   api: AuthServiceApi,
@@ -34,94 +112,24 @@ export async function ensureLogin(
   logger?: AppLogger
 ): Promise<EnsureLoginResult> {
   const phone = String(acc.phone || "").replace(/\D/g, "");
+
   const stored = getStoredTokens(phone);
   if (stored) {
-    const me = await getMeWithAutoAuth(api, phone, activeDeviceId, logger);
-    if (me.ok) {
-
-      const final = getStoredTokens(phone);
-      logger?.debug("SESSION_OK_SKIP_LOGIN", { me: me.data });
-      return {
-        ok: true,
-        tokens: final || undefined,
-        method: "ALREADY_VALID"
-      };
+    const valid = await ensureValidAccessToken(api, phone, activeDeviceId, stored, logger);
+    if (valid.ok && valid.accessToken) {
+      const finalTokens = getStoredTokens(phone) || { accessToken: valid.accessToken, refreshToken: stored.refreshToken };
+      logger?.debug("SESSION_OK", {});
+      return { ok: true, tokens: finalTokens, method: valid.refreshed ? "REFRESHED" : "ALREADY_VALID" };
     }
-    logger?.debug("SESSION_NOT_OK_WILL_LOGIN", { reason: me.message });
+    logger?.debug("SESSION_EXPIRED", { reason: valid.reason });
   }
+
   const res = await loginWithOtpFlow(api, acc, headers, logger);
   if (res.ok && res.tokens) {
-    return {
-      ok: true,
-      tokens: res.tokens,
-      method: res.usedOtp ? "LOGIN_OTP" : "LOGIN_PASS",
-      usedOtp: res.usedOtp
-    };
+    return { ok: true, tokens: res.tokens, method: res.usedOtp ? "LOGIN_OTP" : "LOGIN_PASS", usedOtp: res.usedOtp };
   }
 
   return { ok: false, reason: res.reason, method: "FAIL" };
-}
-
-async function doVerify(
-  api: AuthServiceApi,
-  phone: string,
-  otp: string,
-  headers: any,
-  logger?: AppLogger
-): Promise<{ ok: boolean; tokens?: Tokens; msg?: string }> {
-
-  const res = await api.verifyLoginOtp(phone, otp, headers);
-  const body = res.data;
-
-  if (body?.isSucceed) {
-    if (body.data?.tokens) {
-      return { ok: true, tokens: body.data.tokens as Tokens };
-    }
-    if (body.data?.accessToken && body.data?.refreshToken) {
-      return {
-        ok: true,
-        tokens: {
-          accessToken: body.data.accessToken,
-          refreshToken: body.data.refreshToken,
-        },
-      };
-    }
-  }
-  return { ok: false, msg: String(body?.message ?? "VERIFY_FAIL") };
-}
-
-async function startLoginAttempt(
-  api: AuthServiceApi,
-  phone: string,
-  password: string,
-  headers: any,
-  logger?: AppLogger
-): Promise<{ needOtp: boolean; tokens?: Tokens; msg?: string; otpSample?: string }> {
-
-  const res = await api.login(phone, password, headers);
-  const body = res.data;
-
-  if (!body?.isSucceed) {
-    return { needOtp: true, msg: String(body?.message ?? "LOGIN_FAIL") };
-  }
-
-  const data = body.data as any;
-  if (data?.needOtp === false || data?.otpRequired === false) {
-    if (data?.tokens) {
-      return { needOtp: false, tokens: data.tokens as Tokens };
-    }
-    if (data?.accessToken && data?.refreshToken) {
-      return {
-        needOtp: false,
-        tokens: {
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-        },
-      };
-    }
-  }
-
-  return { needOtp: true, msg: "NEED_OTP", otpSample: data?.otpSample };
 }
 
 export async function loginWithOtpFlow(
@@ -134,202 +142,108 @@ export async function loginWithOtpFlow(
   const password = String(acc.password || "");
 
   clearTokensForUser(phone);
-  while (true) {
-    try {
-      const loginAttempt = await startLoginAttempt(api, phone, password, headers, logger);
 
-      if (!loginAttempt.needOtp && loginAttempt.tokens) {
-        setStoredTokens(phone, loginAttempt.tokens.accessToken, loginAttempt.tokens.refreshToken, headers["x-device-id"]);
+  const loginRes = await api.login(phone, password, headers);
+  const loginData = loginRes.data?.data as any;
 
-        logger?.debug("LOGIN_OK_NO_OTP", {});
-        return { ok: true, tokens: loginAttempt.tokens };
-      }
-
-      if (loginAttempt.msg && loginAttempt.msg !== "NEED_OTP") {
-        logger?.warn("LOGIN_FAIL", { msg: loginAttempt.msg });
-        return { ok: false, reason: loginAttempt.msg };
-      }
-
-      let resendCount = 0;
-      let sessionStartMs = Date.now();
-
-      while (true) {
-        const verifyDeadline = sessionStartMs + ENV.VERIFY_WINDOW_MS;
-        let lastOtp: string | null = null;
-        let redisStaleOtp: string | null = null;
-
-        if (ENV.OTP_DEBUG_PATH_REDIS) {
-          const rd = await api.debugRedisOtp(phone, "LOGIN");
-          const payload = rd.data?.data;
-          if (payload) {
-            const direct = payload.otp ?? payload.smsOtp ?? payload.otpKeyOtp ?? null;
-            const msgOtp = payload.msg?.otp ?? payload.smsLatest?.otp ?? null;
-            const ro = String(direct || msgOtp || "").trim();
-            if (ro.length >= 4) redisStaleOtp = ro;
-          }
-        }
-
-        let directOtp = redisStaleOtp || (loginAttempt as any).otpSample || null;
-
-        while (Date.now() < verifyDeadline) {
-          let otp: string | null = directOtp;
-          directOtp = null;
-
-          if (!otp && ENV.AUTO_FETCH_OTP) {
-            otp = await waitForOtpFromAuthService(api, phone, {
-              context: "LOGIN",
-              sinceMs: sessionStartMs,
-              timeoutMs: Math.min(ENV.OTP_TIMEOUT_MS, Math.max(500, verifyDeadline - Date.now())),
-              pollMs: ENV.OTP_POLL_MS,
-              logger: logger as any,
-              headers
-            });
-            if (!otp) {
-              logger?.debug("OTP_FETCH_TIMEOUT_FAST_FAIL_ABORT", { phone });
-              return { ok: false, reason: "OTP_TIMEOUT" };
-            }
-          } else if (ENV.PROMPT_OTP) {
-            otp = await promptOtpOnce(`Nhập OTP cho ${phone}: `, logger as any);
-          }
-
-          if (!otp) {
-            await new Promise((r) => setTimeout(r, ENV.OTP_POLL_MS));
-            continue;
-          }
-
-          if (otp === lastOtp) {
-            await new Promise((r) => setTimeout(r, ENV.OTP_POLL_MS));
-            continue;
-          }
-          lastOtp = otp;
-
-          for (let k = 0; k < ENV.OTP_VERIFY_RETRY; k++) {
-            const vr = await doVerify(api, phone, otp, headers, logger);
-            if (vr.ok && vr.tokens) {
-              setStoredTokens(phone, vr.tokens.accessToken, vr.tokens.refreshToken, headers["X-Device-Id"]);
-              logger?.debug("LOGIN_OK_WITH_OTP", {});
-              return { ok: true, tokens: vr.tokens, usedOtp: otp };
-            }
-            await new Promise((r) => setTimeout(r, 300));
-          }
-        }
-
-        const resendDeadline = verifyDeadline + ENV.RESEND_WINDOW_MS;
-        if (resendCount >= ENV.MAX_RESEND) break;
-
-        if (!ENV.AUTO_RESEND) {
-          while (Date.now() < resendDeadline) await new Promise((r) => setTimeout(r, 500));
-          break;
-        }
-        logger?.debug("RESEND_OTP_REQUEST", { phone, resendCount: resendCount + 1 });
-        const rr = await api.resendLoginOtp(phone, headers);
-        const body = rr.data;
-        if (body?.data?.otpSample) directOtp = body.data.otpSample;
-
-        if (!body?.isSucceed) {
-          break;
-        }
-
-        resendCount += 1;
-        sessionStartMs = Date.now();
-        continue;
-      }
-
-      logger?.debug("BACK_TO_LOGIN", {});
-
-    } catch (err: any) {
-
-      logger?.error("LOGIN_FLOW_EXCEPTION", { err: err?.message ?? String(err) });
-      await new Promise((r) => setTimeout(r, 2000));
+  if (!loginRes.data?.isSucceed) {
+    const msg = String(loginRes.data?.message ?? "LOGIN_FAIL");
+    if (msg !== "NEED_OTP" && !loginData?.otpRequired) {
+      logger?.warn("LOGIN_FAIL", { msg });
+      return { ok: false, reason: msg };
     }
   }
+  if (loginData?.tokens || (loginData?.accessToken && loginData?.refreshToken)) {
+    const tokens = (loginData.tokens || { accessToken: loginData.accessToken, refreshToken: loginData.refreshToken }) as Tokens;
+    setStoredTokens(phone, tokens.accessToken, tokens.refreshToken, headers["x-device-id"]);
+    logger?.debug("LOGIN_PASS_SUCCESS", {});
+    return { ok: true, tokens };
+  }
+
+  let sessionStartMs = Date.now();
+  let failCount = 0;
+
+  while (failCount < 2) {
+    const deadline = sessionStartMs + ENV.VERIFY_WINDOW_MS;
+
+    let otp: string | null = null;
+    if (ENV.AUTO_FETCH_OTP) {
+
+      const timeout = Math.min(ENV.OTP_TIMEOUT_MS, Math.max(500, deadline - Date.now()));
+      otp = await waitForOtp(api, phone, { sinceMs: sessionStartMs, timeoutMs: timeout, logger, headers });
+
+      if (!otp) {
+        logger?.debug("OTP_MISSING_FAST_FAIL", { phone });
+        return { ok: false, reason: "OTP_TIMEOUT" };
+      }
+    } else if (ENV.PROMPT_OTP) {
+      otp = await promptOtp(phone, logger);
+    }
+
+    if (!otp) return { ok: false, reason: "OTP_MISSING" };
+
+    for (let i = 0; i < ENV.OTP_VERIFY_RETRY; i++) {
+      const vr = await api.verifyLoginOtp(phone, otp, headers);
+      if (vr.data?.isSucceed && vr.data?.data) {
+        const d = vr.data.data;
+        const tokens = (d.tokens || { accessToken: d.accessToken, refreshToken: d.refreshToken }) as Tokens;
+        if (tokens?.accessToken) {
+          setStoredTokens(phone, tokens.accessToken, tokens.refreshToken, headers["x-device-id"]);
+          logger?.debug("LOGIN_OTP_SUCCESS", {});
+          return { ok: true, tokens, usedOtp: otp };
+        }
+      }
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    logger?.warn("OTP_VERIFY_FAIL_RETRYING", { phone });
+    if (!ENV.AUTO_RESEND || failCount >= ENV.MAX_RESEND) break;
+
+    await api.resendLoginOtp(phone, headers);
+    sessionStartMs = Date.now();
+    failCount++;
+  }
+
+  return { ok: false, reason: "LOGIN_FAILED_FINAL" };
 }
-export type EnsureTokenResult = {
-  ok: boolean;
-  accessToken?: string;
-  reason?: string;
-  refreshed?: boolean;
-};
+
 
 export async function ensureValidAccessToken(
   api: AuthServiceApi,
   phone: string,
   deviceId: string,
+  currentTokens: Tokens | null,
   logger?: AppLogger
-): Promise<EnsureTokenResult> {
+): Promise<{ ok: boolean; accessToken?: string; refreshed?: boolean; reason?: string }> {
+
+  if (!currentTokens) return { ok: false, reason: "NO_TOKENS" };
+
+  const { accessToken, refreshToken } = currentTokens;
+
+  if (!isAccessExpired(accessToken)) {
+    return { ok: true, accessToken, reason: "ACCESS_OK" };
+  }
+
+  if (isRefreshExpired(refreshToken)) {
+    clearAllData();
+    return { ok: false, reason: "REFRESH_EXPIRED" };
+  }
+
   try {
-    const stored = getStoredTokens(phone);
-    if (!stored) {
-      return { ok: false, reason: "NO_TOKENS" };
-    }
-
-    const { accessToken, refreshToken } = stored;
-
-    const accessExpired = isAccessExpired(accessToken);
-    const refreshExpired = isRefreshExpired(refreshToken);
-
-    logger?.debug(
-      "TOKEN_STATUS",
-      {
-        phone,
-        accessExpired,
-        refreshExpired,
-        accessToken: maskToken(accessToken),
-        refreshToken: maskToken(refreshToken),
-      }
-    );
-
-    if (!accessExpired) {
-      return { ok: true, accessToken, reason: "ACCESS_OK" };
-    }
-
-    if (refreshExpired) {
-      logger?.debug("REFRESH_EXPIRED_CLEAR_ALL", { phone });
-      clearAllData();
-      return { ok: false, reason: "REFRESH_EXPIRED" };
-    }
-
-    logger?.debug("REFRESH_TRY", { phone });
-    const headers = buildHeaders(deviceId);
-    const res = await api.refreshToken(refreshToken, headers);
-    const body = res.data;
-    const bodyData = body?.data;
-
-    let newTokens: Tokens | undefined;
-    if (body?.isSucceed) {
-      if (bodyData?.tokens) {
-        newTokens = bodyData.tokens as Tokens;
-      } else if (bodyData?.accessToken && bodyData?.refreshToken) {
-        newTokens = {
-          accessToken: bodyData.accessToken,
-          refreshToken: bodyData.refreshToken
-        };
-      }
-    }
+    logger?.debug("REFRESHING", { phone });
+    const res = await api.refreshToken(refreshToken, buildHeaders(deviceId));
+    const d = res.data?.data;
+    const newTokens = (d?.tokens || (d?.accessToken ? { accessToken: d.accessToken, refreshToken: d.refreshToken } : null)) as Tokens;
 
     if (newTokens) {
       setStoredTokens(phone, newTokens.accessToken, newTokens.refreshToken, deviceId);
-      logger?.info(
-        "REFRESH_OK",
-        {
-          phone,
-          accessToken: maskToken(newTokens.accessToken),
-          refreshToken: maskToken(newTokens.refreshToken),
-        }
-      );
-      return { ok: true, accessToken: newTokens.accessToken, refreshed: true, reason: "REFRESH_OK" };
+      logger?.info("REFRESH_SUCCESS", {});
+      return { ok: true, accessToken: newTokens.accessToken, refreshed: true };
     }
+  } catch (e) { }
 
-    const msg = String(body?.message ?? "REFRESH_FAIL");
-    logger?.debug("REFRESH_FAIL_LOGOUT", { phone, msg });
-    clearTokensForUser(phone);
-    return { ok: false, reason: msg };
-
-  } catch (err: any) {
-    logger?.error("REFRESH_ERR_LOGOUT", { phone, err: err?.message ?? String(err) });
-    clearTokensForUser(phone);
-    return { ok: false, reason: "REFRESH_ERROR" };
-  }
+  clearTokensForUser(phone);
+  return { ok: false, reason: "REFRESH_FAIL" };
 }
 
 export async function getMeWithAutoAuth(
@@ -338,41 +252,16 @@ export async function getMeWithAutoAuth(
   deviceId: string,
   logger?: AppLogger
 ): Promise<{ ok: boolean; data?: any; message?: string }> {
+
+  const stored = getStoredTokens(phone);
+  const valid = await ensureValidAccessToken(api, phone, deviceId, stored, logger);
+
+  if (!valid.ok || !valid.accessToken) return { ok: false, message: valid.reason };
+
   try {
-    const t = await ensureValidAccessToken(api, phone, deviceId, logger);
-    if (!t.ok || !t.accessToken) {
-      return { ok: false, message: t.reason ?? "NO_TOKEN" };
-    }
+    const res = await api.getMe(valid.accessToken);
+    if (res.data?.isSucceed) return { ok: true, data: res.data.data };
+  } catch (e) { }
 
-    const res = await api.getMe(t.accessToken);
-    const body = res.data;
-    logger?.debug("ME_RESPONSE", { phone, status: res.status, body });
-
-    if (body?.isSucceed) {
-      return { ok: true, data: body.data };
-    }
-
-    const msg = String(body?.message ?? "ME_FAIL");
-
-    if (msg === "ACCESS_TOKEN_EXPIRED") {
-      const t2 = await ensureValidAccessToken(api, phone, deviceId, logger);
-      if (t2.ok && t2.accessToken) {
-        const res2 = await api.getMe(t2.accessToken);
-        const body2 = res2.data;
-        logger?.debug("ME_RETRY_RESPONSE", { phone, status: res2.status, body: body2 });
-        if (body2?.isSucceed) return { ok: true, data: body2.data };
-        return { ok: false, message: String(body2?.message ?? "ME_FAIL") };
-      }
-      return { ok: false, message: t2.reason ?? "REFRESH_FAIL" };
-    }
-
-    if (msg === "INVALID_ACCESS_TOKEN") {
-      clearTokensForUser(phone);
-    }
-
-    return { ok: false, message: msg };
-  } catch (err: any) {
-    logger?.error("ME_ERROR", { phone, err: err?.message ?? String(err) });
-    return { ok: false, message: "ME_ERROR" };
-  }
+  return { ok: false, message: "ME_FAIL" };
 }
