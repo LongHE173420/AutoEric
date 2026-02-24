@@ -1,0 +1,6 @@
+{"level":30,"time":"2026-02-24T02:35:51.088Z","logId":1771900540458,"logger":"LoginWorker","msg":"LOGIN summary: success=6 alreadyOk=0 relogin=6 fail=1"}
+{"level":30,"time":"2026-02-24T02:37:01.796Z","logId":1771900540458,"logger":"LoginWorker","msg":"LOGIN summary: success=6 alreadyOk=0 relogin=6 fail=1"}
+{"level":30,"time":"2026-02-24T08:24:50.327Z","logId":1771921479452,"logger":"LoginWorker","msg":"LOGIN summary: success=5 alreadyOk=0 relogin=5 fail=2"}
+{"level":30,"time":"2026-02-24T08:26:01.298Z","logId":1771921479452,"logger":"LoginWorker","msg":"LOGIN summary: success=5 alreadyOk=0 relogin=5 fail=2"}
+{"level":30,"time":"2026-02-24T08:27:01.320Z","logId":1771921479452,"logger":"LoginWorker","msg":"LOGIN summary: success=5 alreadyOk=0 relogin=5 fail=2"}
+{"level":30,"time":"2026-02-24T08:28:01.327Z","logId":1771921479452,"logger":"LoginWorker","msg":"LOGIN summary: success=5 alreadyOk=0 relogin=5 fail=2"}
