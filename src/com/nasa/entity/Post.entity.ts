@@ -5,9 +5,6 @@ export class PostEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    // TODO: Add post specific columns
-    // @Column()
-    // content: string;
 
     @CreateDateColumn()
     createdAt!: Date;
