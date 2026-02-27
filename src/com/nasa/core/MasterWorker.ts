@@ -1,7 +1,11 @@
-import { AuthServiceApi } from "../connection/api/authService";
-import { AccountRepository } from "../repo/AccountRepository";
+import { AuthServiceApi } from "../auth/authService";
+import { AccountRepository } from "../auth/AccountRepository";
 import { getDeviceId } from "../utils/device";
-import { UserWorker } from "./UserWorker";
+import { AuthWorker } from "../auth/AuthWorker";
+import { FriendWorker } from "../friend/FriendWorker";
+import { NotificationWorker } from "../notification/NotificationWorker";
+import { FeedWorker } from "../feed/FeedWorker";
+import { SurfWorker } from "../surf/SurfWorker";
 import { Log } from "../utils/log";
 
 export type LoginSummary = {
@@ -35,6 +39,20 @@ export class MasterWorker {
         };
 
         try {
+            // Start background workers
+            this.logger.info("Initializing background workers...");
+            const friendWorker = new FriendWorker();
+            friendWorker.start();
+
+            const notifWorker = new NotificationWorker();
+            notifWorker.start();
+
+            const feedWorker = new FeedWorker();
+            feedWorker.start();
+
+            const surfWorker = new SurfWorker();
+            surfWorker.start();
+
             const accounts = await this.repo.findEnabledAccounts(1000);
             summary.accounts = accounts.length;
             this.logger.debug("DB_ACCOUNTS_LOADED", { accounts: accounts.length, deviceId: this.defaultDeviceId });
@@ -44,7 +62,7 @@ export class MasterWorker {
                 const batch = accounts.slice(i, i + BATCH_SIZE);
                 await Promise.all(
                     batch.map(async (acc, idx) => {
-                        const worker = new UserWorker(
+                        const worker = new AuthWorker(
                             acc,
                             this.api,
                             this.repo,

@@ -1,5 +1,5 @@
 import { AppDataSource } from "../config/data-source";
-import { AccountEntity } from "../entity/Account.entity";
+import { AccountEntity } from "./Account.entity";
 
 export class AccountRepository {
     private get repo() {

@@ -25,6 +25,8 @@ function bool(name: string, def: Bool): Bool {
 export const ENV = {
 
   BASE_URL: str("BASE_URL", "http://localhost:3001"),
+  KONG_URL: str("KONG_URL", "http://localhost:8000"),
+  NOTIFICATION_URL: str("NOTIFICATION_URL", "http://localhost:8001"),
 
   MYSQL_HOST: str("MYSQL_HOST", "localhost"),
   MYSQL_PORT: num("MYSQL_PORT", 3306),

@@ -1,10 +1,10 @@
-import { AuthServiceApi } from "../connection/api/authService";
-import { AccountRepository } from "../repo/AccountRepository";
-import { AccountEntity } from "../entity/Account.entity";
+import { AuthServiceApi } from "./authService";
+import { AccountRepository } from "./AccountRepository";
+import { AccountEntity } from "./Account.entity";
 import { maskPassword, maskToken, Log } from "../utils/log";
 import { buildHeaders } from "../utils/headers";
 import { getStoredTokens, setStoredTokens } from "../storage/tokenStore";
-import { getMeWithAutoAuth, loginWithOtpFlow } from "../connection/service/loginFlow";
+import { getMeWithAutoAuth, loginWithOtpFlow } from "./service/loginFlow";
 
 
 export type UserWorkerResult = {
@@ -16,7 +16,7 @@ export type UserWorkerResult = {
 
 type AppLogger = ReturnType<typeof Log.getLogger>;
 
-export class UserWorker {
+export class AuthWorker {
     private logger: AppLogger;
 
     constructor(

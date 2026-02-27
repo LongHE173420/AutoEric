@@ -1,12 +1,12 @@
 
 import readline from "readline";
-import { AuthServiceApi, Tokens } from "../api/authService";
+import { AuthServiceApi, Tokens } from "../authService";
 import { ENV } from "../../config/env";
 import { setStoredTokens, clearTokensForUser, getStoredTokens, clearAllData } from "../../storage/tokenStore";
 import { maskToken, maskOtp, Log } from "../../utils/log";
 import { isAccessExpired, isRefreshExpired } from "../../utils/tokenUtils";
 import { buildHeaders } from "../../utils/headers";
-
+import { UserApiService } from "../../user/userApiService";
 type AppLogger = ReturnType<typeof Log.getLogger>;
 export type Account = { phone: string; password: string };
 
@@ -259,7 +259,7 @@ export async function getMeWithAutoAuth(
   if (!valid.ok || !valid.accessToken) return { ok: false, message: valid.reason };
 
   try {
-    const res = await api.getMe(valid.accessToken);
+    const res = await UserApiService.getProfileMe(valid.accessToken);
     if (res.data?.isSucceed) return { ok: true, data: res.data.data };
   } catch (e) { }
 
