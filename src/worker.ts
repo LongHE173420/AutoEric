@@ -1,8 +1,11 @@
 import { ENV } from "./com/nasa/config/env";
 import { cleanupOldLogs, getTodayLogPath, Log } from "./com/nasa/utils/log";
-import { AuthServiceApi } from "./com/nasa/auth/authService";
-import { MasterWorker } from "./com/nasa/core/MasterWorker";
+import { AuthServiceApi } from "./com/nasa/api/auth/authApiService";
+import { MasterWorker } from "./com/nasa/service/core/MasterWorker";
 import { AppDataSource } from "./com/nasa/config/data-source";
+import axios from "axios";
+
+axios.defaults.headers.common["Host"] = "social.eric.pro.vn";
 
 let isRunning = false;
 let started = false;
@@ -18,7 +21,7 @@ async function runOnce(reason: string) {
     const { filePath } = getTodayLogPath();
     Log.init({ filePath });
     const logger = Log.getLogger("LoginWorker");
-    const api = new AuthServiceApi(ENV.BASE_URL);
+    const api = new AuthServiceApi(ENV.KONG_URL);
 
     if (!started) {
       started = true;
@@ -26,7 +29,7 @@ async function runOnce(reason: string) {
         "WORKER_CONFIG",
         {
           config: {
-            BASE_URL: ENV.BASE_URL,
+            BASE_URL: ENV.KONG_URL,
             MYSQL_HOST: ENV.MYSQL_HOST,
             MYSQL_PORT: ENV.MYSQL_PORT,
             MYSQL_DATABASE: ENV.MYSQL_DATABASE,

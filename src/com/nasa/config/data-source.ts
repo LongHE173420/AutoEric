@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { ENV } from "./env";
-import { AccountEntity } from "../auth/Account.entity";
+import { AccountEntity } from "../db/auth/Account.entity";
 
 export const AppDataSource = new DataSource({
     type: "mysql",
