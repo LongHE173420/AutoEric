@@ -90,3 +90,30 @@
 {"level":30,"time":"2026-03-04T08:44:07.886Z","logId":1772613783736,"logger":"FeedWorker","msg":"FeedWorker starting..."}
 {"level":30,"time":"2026-03-04T08:44:07.887Z","logId":1772613783736,"logger":"SurfWorker","msg":"SurfWorker starting..."}
 {"level":30,"time":"2026-03-04T08:44:09.092Z","logId":1772613783736,"logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"2026-03-04T09:08:41.433Z","logId":1772615321430,"logger":"LoginService","msg":"Initializing background workers..."}
+{"level":30,"time":"2026-03-04T09:08:41.433Z","logId":1772615321430,"logger":"FriendWorker","msg":"FriendWorker starting..."}
+{"level":30,"time":"2026-03-04T09:08:41.434Z","logId":1772615321430,"logger":"NotificationWorker","msg":"NotificationWorker starting..."}
+{"level":30,"time":"2026-03-04T09:08:41.434Z","logId":1772615321430,"logger":"FeedWorker","msg":"FeedWorker starting..."}
+{"level":30,"time":"2026-03-04T09:08:41.434Z","logId":1772615321430,"logger":"SurfWorker","msg":"SurfWorker starting..."}
+{"level":50,"time":"2026-03-04T09:08:41.632Z","logId":1772615321430,"logger":"LoginService","row":1,"phone":"longh1248@gmail.com","proxy":"http://103.84.95.54:7890","err":"read ECONNRESET","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"2026-03-04T09:08:41.632Z","logId":1772615321430,"logger":"LoginService","msg":"LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=1"}
+{"level":30,"time":"2026-03-04T09:11:02.261Z","logId":1772615462258,"logger":"LoginService","msg":"Initializing background workers..."}
+{"level":30,"time":"2026-03-04T09:11:02.261Z","logId":1772615462258,"logger":"FriendWorker","msg":"FriendWorker starting..."}
+{"level":30,"time":"2026-03-04T09:11:02.262Z","logId":1772615462258,"logger":"NotificationWorker","msg":"NotificationWorker starting..."}
+{"level":30,"time":"2026-03-04T09:11:02.262Z","logId":1772615462258,"logger":"FeedWorker","msg":"FeedWorker starting..."}
+{"level":30,"time":"2026-03-04T09:11:02.262Z","logId":1772615462258,"logger":"SurfWorker","msg":"SurfWorker starting..."}
+{"level":30,"time":"2026-03-04T09:11:03.146Z","logId":1772615462258,"logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"2026-03-04T09:11:22.308Z","logId":1772615482304,"logger":"LoginService","msg":"Initializing background workers..."}
+{"level":30,"time":"2026-03-04T09:11:22.309Z","logId":1772615482304,"logger":"FriendWorker","msg":"FriendWorker starting..."}
+{"level":30,"time":"2026-03-04T09:11:22.309Z","logId":1772615482304,"logger":"NotificationWorker","msg":"NotificationWorker starting..."}
+{"level":30,"time":"2026-03-04T09:11:22.310Z","logId":1772615482304,"logger":"FeedWorker","msg":"FeedWorker starting..."}
+{"level":30,"time":"2026-03-04T09:11:22.310Z","logId":1772615482304,"logger":"SurfWorker","msg":"SurfWorker starting..."}
+{"level":50,"time":"2026-03-04T09:11:22.595Z","logId":1772615482304,"logger":"LoginService","row":1,"phone":"longh1248@gmail.com","proxy":"http://103.84.95.54:7890","err":"Client network socket disconnected before secure TLS connection was established","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"2026-03-04T09:11:22.595Z","logId":1772615482304,"logger":"LoginService","msg":"LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=1"}
+{"level":30,"time":"2026-03-04T09:13:30.181Z","logId":1772615610178,"logger":"LoginService","msg":"Initializing background workers..."}
+{"level":30,"time":"2026-03-04T09:13:30.181Z","logId":1772615610178,"logger":"FriendWorker","msg":"FriendWorker starting..."}
+{"level":30,"time":"2026-03-04T09:13:30.182Z","logId":1772615610178,"logger":"NotificationWorker","msg":"NotificationWorker starting..."}
+{"level":30,"time":"2026-03-04T09:13:30.182Z","logId":1772615610178,"logger":"FeedWorker","msg":"FeedWorker starting..."}
+{"level":30,"time":"2026-03-04T09:13:30.182Z","logId":1772615610178,"logger":"SurfWorker","msg":"SurfWorker starting..."}
+{"level":50,"time":"2026-03-04T09:13:30.405Z","logId":1772615610178,"logger":"LoginService","row":1,"phone":"longh1248@gmail.com","proxy":"http://103.84.95.54:7890","err":"read ECONNRESET","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"2026-03-04T09:13:30.405Z","logId":1772615610178,"logger":"LoginService","msg":"LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=1"}
