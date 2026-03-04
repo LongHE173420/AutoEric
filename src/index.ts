@@ -1,6 +1,6 @@
-import { startWorker } from "./worker";
+import { startService } from "./service";
 
-startWorker().catch((err) => {
-  console.error("Worker crash:", err);
+startService().catch((err) => {
+  console.error("Service crash:", err);
   process.exit(1);
 });

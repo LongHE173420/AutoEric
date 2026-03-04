@@ -1,25 +1,22 @@
 import { ENV } from '../../config/env';
 import { FriendApiService } from '../../api/friend/friendApiService';
-
-
 import { Log } from '../../utils/log';
 
 type AppLogger = ReturnType<typeof Log.getLogger>;
 
-export class FriendWorker {
+export class FriendService {
     private isRunning = false;
     private intervalId?: NodeJS.Timeout;
-    
-    
+    private accounts: any[] = [];
     private logger: AppLogger;
 
-    constructor() {
-        
-        this.logger = Log.getLogger("FriendWorker");
+    constructor(accounts: any[] = []) {
+        this.accounts = accounts;
+        this.logger = Log.getLogger("FriendService");
     }
 
     public async start() {
-        this.logger.info("FriendWorker starting...");
+        this.logger.info("FriendService starting...");
         this.isRunning = true;
         this.loop();
         this.intervalId = setInterval(() => this.loop(), ENV.INTERVAL_MS || 60000);
@@ -28,42 +25,42 @@ export class FriendWorker {
     private async loop() {
         if (!this.isRunning) return;
         try {
-            this.logger.debug("[FriendWorker] Polling for friend updates...");
+            this.logger.debug("[FriendService] Polling for friend updates...");
 
             // Get all enabled accounts that have an active session (tokens)
-            const accounts: any[] = [];
+            const accounts = this.accounts;
 
             for (const account of accounts) {
                 if (!account.accessToken) continue;
 
                 try {
                     const ctx = { accId: account.id, phone: account.phone };
-                    this.logger.debug("[FriendWorker] Fetching friends", ctx);
+                    this.logger.debug("[FriendService] Fetching friends", ctx);
 
                     const response = await FriendApiService.getMyFriends(account.accessToken);
 
                     if (response.data && response.data.isSucceed && response.data.data) {
                         const friends = response.data.data;
-                        this.logger.debug(`[FriendWorker] Found ${friends.length} friends`, ctx);
+                        this.logger.debug(`[FriendService] Found ${friends.length} friends`, ctx);
 
                         // For demonstration, we just log. In a real scenario, map response data to FriendEntity
                         // and save using this.friendRepo.save(...)
                     } else {
-                        this.logger.warn("[FriendWorker] Failed to fetch friends", { ...ctx, msg: response.data?.message });
+                        this.logger.warn("[FriendService] Failed to fetch friends", { ...ctx, msg: response.data?.message });
                     }
 
                 } catch (apiError: any) {
-                    this.logger.error("[FriendWorker] API Error for account", { accId: account.id, err: apiError.message });
+                    this.logger.error("[FriendService] API Error for account", { accId: account.id, err: apiError.message });
                 }
             }
 
         } catch (error: any) {
-            this.logger.error("[FriendWorker] Loop Error:", { err: error.message });
+            this.logger.error("[FriendService] Loop Error:", { err: error.message });
         }
     }
 
     public async stop() {
-        this.logger.info("FriendWorker stopping...");
+        this.logger.info("FriendService stopping...");
         this.isRunning = false;
         if (this.intervalId) {
             clearInterval(this.intervalId);

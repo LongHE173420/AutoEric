@@ -28,17 +28,6 @@ export const ENV = {
   KONG_URL: str("KONG_URL", "http://localhost:8000"),
   NOTIFICATION_URL: str("NOTIFICATION_URL", "http://localhost:8001"),
 
-  MYSQL_HOST: str("MYSQL_HOST", "localhost"),
-  MYSQL_PORT: num("MYSQL_PORT", 3306),
-  MYSQL_USER: str("MYSQL_USER", "root"),
-  MYSQL_PASSWORD: str("MYSQL_PASSWORD", ""),
-  MYSQL_DATABASE: str("MYSQL_DATABASE", "auth_service"),
-  MYSQL_CONN_LIMIT: num("MYSQL_CONN_LIMIT", 5),
-
-  USERS_TABLE: str("USERS_TABLE", "users"),
-  USERS_USERNAME_COL: str("USERS_USERNAME_COL", "phone"),
-  USERS_PASSWORD_COL: str("USERS_PASSWORD_COL", "password"),
-
   INTERVAL_MS: num("INTERVAL_MS", 60_000),
   RUN_ONCE: bool("RUN_ONCE", false),
 
@@ -56,6 +45,9 @@ export const ENV = {
   PROMPT_OTP: bool("PROMPT_OTP", false),
 
   OTP_DEBUG_PATH_REDIS: str("OTP_DEBUG_PATH_REDIS", "/auth/debug/redis-otp"),
+
+  UPSTASH_REDIS_REST_URL: str("UPSTASH_REDIS_REST_URL", ""),
+  UPSTASH_REDIS_REST_TOKEN: str("UPSTASH_REDIS_REST_TOKEN", ""),
 
   ACCESS_TTL_MS: num("ACCESS_TTL_MS", 60_000),
   REFRESH_TTL_MS: num("REFRESH_TTL_MS", 10 * 60_000),

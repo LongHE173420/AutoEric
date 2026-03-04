@@ -111,7 +111,7 @@ export async function ensureLogin(
   headers: any,
   logger?: AppLogger
 ): Promise<EnsureLoginResult> {
-  const phone = String(acc.phone || "").replace(/\D/g, "");
+  const phone = String(acc.phone || "").trim();
 
   const stored = getStoredTokens(phone);
   if (stored) {
@@ -138,7 +138,7 @@ export async function loginWithOtpFlow(
   headers: any,
   logger?: AppLogger
 ): Promise<LoginFlowResult> {
-  const phone = String(acc.phone || "").replace(/\D/g, "");
+  const phone = String(acc.phone || "").trim();
   const password = String(acc.password || "");
 
   clearTokensForUser(phone);

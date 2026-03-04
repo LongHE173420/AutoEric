@@ -1,6 +1,4 @@
 import { AuthServiceApi } from "../../api/auth/authApiService";
-import { AccountRepository } from "../../db/auth/AccountRepository";
-import { AccountEntity } from "../../db/auth/Account.entity";
 import { maskPassword, maskToken, Log } from "../../utils/log";
 import { buildHeaders } from "../../utils/headers";
 import { getStoredTokens, setStoredTokens } from "../../storage/tokenStore";
@@ -13,7 +11,10 @@ import { ReactionApiService } from "../../api/reaction/reactionApiService";
 import { NotificationApiService } from "../../api/notification/notificationApiService";
 import { SurfApiService } from "../../api/surf/surfApiService";
 import { v4 as uuidv4 } from "uuid";
-export type UserWorkerResult = {
+import { HttpsProxyAgent } from "https-proxy-agent";
+import { ENV } from "../../config/env";
+
+export type UserServiceResult = {
     success: boolean;
     relogin: boolean;
     alreadyOk: boolean;
@@ -24,24 +25,28 @@ type AppLogger = ReturnType<typeof Log.getLogger>;
 
 export class EricWorker {
     private logger: AppLogger;
+    private api: AuthServiceApi;
+    private proxyAgent?: any;
 
     constructor(
-        private readonly acc: AccountEntity,
-        private readonly api: AuthServiceApi,
-        private readonly repo: AccountRepository,
+        private readonly acc: any,
         parentLogger: AppLogger,
         private readonly defaultDeviceId: string,
         private readonly rowNo: number
     ) {
         this.logger = parentLogger;
+        if (this.acc.proxy) {
+            this.proxyAgent = new HttpsProxyAgent(this.acc.proxy);
+        }
+        this.api = new AuthServiceApi(ENV.KONG_URL, this.proxyAgent);
     }
     private logContext() {
-        const phone = String(this.acc.phone || "").replace(/\D/g, "");
-        return { row: this.rowNo, accId: this.acc.id, phone };
+        const phone = String(this.acc.phone || "").trim();
+        return { row: this.rowNo, accId: this.acc.id, phone, proxy: this.acc.proxy || "direct" };
     }
 
-    async run(): Promise<UserWorkerResult> {
-        const phone = String(this.acc.phone || "").replace(/\D/g, "");
+    async run(): Promise<UserServiceResult> {
+        const phone = String(this.acc.phone || "").trim();
         const password = String(this.acc.password || "");
 
         // Ensure strictly isolated device identification per user
@@ -52,7 +57,6 @@ export class EricWorker {
         this.logger.debug("ACCOUNT_START", { ...ctx, password: maskPassword(password) });
 
         if (!phone || !password) {
-            await this.repo.markAttempt(this.acc.id, "INVALID", "missing phone/password");
             this.logger.warn("ACCOUNT_INVALID_SKIP", ctx);
             return { success: false, relogin: false, alreadyOk: false, reason: "INVALID_CREDENTIALS" };
         }
@@ -72,13 +76,9 @@ export class EricWorker {
                 );
                 const me = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger);
                 if (me.ok) {
-                    await this.repo.markAttempt(this.acc.id, "OK", "session still valid");
                     this.logger.debug("SESSION_OK_SKIP_LOGIN", { ...ctx, me: me.data });
 
                     const final = getStoredTokens(phone);
-                    if (final) {
-                        await this.repo.updateTokens(this.acc.id, { accessToken: final.accessToken, refreshToken: final.refreshToken });
-                    }
                     return { success: true, relogin: false, alreadyOk: true };
                 }
 
@@ -89,19 +89,15 @@ export class EricWorker {
             const lr = await loginWithOtpFlow(this.api, { phone, password }, headers, this.logger);
 
             if (!lr.ok) {
-                await this.repo.markAttempt(this.acc.id, "FAIL", String(lr.reason ?? "LOGIN_FAIL"));
                 this.logger.debug("LOGIN_FLOW_FAIL", { ...ctx, reason: lr.reason });
                 return { success: false, relogin: false, alreadyOk: false, reason: lr.reason };
             }
             const final = getStoredTokens(phone);
             if (final) {
-                await this.repo.updateTokens(this.acc.id, { accessToken: final.accessToken, refreshToken: final.refreshToken });
                 if (!this.acc.deviceId) {
-                    await this.repo.updateDeviceId(this.acc.id, activeDeviceId);
                     this.acc.deviceId = activeDeviceId; // Sync back to memory 
                 }
             }
-            await this.repo.markAttempt(this.acc.id, "OK", "login ok");
             const me2 = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger);
             if (me2.ok) {
                 this.logger.debug("LOGIN_OK_ME_OK", { ...ctx, me: me2.data });
@@ -118,51 +114,54 @@ export class EricWorker {
             return { success: true, relogin: !!stored, alreadyOk: false };
 
         } catch (err: any) {
-            this.logger.debug("ACCOUNT_PROCESS_ERROR", { ...ctx, err: err?.message ?? String(err) });
+            // LOG CHI TIẾT LỖI TỪ BACKEND REPORT LÊN!
+            const errorDetails = err?.response?.data || err?.message || String(err);
+            this.logger.error("ACCOUNT_PROCESS_ERROR", { ...ctx, err: errorDetails });
             return { success: false, relogin: false, alreadyOk: false, reason: "EXCEPTION" };
         }
     }
 
     private async simulateInitialAppLoad(accessToken: string, ctx: any) {
         this.logger.debug("SIMULATING_APP_LOAD_POST_LOGIN", ctx);
+        const agent = this.proxyAgent;
 
         try {
-            await FeedApiService.getListBackgroundColor(accessToken);
+            await FeedApiService.getListBackgroundColor(accessToken, agent);
             this.logger.info("LOAD_SUCCESS: BackgroundColor", ctx);
         } catch (e: any) { this.logger.error("LOAD_ERROR: BackgroundColor", { ...ctx, error: e.message }); }
 
         try {
-            await FriendApiService.getMyFriends(accessToken);
+            await FriendApiService.getMyFriends(accessToken, agent);
             this.logger.info("LOAD_SUCCESS: MyFriends", ctx);
         } catch (e: any) { this.logger.error("LOAD_ERROR: MyFriends", { ...ctx, error: e.message }); }
 
         try {
-            await UserApiService.getProfileMe(accessToken);
+            await UserApiService.getProfileMe(accessToken, agent);
             this.logger.info("LOAD_SUCCESS: ProfileMe", ctx);
         } catch (e: any) { this.logger.error("LOAD_ERROR: ProfileMe", { ...ctx, error: e.message }); }
 
         try {
-            await MissionApiService.getCurrentUserMissions(accessToken);
+            await MissionApiService.getCurrentUserMissions(accessToken, agent);
             this.logger.info("LOAD_SUCCESS: Missions", ctx);
         } catch (e: any) { this.logger.error("LOAD_ERROR: Missions", { ...ctx, error: e.message }); }
 
         try {
-            await ReactionApiService.listReactions(accessToken);
+            await ReactionApiService.listReactions(accessToken, agent);
             this.logger.info("LOAD_SUCCESS: Reactions", ctx);
         } catch (e: any) { this.logger.error("LOAD_ERROR: Reactions", { ...ctx, error: e.message }); }
 
         try {
-            await NotificationApiService.listNotifications(accessToken);
+            await NotificationApiService.listNotifications(accessToken, agent);
             this.logger.info("LOAD_SUCCESS: Notifications", ctx);
         } catch (e: any) { this.logger.error("LOAD_ERROR: Notifications", { ...ctx, error: e.message }); }
 
         try {
-            await FeedApiService.getFeedHome(accessToken);
+            await FeedApiService.getFeedHome(accessToken, agent);
             this.logger.info("LOAD_SUCCESS: FeedHome", ctx);
         } catch (e: any) { this.logger.error("LOAD_ERROR: FeedHome", { ...ctx, error: e.message }); }
 
         try {
-            await SurfApiService.getSurfHome(accessToken);
+            await SurfApiService.getSurfHome(accessToken, agent);
             this.logger.info("LOAD_SUCCESS: SurfHome", ctx);
         } catch (e: any) { this.logger.error("LOAD_ERROR: SurfHome", { ...ctx, error: e.message }); }
 

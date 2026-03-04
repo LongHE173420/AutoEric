@@ -1,5 +1,3 @@
-import { AuthServiceApi } from "../../api/auth/authApiService";
-import { AccountRepository } from "../../db/auth/AccountRepository";
 import { getDeviceId } from "../../utils/device";
 import { EricWorker } from "./EricWorker";
 import { FriendWorker } from "../friend/FriendWorker";
@@ -18,18 +16,15 @@ export type LoginSummary = {
 type AppLogger = ReturnType<typeof Log.getLogger>;
 
 export class MasterWorker {
-    private readonly repo: AccountRepository;
     private readonly defaultDeviceId: string;
 
     constructor(
-        private readonly api: AuthServiceApi,
         private readonly logger: AppLogger
     ) {
-        this.repo = new AccountRepository();
         this.defaultDeviceId = getDeviceId();
     }
 
-    async run(): Promise<LoginSummary> {
+    async run(accounts: any[]): Promise<LoginSummary> {
         const summary: LoginSummary = {
             success: 0,
             alreadyOk: 0,
@@ -39,7 +34,6 @@ export class MasterWorker {
         };
 
         try {
-            // Start background workers
             this.logger.info("Initializing background workers...");
             const friendWorker = new FriendWorker();
             friendWorker.start();
@@ -53,9 +47,8 @@ export class MasterWorker {
             const surfWorker = new SurfWorker();
             surfWorker.start();
 
-            const accounts = await this.repo.findEnabledAccounts(1000);
             summary.accounts = accounts.length;
-            this.logger.debug("DB_ACCOUNTS_LOADED", { accounts: accounts.length, deviceId: this.defaultDeviceId });
+            this.logger.debug("ACCOUNTS_LOADED", { accounts: accounts.length, deviceId: this.defaultDeviceId });
 
             const BATCH_SIZE = 5;
             for (let i = 0; i < accounts.length; i += BATCH_SIZE) {
@@ -64,8 +57,6 @@ export class MasterWorker {
                     batch.map(async (acc, idx) => {
                         const worker = new EricWorker(
                             acc,
-                            this.api,
-                            this.repo,
                             this.logger,
                             this.defaultDeviceId,
                             i + idx + 1

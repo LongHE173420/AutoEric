@@ -4,7 +4,7 @@ export function buildHeaders(deviceId: string) {
     return {
         "Content-Type": "application/json",
         "X-Device-Id": deviceId,
-        "X-Client-Type": "web",
+        "X-Client-Type": "mobile",
         "Accept-Language": "vi",
         "Idempotency-Key": randomUUID()
     };

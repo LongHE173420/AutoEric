@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { ENV } from "../../config/env";
+import { applySignatureInterceptor } from "../../utils/axiosSignature";
 
 export type ApiRes<T> = {
   isSucceed: boolean;
@@ -25,57 +26,64 @@ export type LoginRes = {
   refreshToken?: string;
   tokens?: Tokens;
 };
-export type VerifyOtpRes = { tokens?: Tokens; accessToken?: string; refreshToken?: string };
-export type RefreshRes = { tokens?: Tokens; accessToken?: string; refreshToken?: string };
+
+export type VerifyOtpRes = {
+  tokens?: Tokens;
+  accessToken?: string;
+  refreshToken?: string;
+};
+
+export type RefreshRes = {
+  tokens?: Tokens;
+  accessToken?: string;
+  refreshToken?: string;
+};
 
 export class AuthServiceApi {
   private http: AxiosInstance;
 
-  constructor(baseURL = ENV.KONG_URL) {
-    this.http = axios.create({
+  constructor(baseURL = ENV.KONG_URL, proxyAgent?: any) {
+    const config: any = {
       baseURL,
       timeout: 20_000,
-      headers: { "Content-Type": "application/json" },
-    });
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-Client-Type": "mobile",
+        "User-Agent": "ERIC/1.0.0 (iOS; 18.2; iPhone 15 Pro Max)",
+        "X-Forwarded-Proto": "https"
+      },
+    };
+
+    if (proxyAgent) {
+      config.httpsAgent = proxyAgent;
+    }
+
+    this.http = axios.create(config);
+
+    applySignatureInterceptor(this.http);
   }
 
   // --- LOGIN ---
   async login(phone: string, password: string, headers: any) {
-    return this.http.post<ApiRes<LoginRes>>("/api/auth/login", { phone, password }, { headers });
+    return this.http.post<ApiRes<LoginRes>>("/api/auth/login", { username: phone, password }, { headers });
   }
 
   async verifyLoginOtp(phone: string, otp: string, headers: any) {
-    return this.http.post<ApiRes<VerifyOtpRes>>("/api/auth/verify-login-otp", { phone, otp }, { headers });
+    return this.http.post<ApiRes<VerifyOtpRes>>("/api/auth/verify-login-otp", { username: phone, otp, channel: "EMAIL" }, { headers });
   }
 
   async resendLoginOtp(phone: string, headers: any) {
-    return this.http.post<ApiRes<any>>("/api/auth/resend-otp-login", { phone }, { headers });
-  }
-
-  // --- REGISTER ---
-  async validateUsername(username: string, headers?: any) {
-    return this.http.post<ApiRes<any>>("/api/auth/validate-username", { username }, { headers });
-  }
-
-  async register(data: any, headers?: any) {
-    return this.http.post<ApiRes<any>>("/api/auth/register", data, { headers });
-  }
-
-  async verifyRegisterOtp(phone: string, otp: string, headers?: any) {
-    return this.http.post<ApiRes<any>>("/api/auth/verify-register-otp", { phone, otp }, { headers });
-  }
-
-  async resendRegisterOtp(phone: string, headers?: any) {
-    return this.http.post<ApiRes<any>>("/api/auth/resend-otp-register", { phone }, { headers });
+    return this.http.post<ApiRes<any>>("/api/auth/resend-otp-login", { username: phone, channel: "EMAIL" }, { headers });
   }
 
   // --- PASSWORD ---
   async forgotPassword(phone: string, headers?: any) {
-    return this.http.post<ApiRes<any>>("/api/password/forgot", { phone }, { headers });
+    return this.http.post<ApiRes<any>>("/api/password/forgot", { username: phone }, { headers });
   }
 
   async verifyForgotOtp(phone: string, otp: string, headers?: any) {
-    return this.http.post<ApiRes<any>>("/api/password/verify-otp", { phone, otp }, { headers });
+    return this.http.post<ApiRes<any>>("/api/password/verify-otp", { username: phone, otp }, { headers });
   }
 
   async resetPassword(data: any, headers?: any) {
@@ -83,7 +91,7 @@ export class AuthServiceApi {
   }
 
   async resendForgotOtp(phone: string, headers?: any) {
-    return this.http.post<ApiRes<any>>("/api/password/resend-otp-forgot", { phone }, { headers });
+    return this.http.post<ApiRes<any>>("/api/password/resend-otp-forgot", { username: phone }, { headers });
   }
 
   async changePassword(accessToken: string, data: any) {
@@ -98,23 +106,45 @@ export class AuthServiceApi {
   }
 
   async logout(accessToken: string, refreshToken: string) {
-    return this.http.post<ApiRes<any>>("/api/auth/logout", { refreshToken }, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    return this.http.post<ApiRes<any>>(
+      "/api/auth/logout",
+      { refreshToken },
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
   }
 
   async saveTrustedDevice(accessToken: string, deviceId: string) {
-    return this.http.post<ApiRes<any>>("/api/trusted-device/save", { deviceId }, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+    return this.http.post<ApiRes<any>>(
+      "/api/trusted-device/save",
+      { deviceId },
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
   }
 
-
   async debugRedisOtp(phone: string, context: string = "LOGIN", headers?: any) {
+    if (ENV.UPSTASH_REDIS_REST_URL && ENV.UPSTASH_REDIS_REST_TOKEN) {
+      const baseUrl = ENV.UPSTASH_REDIS_REST_URL.replace(/\/$/, "");
+      const key = `otp:${context.toLowerCase()}:${phone}`;
+      const redisUrl = `${baseUrl}/get/${key}`;
+
+      const res = await axios.get(redisUrl, {
+        headers: {
+          Authorization: `Bearer ${ENV.UPSTASH_REDIS_REST_TOKEN}`
+        }
+      });
+      if (res.data?.result) {
+        return { data: { data: { otp: res.data.result, timestamp: Date.now() } } } as any;
+      }
+      return { data: { data: null } } as any;
+    }
+
     return this.http.get<ApiRes<any>>(ENV.OTP_DEBUG_PATH_REDIS, {
-      params: { phone, context },
+      params: { username: phone, context },
       headers,
     });
   }
 }
-
