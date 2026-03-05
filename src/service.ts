@@ -3,6 +3,9 @@ import { cleanupOldLogs, getTodayLogPath, Log } from "./com/nasa/utils/log";
 import { AuthServiceApi } from "./com/nasa/api/auth/authApiService";
 import { MasterWorker } from "./com/nasa/service/core/MasterWorker";
 import axios from "axios";
+import { applyStandardInterceptors } from "./com/nasa/utils/axiosSignature";
+
+applyStandardInterceptors(axios, "global-system");
 
 
 let isRunning = false;
@@ -23,7 +26,7 @@ async function runOnce(reason: string) {
       started = true;
       logger.debug("Service_CONFIG", {
         config: {
-          BASE_URL: ENV.KONG_URL,
+          KONG_URL: ENV.KONG_URL,
           INTERVAL_MS: ENV.INTERVAL_MS,
           RUN_ONCE: ENV.RUN_ONCE,
           AUTO_FETCH_OTP: ENV.AUTO_FETCH_OTP,
@@ -51,9 +54,9 @@ async function runOnce(reason: string) {
     const master = new MasterWorker(logger);
     const accountsInfo = [
       {
-        phone: "longh1248@gmail.com", // Keeping the key as 'phone' because the project internally uses it before mapping to username in authApiService
+        phone: "xabay92980@keecs.com", // Keeping the key as 'phone' because the project internally uses it before mapping to username in authApiService
         password: "Admin@123",
-        deviceId: "dev-123456",
+        deviceId: "9A2E7F4B-1C6D-4F92-A5E3-7D4B1C8F6A21",
         proxy: "http://103.84.95.54:7890"  // Hong Kong Elite Proxy (from free-proxy-list)
       }
     ];

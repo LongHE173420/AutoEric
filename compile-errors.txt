@@ -1,0 +1,3 @@
+﻿src/com/nasa/service/auth/LoginFlowService.ts(264,38): error TS2339: Property 'getProfileMe' does not exist on type 'typeof UserApiService'.
+src/com/nasa/service/core/EricWorker.ts(101,116): error TS2554: Expected 3-5 arguments, but got 6.
+src/com/nasa/service/core/EricWorker.ts(124,117): error TS2554: Expected 3-5 arguments, but got 6.

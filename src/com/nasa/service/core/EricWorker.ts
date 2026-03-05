@@ -1,7 +1,6 @@
 import { AuthServiceApi } from "../../api/auth/authApiService";
 import { maskPassword, maskToken, Log } from "../../utils/log";
-import { buildHeaders } from "../../utils/headers";
-import { getStoredTokens, setStoredTokens } from "../../storage/tokenStore";
+import { getStoredTokens, setStoredTokens, clearTokensForUser } from "../../storage/tokenStore";
 import { getMeWithAutoAuth, loginWithOtpFlow } from "../auth/LoginFlowService";
 import { FeedApiService } from "../../api/feed/feedApiService";
 import { FriendApiService } from "../../api/friend/friendApiService";
@@ -10,9 +9,11 @@ import { MissionApiService } from "../../api/missions/missionApiService";
 import { ReactionApiService } from "../../api/reaction/reactionApiService";
 import { NotificationApiService } from "../../api/notification/notificationApiService";
 import { SurfApiService } from "../../api/surf/surfApiService";
+import { CommentApiService } from "../../api/comment/commentApiService";
 import { v4 as uuidv4 } from "uuid";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { ENV } from "../../config/env";
+import { buildHeaders } from "../../utils/headers";
 
 export type UserServiceResult = {
     success: boolean;
@@ -37,12 +38,17 @@ export class EricWorker {
         this.logger = parentLogger;
         if (this.acc.proxy) {
             this.proxyAgent = new HttpsProxyAgent(this.acc.proxy);
+            this.logger.info("WORKER_INITIALIZED_WITH_PROXY", { proxy: this.acc.proxy });
+        } else {
+            this.logger.info("WORKER_INITIALIZED_DIRECT_NO_PROXY", {});
         }
-        this.api = new AuthServiceApi(ENV.KONG_URL, this.proxyAgent);
+        const activeDeviceId = this.acc.deviceId || this.defaultDeviceId;
+        this.api = new AuthServiceApi(activeDeviceId, ENV.KONG_URL, this.proxyAgent);
+
     }
     private logContext() {
         const phone = String(this.acc.phone || "").trim();
-        return { row: this.rowNo, accId: this.acc.id, phone, proxy: this.acc.proxy || "direct" };
+        return { row: this.rowNo, phone };
     }
 
     async run(): Promise<UserServiceResult> {
@@ -54,7 +60,7 @@ export class EricWorker {
 
         const ctx = this.logContext();
 
-        this.logger.debug("ACCOUNT_START", { ...ctx, password: maskPassword(password) });
+        this.logger.info("ACCOUNT_START", { ...ctx, password: maskPassword(password) });
 
         if (!phone || !password) {
             this.logger.warn("ACCOUNT_INVALID_SKIP", ctx);
@@ -67,48 +73,44 @@ export class EricWorker {
             }
             const stored = getStoredTokens(phone);
             if (stored) {
-                this.logger.debug("TOKENS_FOUND",
+                this.logger.info("TOKENS_FOUND",
                     {
                         ...ctx,
                         accessToken: maskToken(stored.accessToken),
                         refreshToken: maskToken(stored.refreshToken),
                     }
                 );
-                const me = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger);
+                const me = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger, this.proxyAgent);
                 if (me.ok) {
-                    this.logger.debug("SESSION_OK_SKIP_LOGIN", { ...ctx, me: me.data });
-
-                    const final = getStoredTokens(phone);
-                    return { success: true, relogin: false, alreadyOk: true };
+                    this.logger.info("SESSION_OK", { ...ctx, me: me.data });
+                } else {
+                    this.logger.info("SESSION_ME_CHECK_FAILED", { ...ctx, reason: me.message });
                 }
-
-                this.logger.debug("SESSION_NOT_OK_WILL_LOGIN", { ...ctx, reason: me.message });
+                // Always call runMissions after successful token validation
+                await this.runMissions(stored.accessToken, activeDeviceId, ctx);
+                return { success: true, relogin: false, alreadyOk: true };
             }
 
             const headers = buildHeaders(activeDeviceId);
             const lr = await loginWithOtpFlow(this.api, { phone, password }, headers, this.logger);
 
             if (!lr.ok) {
-                this.logger.debug("LOGIN_FLOW_FAIL", { ...ctx, reason: lr.reason });
+                this.logger.info("LOGIN_FLOW_FAIL", { ...ctx, reason: lr.reason });
                 return { success: false, relogin: false, alreadyOk: false, reason: lr.reason };
             }
             const final = getStoredTokens(phone);
-            if (final) {
+            if (final?.accessToken) {
                 if (!this.acc.deviceId) {
                     this.acc.deviceId = activeDeviceId; // Sync back to memory 
                 }
-            }
-            const me2 = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger);
-            if (me2.ok) {
-                this.logger.debug("LOGIN_OK_ME_OK", { ...ctx, me: me2.data });
-
-                // Gỉa lập load app sau login giống hệt mobile
-                if (final?.accessToken) {
-                    await this.simulateInitialAppLoad(final.accessToken, ctx);
+                const me2 = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger, this.proxyAgent);
+                if (me2.ok) {
+                    this.logger.info("LOGIN_OK_ME_OK", { ...ctx, me: me2.data });
+                } else {
+                    this.logger.info("LOGIN_OK_ME_SKIP", { ...ctx, reason: me2.message });
                 }
-
-            } else {
-                this.logger.debug("LOGIN_OK_BUT_ME_FAIL", { ...ctx, reason: me2.message });
+                // Always call runMissions after login success
+                await this.runMissions(final.accessToken, activeDeviceId, ctx);
             }
 
             return { success: true, relogin: !!stored, alreadyOk: false };
@@ -121,50 +123,52 @@ export class EricWorker {
         }
     }
 
-    private async simulateInitialAppLoad(accessToken: string, ctx: any) {
-        this.logger.debug("SIMULATING_APP_LOAD_POST_LOGIN", ctx);
+    private async runMissions(accessToken: string, deviceId: string, ctx: any) {
+        this.logger.info("BOT_MISSIONS_START", ctx);
         const agent = this.proxyAgent;
+        const h = buildHeaders(deviceId);
 
+        // 1. Mission: Profile Awareness
+        await this.doMission("ProfileMe", () => UserApiService.getProfileMe(accessToken, h, agent), ctx);
+        await this.doMission("Missions", () => MissionApiService.getCurrentUserMissions(accessToken, h, agent), ctx);
+
+        // 2. Mission: Social Discovery
+        await this.doMission("MyFriends", () => FriendApiService.getMyFriends(accessToken, h, agent), ctx);
+        await this.doMission("Notifications", () => NotificationApiService.listNotifications(accessToken, h, 10, 0, agent), ctx);
+
+        // 3. Mission: Content Consumption & Engagement
+        let feedHome: any = null;
+        await this.doMission("FeedHome", async () => {
+            const res = await FeedApiService.getFeedHome(accessToken, h, 10, 0, agent);
+            feedHome = res.data;
+            return res;
+        }, ctx);
+
+        await this.doMission("SurfHome", () => SurfApiService.getSurfHome(accessToken, h, 10, 0, agent), ctx);
+
+        // 4. Mission: Active Interaction (Dependent)
+        if (feedHome && feedHome.data && Array.isArray(feedHome.data.items) && feedHome.data.items.length > 0) {
+            const firstPost = feedHome.data.items[0];
+            const postId = firstPost.id;
+            this.logger.info("MISSION_ACTION_DEPENDENT_START", { ...ctx, postId });
+
+            await this.doMission("PostReaction", () => ReactionApiService.sendReaction(accessToken, postId, "LIKE", h, agent), ctx);
+            await this.doMission("PostComment", () => CommentApiService.createComment(accessToken, { postId, content: "Nice post! (Bot Auto)" }, h, agent), ctx);
+        }
+
+        // 5. Mission: Activity Generation
+        await this.doMission("BackgroundColor", () => FeedApiService.getListBackgroundColor(accessToken, h, agent), ctx);
+
+        this.logger.info("BOT_MISSIONS_COMPLETE", ctx);
+    }
+
+    private async doMission(name: string, action: () => Promise<any>, ctx: any) {
         try {
-            await FeedApiService.getListBackgroundColor(accessToken, agent);
-            this.logger.info("LOAD_SUCCESS: BackgroundColor", ctx);
-        } catch (e: any) { this.logger.error("LOAD_ERROR: BackgroundColor", { ...ctx, error: e.message }); }
-
-        try {
-            await FriendApiService.getMyFriends(accessToken, agent);
-            this.logger.info("LOAD_SUCCESS: MyFriends", ctx);
-        } catch (e: any) { this.logger.error("LOAD_ERROR: MyFriends", { ...ctx, error: e.message }); }
-
-        try {
-            await UserApiService.getProfileMe(accessToken, agent);
-            this.logger.info("LOAD_SUCCESS: ProfileMe", ctx);
-        } catch (e: any) { this.logger.error("LOAD_ERROR: ProfileMe", { ...ctx, error: e.message }); }
-
-        try {
-            await MissionApiService.getCurrentUserMissions(accessToken, agent);
-            this.logger.info("LOAD_SUCCESS: Missions", ctx);
-        } catch (e: any) { this.logger.error("LOAD_ERROR: Missions", { ...ctx, error: e.message }); }
-
-        try {
-            await ReactionApiService.listReactions(accessToken, agent);
-            this.logger.info("LOAD_SUCCESS: Reactions", ctx);
-        } catch (e: any) { this.logger.error("LOAD_ERROR: Reactions", { ...ctx, error: e.message }); }
-
-        try {
-            await NotificationApiService.listNotifications(accessToken, agent);
-            this.logger.info("LOAD_SUCCESS: Notifications", ctx);
-        } catch (e: any) { this.logger.error("LOAD_ERROR: Notifications", { ...ctx, error: e.message }); }
-
-        try {
-            await FeedApiService.getFeedHome(accessToken, agent);
-            this.logger.info("LOAD_SUCCESS: FeedHome", ctx);
-        } catch (e: any) { this.logger.error("LOAD_ERROR: FeedHome", { ...ctx, error: e.message }); }
-
-        try {
-            await SurfApiService.getSurfHome(accessToken, agent);
-            this.logger.info("LOAD_SUCCESS: SurfHome", ctx);
-        } catch (e: any) { this.logger.error("LOAD_ERROR: SurfHome", { ...ctx, error: e.message }); }
-
-        this.logger.debug("SIMULATING_APP_LOAD_COMPLETE", ctx);
+            await action();
+            this.logger.info(`OK: ${name}`, ctx);
+        } catch (e: any) {
+            const errData = e.response?.data || e.message;
+            this.logger.error(`MISSION_ERROR: ${name}`, { ...ctx, error: errData, status: e.response?.status });
+        }
     }
 }

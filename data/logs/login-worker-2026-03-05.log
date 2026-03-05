@@ -1,0 +1,214 @@
+{"level":30,"time":"08:46:28.556","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"08:46:28.556","logger":"LoginService","proxy":"http://103.84.95.54:7890","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"08:46:28.557","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"08:46:29.487","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"08:46:29.487","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":50,"time":"08:46:29.770","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Client network socket disconnected before secure TLS connection was established","msg":"MISSION_ERROR: ProfileMe"}
+{"level":50,"time":"08:46:30.021","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Client network socket disconnected before secure TLS connection was established","msg":"MISSION_ERROR: Missions"}
+{"level":30,"time":"08:46:30.416","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: MyFriends"}
+{"level":50,"time":"08:46:31.621","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"08:46:31.968","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"08:46:32.274","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"a9d2a24d31ea571a8f84ee13062e891c"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"08:46:32.435","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Client network socket disconnected before secure TLS connection was established","msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"08:46:32.435","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"08:46:32.436","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"08:48:46.019","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"08:48:46.019","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"08:48:46.019","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"08:48:46.769","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"08:48:46.770","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"08:48:46.937","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":50,"time":"08:48:47.083","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Missions"}
+{"level":50,"time":"08:48:47.207","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: MyFriends"}
+{"level":50,"time":"08:48:47.346","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"08:48:47.500","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"08:48:47.620","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"09076019bb213d3e02b3ad0039cfb043"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"08:48:47.737","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"0514da1900e9d5799ea8ff513ce72146"},"status":404,"msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"08:48:47.737","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"08:48:47.737","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"08:49:16.906","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"08:49:16.906","logger":"LoginService","proxy":"http://103.84.95.54:7890","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"08:49:16.908","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"08:49:19.419","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"08:49:19.420","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"08:49:19.774","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":50,"time":"08:49:20.069","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Missions"}
+{"level":50,"time":"08:49:20.379","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: MyFriends"}
+{"level":50,"time":"08:49:20.716","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"08:49:21.080","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"08:49:22.635","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"eb13e264b5d18b24e261e727e208ba34"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"08:49:22.960","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"1127e8067314e13cf81fde1e472fd52d"},"status":404,"msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"08:49:22.960","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"08:49:22.960","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"09:03:56.848","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"09:03:56.848","logger":"LoginService","proxy":"http://103.84.95.54:7890","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"09:03:56.849","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":50,"time":"09:03:57.120","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","err":"read ECONNRESET","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"09:03:57.121","logger":"LoginService","msg":"LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=1"}
+{"level":30,"time":"09:04:12.861","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"09:04:12.861","logger":"LoginService","proxy":"http://103.84.95.54:7890","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"09:04:12.862","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"09:04:13.826","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"09:04:13.827","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"09:04:14.140","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":50,"time":"09:04:14.990","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Missions"}
+{"level":50,"time":"09:04:15.188","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"read ECONNRESET","msg":"MISSION_ERROR: MyFriends"}
+{"level":50,"time":"09:04:15.373","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"read ECONNRESET","msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"09:04:15.583","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"read ECONNRESET","msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"09:04:15.765","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"read ECONNRESET","msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"09:04:16.098","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"5718b02922fef44326ac2b7e1f4bd655"},"status":404,"msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"09:04:16.098","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"09:04:16.098","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"09:05:08.202","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"09:05:08.203","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"09:05:08.203","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"09:05:08.905","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"09:05:08.906","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"09:05:09.064","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":50,"time":"09:05:09.220","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Missions"}
+{"level":50,"time":"09:05:09.357","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: MyFriends"}
+{"level":50,"time":"09:05:09.500","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"09:05:09.628","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"09:05:09.749","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"19ab0c466060c33c8e921c13e918dd7b"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"09:05:09.870","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"b19481547f34ee24b3e9996b920d257d"},"status":404,"msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"09:05:09.870","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"09:05:09.870","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"09:15:33.724","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"09:15:33.725","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"09:15:33.725","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":50,"time":"09:15:34.106","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","err":"Request failed with status code 400","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"09:15:34.107","logger":"LoginService","msg":"LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=1"}
+{"level":30,"time":"09:16:10.148","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"09:16:10.148","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"09:16:10.149","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":50,"time":"09:16:10.492","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","err":"Request failed with status code 400","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"09:16:10.492","logger":"LoginService","msg":"LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=1"}
+{"level":30,"time":"09:17:10.500","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"09:17:10.501","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"09:17:10.501","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":50,"time":"09:17:11.148","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","err":"Request failed with status code 400","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"09:17:11.148","logger":"LoginService","msg":"LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=1"}
+{"level":30,"time":"09:18:10.521","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"09:18:10.521","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"09:18:10.521","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":50,"time":"09:18:10.937","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","err":"Request failed with status code 400","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"09:18:10.937","logger":"LoginService","msg":"LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=1"}
+{"level":30,"time":"09:26:11.974","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"09:26:11.974","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"09:26:11.975","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"09:26:12.729","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"09:26:12.730","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"09:26:12.900","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":50,"time":"09:26:13.050","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Missions"}
+{"level":50,"time":"09:26:13.189","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: MyFriends"}
+{"level":50,"time":"09:26:13.349","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"09:26:13.486","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"09:26:13.610","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"8e6ee86a58202f1852e666057627f76d"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"09:26:13.733","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"64b1ae31053e042f23c71a6decd34e59"},"status":404,"msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"09:26:13.734","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"09:26:13.734","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"09:31:06.439","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"09:31:06.439","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"09:31:06.440","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"09:31:07.176","logger":"LoginService","phone":"xabay92980@keecs.com","error":"Request failed with status code 400","status":400,"data":{"message":"Invalid or missing request headers."},"msg":"GET_ME_ERROR_DETAIL"}
+{"level":30,"time":"09:31:07.176","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","reason":"ME_FAIL","msg":"LOGIN_OK_ME_SKIP"}
+{"level":30,"time":"09:31:07.176","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":50,"time":"09:31:07.302","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"Invalid or missing request headers."},"status":400,"msg":"MISSION_ERROR: ProfileMe"}
+{"level":50,"time":"09:31:07.432","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"Invalid or missing request headers."},"status":400,"msg":"MISSION_ERROR: Missions"}
+{"level":50,"time":"09:31:07.559","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"Invalid or missing request headers."},"status":400,"msg":"MISSION_ERROR: MyFriends"}
+{"level":50,"time":"09:31:07.688","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"Invalid or missing request headers."},"status":400,"msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"09:31:07.815","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"Invalid or missing request headers."},"status":400,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"09:31:07.941","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"9c4eff31b8f427157dee4a437aae1737"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"09:31:08.063","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"316bc46c5d336e256617f364ef144543"},"status":404,"msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"09:31:08.063","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"09:31:08.063","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"09:32:17.683","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"09:32:17.683","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"09:32:17.684","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"09:32:18.412","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"09:32:18.412","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"09:32:18.580","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":50,"time":"09:32:18.726","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Missions"}
+{"level":50,"time":"09:32:18.894","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: MyFriends"}
+{"level":50,"time":"09:32:19.045","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"09:32:19.172","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"09:32:19.290","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"05870c59094ed40dcc78e34199f3dc1d"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"09:32:19.407","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"c7664359c173de59b9f4fe27456e2231"},"status":404,"msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"09:32:19.407","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"09:32:19.407","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"09:40:00.011","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"09:40:00.012","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"09:40:00.013","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"09:40:00.727","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"09:40:00.727","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"09:40:00.893","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":50,"time":"09:40:01.068","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Missions"}
+{"level":50,"time":"09:40:01.196","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: MyFriends"}
+{"level":50,"time":"09:40:01.335","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"09:40:01.471","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"09:40:01.587","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"74d2236f7e59562f9eb9900458bbd72d"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"09:40:01.703","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"fa3fbe7fda10860c037a0f3c4be1b86a"},"status":404,"msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"09:40:01.703","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"09:40:01.703","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"10:06:07.703","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"10:06:07.703","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"10:06:07.704","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"10:06:07.705","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","accessToken":"eyJraWQi...fXCXCw","refreshToken":"eyJraWQi...yGyEwg","msg":"TOKENS_FOUND"}
+{"level":40,"time":"10:06:08.278","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","reason":"REFRESH_FAIL","msg":"SESSION_FAIL"}
+{"level":50,"time":"10:06:08.486","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","err":"Request failed with status code 400","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"10:06:08.486","logger":"LoginService","msg":"LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=1"}
+{"level":30,"time":"10:08:33.286","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"10:08:33.286","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"10:08:33.287","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":50,"time":"10:08:33.840","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","err":"Request failed with status code 400","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"10:08:33.841","logger":"LoginService","msg":"LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=1"}
+{"level":30,"time":"10:11:53.527","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"10:11:53.527","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"10:11:53.528","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":50,"time":"10:11:54.030","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","err":"Request failed with status code 400","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"10:11:54.031","logger":"LoginService","msg":"LOGIN summary: success=0 alreadyOk=0 relogin=0 fail=1"}
+{"level":30,"time":"13:00:52.656","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"13:00:52.656","logger":"LoginService","msg":"WORKER_INITIALIZED_DIRECT_NO_PROXY"}
+{"level":30,"time":"13:00:52.657","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"13:00:53.803","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"13:00:53.803","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"13:00:53.948","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":50,"time":"13:00:54.109","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Missions"}
+{"level":50,"time":"13:00:54.277","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: MyFriends"}
+{"level":50,"time":"13:00:54.405","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"13:00:54.539","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"13:00:54.655","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"896fdc074245c57721b94b774917ef67"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"13:00:54.772","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"6777692f1175db2ab87b052e08c7cf68"},"status":404,"msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"13:00:54.772","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"13:00:54.772","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=0 relogin=0 fail=0"}
+{"level":30,"time":"13:02:56.646","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"13:02:56.646","logger":"LoginService","proxy":"http://103.84.95.54:7890","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"13:02:56.647","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"13:02:56.648","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","accessToken":"eyJraWQi...CsC1vQ","refreshToken":"eyJraWQi...wQiXGw","msg":"TOKENS_FOUND"}
+{"level":30,"time":"13:02:58.038","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"SESSION_OK"}
+{"level":30,"time":"13:02:58.038","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":50,"time":"13:02:58.158","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Client network socket disconnected before secure TLS connection was established","msg":"MISSION_ERROR: ProfileMe"}
+{"level":30,"time":"13:02:58.554","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: Missions"}
+{"level":50,"time":"13:02:59.619","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: MyFriends"}
+{"level":50,"time":"13:02:59.773","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Client network socket disconnected before secure TLS connection was established","msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"13:03:00.088","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"13:03:00.655","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"1536af19df7e82403d522c1380892a78"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"13:03:00.824","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Client network socket disconnected before secure TLS connection was established","msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"13:03:00.825","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"13:03:00.825","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=1 relogin=0 fail=0"}
+{"level":30,"time":"13:14:30.782","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"13:14:30.783","logger":"LoginService","proxy":"http://103.84.95.54:7890","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"13:14:30.783","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"13:14:30.784","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","accessToken":"eyJraWQi...CsC1vQ","refreshToken":"eyJraWQi...wQiXGw","msg":"TOKENS_FOUND"}
+{"level":30,"time":"13:14:31.837","logger":"LoginService","phone":"xabay92980@keecs.com","error":"Client network socket disconnected before secure TLS connection was established","msg":"GET_ME_ERROR_DETAIL"}
+{"level":30,"time":"13:14:31.837","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","reason":"ME_FAIL","msg":"SESSION_ME_CHECK_FAILED"}
+{"level":30,"time":"13:14:31.838","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":50,"time":"13:14:32.849","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Client network socket disconnected before secure TLS connection was established","msg":"MISSION_ERROR: ProfileMe"}
+{"level":50,"time":"13:14:33.822","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Client network socket disconnected before secure TLS connection was established","msg":"MISSION_ERROR: Missions"}
+{"level":30,"time":"13:14:38.206","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: MyFriends"}
+{"level":50,"time":"13:14:38.711","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"13:14:39.378","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 409","status":409,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"13:14:39.647","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Client network socket disconnected before secure TLS connection was established","msg":"MISSION_ERROR: SurfHome"}
+{"level":50,"time":"13:14:41.314","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Client network socket disconnected before secure TLS connection was established","msg":"MISSION_ERROR: BackgroundColor"}
+{"level":30,"time":"13:14:41.314","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"13:14:41.314","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=1 relogin=0 fail=0"}

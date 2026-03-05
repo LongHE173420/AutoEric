@@ -96,10 +96,8 @@ export class Log {
       level: opts?.level ?? (process.env.LOG_LEVEL as LogLevel),
       base: {
         app: opts?.appName,
-        env: opts?.env ?? process.env.NODE_ENV,
-        logId: opts?.logId ?? Date.now(),
       },
-      timestamp: pino.stdTimeFunctions.isoTime,
+      timestamp: () => `,"time":"${new Date().toISOString().split('T')[1].split('Z')[0]}"`,
     };
 
     if (opts?.filePath) {

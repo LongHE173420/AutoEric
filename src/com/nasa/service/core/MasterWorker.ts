@@ -1,9 +1,5 @@
 import { getDeviceId } from "../../utils/device";
 import { EricWorker } from "./EricWorker";
-import { FriendWorker } from "../friend/FriendWorker";
-import { NotificationWorker } from "../notification/NotificationWorker";
-import { FeedWorker } from "../feed/FeedWorker";
-import { SurfWorker } from "../surf/SurfWorker";
 import { Log } from "../../utils/log";
 
 export type LoginSummary = {
@@ -34,18 +30,7 @@ export class MasterWorker {
         };
 
         try {
-            this.logger.info("Initializing background workers...");
-            const friendWorker = new FriendWorker();
-            friendWorker.start();
-
-            const notifWorker = new NotificationWorker();
-            notifWorker.start();
-
-            const feedWorker = new FeedWorker();
-            feedWorker.start();
-
-            const surfWorker = new SurfWorker();
-            surfWorker.start();
+            this.logger.info("Starting login flow for accounts...");
 
             summary.accounts = accounts.length;
             this.logger.debug("ACCOUNTS_LOADED", { accounts: accounts.length, deviceId: this.defaultDeviceId });

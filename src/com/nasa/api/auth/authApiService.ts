@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 import { ENV } from "../../config/env";
-import { applySignatureInterceptor } from "../../utils/axiosSignature";
+import { applyStandardInterceptors } from "../../utils/axiosSignature";
+import { buildHeaders } from "../../utils/headers";
 
 export type ApiRes<T> = {
   isSucceed: boolean;
@@ -42,17 +43,10 @@ export type RefreshRes = {
 export class AuthServiceApi {
   private http: AxiosInstance;
 
-  constructor(baseURL = ENV.KONG_URL, proxyAgent?: any) {
+  constructor(deviceId: string, baseURL = ENV.KONG_URL, proxyAgent?: any) {
     const config: any = {
       baseURL,
       timeout: 20_000,
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-Client-Type": "mobile",
-        "User-Agent": "ERIC/1.0.0 (iOS; 18.2; iPhone 15 Pro Max)",
-        "X-Forwarded-Proto": "https"
-      },
     };
 
     if (proxyAgent) {
@@ -61,7 +55,7 @@ export class AuthServiceApi {
 
     this.http = axios.create(config);
 
-    applySignatureInterceptor(this.http);
+    applyStandardInterceptors(this.http, deviceId);
   }
 
   // --- LOGIN ---
@@ -122,6 +116,31 @@ export class AuthServiceApi {
       {
         headers: { Authorization: `Bearer ${accessToken}` },
       }
+    );
+  }
+
+  // --- MFA ---
+  async setupMfa(accessToken: string) {
+    return this.http.post<ApiRes<any>>(
+      "/api/v1/mfa/setup",
+      {},
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+  }
+
+  async confirmMfa(accessToken: string, otp: string) {
+    return this.http.post<ApiRes<any>>(
+      "/api/v1/mfa/confirm-setup",
+      { otp },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+  }
+
+  async disableMfa(accessToken: string, otp: string) {
+    return this.http.post<ApiRes<any>>(
+      "/api/v1/mfa/disable",
+      { otp },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     );
   }
 

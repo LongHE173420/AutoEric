@@ -250,7 +250,8 @@ export async function getMeWithAutoAuth(
   api: AuthServiceApi,
   phone: string,
   deviceId: string,
-  logger?: AppLogger
+  logger?: AppLogger,
+  agent?: any
 ): Promise<{ ok: boolean; data?: any; message?: string }> {
 
   const stored = getStoredTokens(phone);
@@ -259,9 +260,23 @@ export async function getMeWithAutoAuth(
   if (!valid.ok || !valid.accessToken) return { ok: false, message: valid.reason };
 
   try {
-    const res = await UserApiService.getProfileMe(valid.accessToken);
-    if (res.data?.isSucceed) return { ok: true, data: res.data.data };
-  } catch (e) { }
+    const headers = buildHeaders(deviceId);
+    const res = await UserApiService.getProfileMe(valid.accessToken, headers, agent);
+    const d = res.data;
+    // Support both {isSucceed: true, data: {...}} and direct {id, userName, ...} responses
+    if (d?.isSucceed && d?.data) return { ok: true, data: d.data };
+    if (d?.data?.id || d?.data?.userName) return { ok: true, data: d.data };
+    if (d?.id || d?.userName) return { ok: true, data: d };
+    logger?.info("GET_ME_FAILED_BODY", { phone, message: d?.message, data: d?.data });
+  } catch (e: any) {
+    const errorData = e.response?.data;
+    logger?.info("GET_ME_ERROR_DETAIL", {
+      phone,
+      error: e.message,
+      status: e.response?.status,
+      data: errorData
+    });
+  }
 
   return { ok: false, message: "ME_FAIL" };
 }

@@ -24,9 +24,7 @@ function bool(name: string, def: Bool): Bool {
 
 export const ENV = {
 
-  BASE_URL: str("BASE_URL", "http://localhost:3001"),
   KONG_URL: str("KONG_URL", "http://localhost:8000"),
-  NOTIFICATION_URL: str("NOTIFICATION_URL", "http://localhost:8001"),
 
   INTERVAL_MS: num("INTERVAL_MS", 60_000),
   RUN_ONCE: bool("RUN_ONCE", false),
