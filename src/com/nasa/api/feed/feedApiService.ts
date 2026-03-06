@@ -66,6 +66,13 @@ export class FeedApiService {
         });
     }
 
+    static async getFeedBackgroundColor(accessToken: string, headers = buildHeaders(), agent?: any) {
+        return axios.get(`${ENV.KONG_URL}/api/feed/background-color`, {
+            headers: { ...headers, Authorization: `Bearer ${accessToken}` },
+            httpsAgent: agent
+        });
+    }
+
     static async getListCheckinPosition(accessToken: string, headers = buildHeaders(), agent?: any) {
         return axios.get(`${ENV.KONG_URL}/api/v1/posts/checkin-position`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },

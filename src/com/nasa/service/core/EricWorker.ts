@@ -52,11 +52,8 @@ export class EricWorker {
     }
 
     async run(): Promise<UserServiceResult> {
-        const phone = String(this.acc.phone || "").trim();
-        const password = String(this.acc.password || "");
-
-        // Ensure strictly isolated device identification per user
-        const activeDeviceId = this.acc.deviceId || uuidv4();
+        const phone = String(this.acc.phone || this.acc.username || "").trim();
+        const password = String(this.acc.password || "").trim();
 
         const ctx = this.logContext();
 
@@ -68,10 +65,19 @@ export class EricWorker {
         }
 
         try {
-            if (this.acc.accessToken && this.acc.refreshToken) {
-                setStoredTokens(phone, this.acc.accessToken, this.acc.refreshToken, activeDeviceId);
-            }
             const stored = getStoredTokens(phone);
+
+            // Auto-fallback to previously stored device configuration if not present in payload
+            const activeDeviceId = this.acc.deviceId || stored?.deviceId || uuidv4();
+            const activeUserAgent = this.acc.userAgent || stored?.userAgent;
+
+            // Sync active config backward so downstream API calls match perfectly
+            this.acc.deviceId = activeDeviceId;
+            this.acc.userAgent = activeUserAgent;
+
+            if ((this.acc as any).accessToken && (this.acc as any).refreshToken) {
+                setStoredTokens(phone, (this.acc as any).accessToken, (this.acc as any).refreshToken, activeDeviceId, activeUserAgent);
+            }
             if (stored) {
                 this.logger.info("TOKENS_FOUND",
                     {
@@ -83,15 +89,17 @@ export class EricWorker {
                 const me = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger, this.proxyAgent);
                 if (me.ok) {
                     this.logger.info("SESSION_OK", { ...ctx, me: me.data });
+                    // Only call runMissions if the token is proven to be fully valid and active
+                    await this.runMissions(stored.accessToken, activeDeviceId, ctx);
+                    return { success: true, relogin: false, alreadyOk: true };
                 } else {
                     this.logger.info("SESSION_ME_CHECK_FAILED", { ...ctx, reason: me.message });
+                    clearTokensForUser(phone);
+                    // Do NOT runMissions here. Let it fall through to loginWithOtpFlow below.
                 }
-                // Always call runMissions after successful token validation
-                await this.runMissions(stored.accessToken, activeDeviceId, ctx);
-                return { success: true, relogin: false, alreadyOk: true };
             }
 
-            const headers = buildHeaders(activeDeviceId);
+            const headers = buildHeaders(activeDeviceId, this.acc.userAgent);
             const lr = await loginWithOtpFlow(this.api, { phone, password }, headers, this.logger);
 
             if (!lr.ok) {
@@ -126,7 +134,7 @@ export class EricWorker {
     private async runMissions(accessToken: string, deviceId: string, ctx: any) {
         this.logger.info("BOT_MISSIONS_START", ctx);
         const agent = this.proxyAgent;
-        const h = buildHeaders(deviceId);
+        const h = buildHeaders(deviceId, this.acc.userAgent);
 
         // 1. Mission: Profile Awareness
         await this.doMission("ProfileMe", () => UserApiService.getProfileMe(accessToken, h, agent), ctx);
@@ -157,7 +165,10 @@ export class EricWorker {
         }
 
         // 5. Mission: Activity Generation
-        await this.doMission("BackgroundColor", () => FeedApiService.getListBackgroundColor(accessToken, h, agent), ctx);
+        await this.doMission("BackgroundColor", () => FeedApiService.getFeedBackgroundColor(accessToken, h, agent), ctx);
+
+        // 6. Mission: List Reactions
+        await this.doMission("ReactionList", () => ReactionApiService.listReactions(accessToken, h, 10, 0, agent), ctx);
 
         this.logger.info("BOT_MISSIONS_COMPLETE", ctx);
     }

@@ -8,7 +8,7 @@ import { isAccessExpired, isRefreshExpired } from "../../utils/tokenUtils";
 import { buildHeaders } from "../../utils/headers";
 import { UserApiService } from "../../api/user/userApiService";
 type AppLogger = ReturnType<typeof Log.getLogger>;
-export type Account = { phone: string; password: string };
+export type Account = { phone: string; password: string; deviceId?: string; proxy?: string; userAgent?: string; };
 
 export type LoginFlowResult = {
   ok: boolean;
@@ -155,7 +155,9 @@ export async function loginWithOtpFlow(
   }
   if (loginData?.tokens || (loginData?.accessToken && loginData?.refreshToken)) {
     const tokens = (loginData.tokens || { accessToken: loginData.accessToken, refreshToken: loginData.refreshToken }) as Tokens;
-    setStoredTokens(phone, tokens.accessToken, tokens.refreshToken, headers["x-device-id"]);
+    const sDevice = headers["X-Device-Id"] || headers["x-device-id"];
+    const sUa = headers["User-Agent"] || headers["user-agent"];
+    setStoredTokens(phone, tokens.accessToken, tokens.refreshToken, sDevice, sUa);
     logger?.debug("LOGIN_PASS_SUCCESS", {});
     return { ok: true, tokens };
   }
@@ -188,7 +190,9 @@ export async function loginWithOtpFlow(
         const d = vr.data.data;
         const tokens = (d.tokens || { accessToken: d.accessToken, refreshToken: d.refreshToken }) as Tokens;
         if (tokens?.accessToken) {
-          setStoredTokens(phone, tokens.accessToken, tokens.refreshToken, headers["x-device-id"]);
+          const sDevice = headers["X-Device-Id"] || headers["x-device-id"];
+          const sUa = headers["User-Agent"] || headers["user-agent"];
+          setStoredTokens(phone, tokens.accessToken, tokens.refreshToken, sDevice, sUa);
           logger?.debug("LOGIN_OTP_SUCCESS", {});
           return { ok: true, tokens, usedOtp: otp };
         }
@@ -212,7 +216,7 @@ export async function ensureValidAccessToken(
   api: AuthServiceApi,
   phone: string,
   deviceId: string,
-  currentTokens: Tokens | null,
+  currentTokens: ReturnType<typeof getStoredTokens>,
   logger?: AppLogger
 ): Promise<{ ok: boolean; accessToken?: string; refreshed?: boolean; reason?: string }> {
 
@@ -231,12 +235,12 @@ export async function ensureValidAccessToken(
 
   try {
     logger?.debug("REFRESHING", { phone });
-    const res = await api.refreshToken(refreshToken, buildHeaders(deviceId));
+    const res = await api.refreshToken(refreshToken, buildHeaders(deviceId, currentTokens.userAgent));
     const d = res.data?.data;
     const newTokens = (d?.tokens || (d?.accessToken ? { accessToken: d.accessToken, refreshToken: d.refreshToken } : null)) as Tokens;
 
     if (newTokens) {
-      setStoredTokens(phone, newTokens.accessToken, newTokens.refreshToken, deviceId);
+      setStoredTokens(phone, newTokens.accessToken, newTokens.refreshToken, deviceId, currentTokens.userAgent);
       logger?.info("REFRESH_SUCCESS", {});
       return { ok: true, accessToken: newTokens.accessToken, refreshed: true };
     }

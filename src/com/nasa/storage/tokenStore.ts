@@ -6,6 +6,7 @@ export type StoredTokens = {
     refreshToken: string;
     savedAt: number;
     deviceId: string;
+    userAgent?: string;
 };
 
 function aKey(p: string) { return `access:${p.toLowerCase()}`; }
@@ -23,14 +24,15 @@ export function getStoredTokens(phone: string): StoredTokens | null {
         refreshToken: refresh,
         savedAt: Number(meta.savedAt || 0) || 0,
         deviceId: String(meta.deviceId || ""),
+        userAgent: meta.userAgent ? String(meta.userAgent) : undefined,
     };
 }
 
-export function setStoredTokens(phone: string, accessToken: string, refreshToken: string, deviceId: string) {
+export function setStoredTokens(phone: string, accessToken: string, refreshToken: string, deviceId: string, userAgent?: string) {
     const p = phone.toLowerCase();
     SecureStore.setItem(aKey(p), accessToken);
     AsyncStore.setItem(rKey(p), refreshToken);
-    AsyncStore.setItem(mKey(p), { savedAt: Date.now(), deviceId });
+    AsyncStore.setItem(mKey(p), { savedAt: Date.now(), deviceId, userAgent });
 }
 
 export function clearTokensForUser(phone: string) {

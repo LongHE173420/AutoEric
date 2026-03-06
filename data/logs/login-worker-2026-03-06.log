@@ -1,0 +1,28 @@
+{"level":30,"time":"07:58:23.186","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"07:58:23.187","logger":"LoginService","proxy":"http://121.126.185.63:25152","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"07:58:23.187","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"07:58:23.189","logger":"LoginService","proxy":"http://125.128.12.14:3128","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"07:58:23.189","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"07:58:29.386","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","me":{"id":8646911284551533000,"firstName":"Hoang","lastName":"To","userName":"hoangto.1772770640568936351","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"yivamag857@him6.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"07:58:29.386","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"07:58:30.832","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: ProfileMe"}
+{"level":30,"time":"07:58:33.281","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"07:58:33.281","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"07:58:35.409","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":30,"time":"07:58:39.530","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: Missions"}
+{"level":30,"time":"07:58:46.946","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: MyFriends"}
+{"level":30,"time":"07:58:53.000","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: Notifications"}
+{"level":30,"time":"07:59:04.148","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: Missions"}
+{"level":50,"time":"07:59:05.048","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"Request failed with status code 403","status":403,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"07:59:07.553","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"no Route matched with those values","request_id":"43f31574d8028e66fdfe362b32b2043a"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":30,"time":"07:59:15.647","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: BackgroundColor"}
+{"level":30,"time":"07:59:17.360","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ReactionList"}
+{"level":30,"time":"07:59:17.360","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":50,"time":"08:00:06.060","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","error":"Request failed with status code 400","status":400,"msg":"MISSION_ERROR: MyFriends"}
+{"level":30,"time":"08:00:10.021","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: Notifications"}
+{"level":50,"time":"08:00:18.716","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","error":"Request failed with status code 403","status":403,"msg":"MISSION_ERROR: FeedHome"}
+{"level":50,"time":"08:00:21.310","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","error":{"message":"no Route matched with those values","request_id":"ae684d2fac209b25a72a6d2e524d8b60"},"status":404,"msg":"MISSION_ERROR: SurfHome"}
+{"level":30,"time":"08:00:24.559","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: BackgroundColor"}
+{"level":30,"time":"08:00:28.652","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: ReactionList"}
+{"level":30,"time":"08:00:28.652","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"08:00:28.652","logger":"LoginService","msg":"LOGIN summary: success=2 alreadyOk=0 relogin=0 fail=0"}

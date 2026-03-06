@@ -54,10 +54,17 @@ async function runOnce(reason: string) {
     const master = new MasterWorker(logger);
     const accountsInfo = [
       {
-        phone: "xabay92980@keecs.com", // Keeping the key as 'phone' because the project internally uses it before mapping to username in authApiService
+        phone: "xabay92980@keecs.com",
         password: "Admin@123",
         deviceId: "9A2E7F4B-1C6D-4F92-A5E3-7D4B1C8F6A21",
-        proxy: "http://103.84.95.54:7890"  // Hong Kong Elite Proxy (from free-proxy-list)
+        proxy: "http://121.126.185.63:25152"
+      },
+      {
+        phone: "yivamag857@him6.com",
+        password: "Admin@123",
+        deviceId: "3F7B1C2D-9A4E-4D18-8C6A-12F9B0D3E5A7",
+        userAgent: "ERIC/1.0.0 (iOS; 18.6.2; iPhone 16 Plus)",
+        proxy: "http://125.128.12.14:3128"
       }
     ];
     const summary = await master.run(accountsInfo);
