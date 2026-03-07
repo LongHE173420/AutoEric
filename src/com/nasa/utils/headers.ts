@@ -7,7 +7,7 @@ export function buildHeaders(deviceId?: string, userAgent?: string) {
         "X-Client-Type": "mobile",
         "X-Device-Id": deviceId,
         "X-Forwarded-Proto": "https",
-        "User-Agent": userAgent || "ERIC/1.2.0 (Android; 13; Oppo Find X6)",
+        "User-Agent": userAgent,
         "Accept-Language": "vi"
     };
 }

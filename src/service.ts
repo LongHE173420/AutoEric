@@ -1,12 +1,12 @@
 import { ENV } from "./com/nasa/config/env";
 import { cleanupOldLogs, getTodayLogPath, Log } from "./com/nasa/utils/log";
-import { AuthServiceApi } from "./com/nasa/api/auth/authApiService";
 import { MasterWorker } from "./com/nasa/service/core/MasterWorker";
 import axios from "axios";
 import { applyStandardInterceptors } from "./com/nasa/utils/axiosSignature";
+import { ProxyManager } from "./com/nasa/service/core/ProxyManager";
+import { getAccountsFromDb } from "./com/nasa/data/mysqlStore";
 
 applyStandardInterceptors(axios, "global-system");
-
 
 let isRunning = false;
 let started = false;
@@ -47,26 +47,26 @@ async function runOnce(reason: string) {
       });
     }
 
-
-
     logger.debug("JOB_START", { reason });
 
     const master = new MasterWorker(logger);
-    const accountsInfo = [
-      {
-        phone: "xabay92980@keecs.com",
-        password: "Admin@123",
-        deviceId: "9A2E7F4B-1C6D-4F92-A5E3-7D4B1C8F6A21",
-        proxy: "http://121.126.185.63:25152"
-      },
-      {
-        phone: "yivamag857@him6.com",
-        password: "Admin@123",
-        deviceId: "3F7B1C2D-9A4E-4D18-8C6A-12F9B0D3E5A7",
-        userAgent: "ERIC/1.0.0 (iOS; 18.6.2; iPhone 16 Plus)",
-        proxy: "http://125.128.12.14:3128"
-      }
-    ];
+    const proxyManager = new ProxyManager();
+
+    const dbAccounts = await getAccountsFromDb();
+    const accountsInfo = [];
+    for (const acc of dbAccounts) {
+      accountsInfo.push({
+        phone: acc.phone,
+        password: acc.password,
+        deviceId: acc.deviceId,
+        userAgent: acc.userAgent,
+        accessToken: acc.accessToken,
+        refreshToken: acc.refreshToken,
+        proxy: await proxyManager.getWorkingProxy() || undefined
+      });
+    }
+
+    logger.debug(`Loaded ${accountsInfo.length} accounts from database.`);
     const summary = await master.run(accountsInfo);
 
     logger.debug("JOB_DONE", { summary });

@@ -88,10 +88,9 @@ export class FeedApiService {
         });
     }
 
-    static async getFeedHome(accessToken: string, headers = buildHeaders(), limit = 10, offset = 0, agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/feed/home`, {
+    static async getFeedHome(accessToken: string, headers = buildHeaders(), postId = "", createdAt = Date.now(), limit = 10, agent?: any) {
+        return axios.post(`${ENV.KONG_URL}/api/feed/home`, { postId, createdAt, limit }, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            params: { limit, offset },
             httpsAgent: agent
         });
     }

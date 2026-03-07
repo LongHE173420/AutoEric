@@ -10,10 +10,9 @@ export class SurfApiService {
         });
     }
 
-    static async getSurfHome(accessToken: string, headers = buildHeaders(), limit = 10, offset = 0, agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/surf/home`, {
+    static async getSurfHome(accessToken: string, headers = buildHeaders(), surfId = "", createdAt = Math.floor(Date.now() / 1000), limit = 4, agent?: any) {
+        return axios.post(`${ENV.KONG_URL}/api/surf/home`, { surfId, createdAt, limit }, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            params: { limit, offset },
             httpsAgent: agent
         });
     }

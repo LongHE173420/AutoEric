@@ -58,7 +58,12 @@ export const ENV = {
   LOG_RETENTION_DAYS: num("LOG_RETENTION_DAYS", 7),
 
   LOG_OTP_PLAINTEXT: bool("LOG_OTP_PLAINTEXT", false),
-  LOG_PASSWORD_PLAINTEXT: bool("LOG_PASSWORD_PLAINTEXT", false)
+  LOG_PASSWORD_PLAINTEXT: bool("LOG_PASSWORD_PLAINTEXT", false),
+
+  DB_HOST: str("DB_HOST", "127.0.0.1"),
+  DB_USER: str("DB_USER", "root"),
+  DB_PASS: str("DB_PASS", "Long2002@"),
+  DB_NAME: str("DB_NAME", "auth_service")
 };
 
 export type Env = typeof ENV;

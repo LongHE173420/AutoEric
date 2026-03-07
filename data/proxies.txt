@@ -1,0 +1,101 @@
+IP Address	Port	Code	Country	Anonymity	Google	Https	Last Checked
+85.9.195.140	1080	FI	Finland	elite proxy	no	yes	8 secs ago
+103.84.95.54	7890	HK	Hong Kong	elite proxy	no	yes	22 secs ago
+121.126.185.63	25152	KR	South Korea	elite proxy	no	yes	22 secs ago
+138.124.53.25	7443	DE	Germany	elite proxy	no	yes	22 secs ago
+188.132.141.249	443	TR	Turkey	elite proxy	no	yes	22 secs ago
+8.217.129.162	1080	HK	Hong Kong	elite proxy	yes	yes	22 secs ago
+179.96.28.58	80	BR	Brazil	elite proxy	no	yes	22 secs ago
+194.213.18.200	443	US	United States	anonymous	yes	yes	22 secs ago
+67.169.98.211	443	US	United States	anonymous	yes	yes	22 secs ago
+147.75.34.105	443	NL	Netherlands	elite proxy	no	yes	11 mins ago
+61.72.110.54	3128	KR	South Korea	elite proxy	no	yes	11 mins ago
+94.159.112.138	3128	FI	Finland	elite proxy	no	yes	11 mins ago
+8.212.177.126	8080	PH	Philippines	anonymous	no	yes	11 mins ago
+14.56.107.244	3128	KR	South Korea	elite proxy	no	yes	11 mins ago
+165.227.5.10	8888	US	United States	anonymous	no	yes	20 mins ago
+163.5.128.114	14270	US	United States	elite proxy	no	yes	20 mins ago
+64.181.240.152	3128	US	United States	elite proxy	yes	yes	20 mins ago
+45.81.129.252	8888	US	United States	anonymous		yes	20 mins ago
+222.184.48.242	22222	CN	China	anonymous		yes	20 mins ago
+46.249.103.192	443	SE	Sweden	elite proxy	no	yes	20 mins ago
+13.208.245.221	9080	JP	Japan	elite proxy	no	yes	20 mins ago
+200.174.198.32	8888	BR	Brazil	anonymous	no	yes	30 mins ago
+61.72.221.94	3128	KR	South Korea	elite proxy	no	yes	30 mins ago
+61.72.221.234	3128	KR	South Korea	elite proxy	no	yes	30 mins ago
+202.155.12.161	443	JP	Japan	anonymous	yes	yes	30 mins ago
+103.113.70.189	1081	MD	Moldova, Republic of	elite proxy	no	yes	30 mins ago
+125.128.12.144	3128	KR	South Korea	elite proxy	no	yes	40 mins ago
+14.56.177.44	3128	KR	South Korea	elite proxy	no	yes	40 mins ago
+20.210.39.153	8561	JP	Japan	anonymous	yes	yes	50 mins ago
+1.225.116.115	1080	KR	South Korea	elite proxy	no	yes	1 hour 1 min ago
+35.180.127.14	1001	FR	France	elite proxy	no	yes	1 hour 10 mins ago
+205.209.118.30	3138	US	United States	anonymous	yes	yes	1 hour 12 mins ago
+217.76.245.80	999	DO	Dominican Republic	anonymous	yes	yes	1 hour 17 mins ago
+8.209.255.13	3128	JP	Japan	anonymous	no	yes	1 hour 18 mins ago
+8.213.151.128	3128	KR	South Korea	anonymous	no	yes	1 hour 18 mins ago
+47.91.65.23	3128	DE	Germany	anonymous	no	yes	1 hour 18 mins ago
+83.219.250.8	62920	SE	Sweden	anonymous		yes	1 hour 31 mins ago
+65.108.159.129	8081	FI	Finland	elite proxy	no	yes	1 hour 31 mins ago
+107.173.111.110	7890	US	United States	elite proxy	no	yes	1 hour 40 mins ago
+203.175.127.240	8080	ID	Indonesia	anonymous	no	yes	1 hour 42 mins ago
+103.100.159.145	80	JP	Japan	elite proxy	no	yes	2 hours 20 mins ago
+185.118.51.133	3128	AZ	Azerbaijan	anonymous		yes	2 hours 31 mins ago
+163.5.128.131	14270	US	United States	elite proxy	no	yes	2 hours 31 mins ago
+220.128.223.136	8083	TW	Taiwan	anonymous	no	yes	2 hours 40 mins ago
+190.153.237.6	37453	CL	Chile	elite proxy	no	yes	2 hours 50 mins ago
+89.185.85.138	1080	DE	Germany	elite proxy	no	yes	3 hours 10 mins ago
+47.89.184.18	3128	US	United States	anonymous	no	yes	3 hours 16 mins ago
+211.171.114.154	3128	KR	South Korea	anonymous	yes	yes	3 hours 40 mins ago
+188.191.147.116	8082	IL	Israel	anonymous	no	yes	3 hours 41 mins ago
+103.3.58.162	8080	ID	Indonesia	elite proxy		yes	3 hours 50 mins ago
+62.113.119.14	8080	RU	Russian Federation	elite proxy	no	yes	3 hours 51 mins ago
+122.185.198.242	7999	IN	India	anonymous		yes	4 hours ago
+103.102.12.129	1452	ID	Indonesia	elite proxy	no	yes	4 hours 40 mins ago
+103.165.231.43	8080	ID	Indonesia	anonymous	no	yes	5 hours 11 mins ago
+47.91.104.88	3128	AE	United Arab Emirates	anonymous	no	yes	5 hours 15 mins ago
+47.243.92.199	3128	HK	Hong Kong	anonymous	no	yes	5 hours 15 mins ago
+91.107.148.58	53967	DE	Germany	elite proxy	no	yes	6 hours ago
+104.128.228.69	8118	US	United States	anonymous	no	yes	6 hours 21 mins ago
+128.140.113.110	8081	DE	Germany	elite proxy	no	yes	7 hours ago
+91.233.223.147	3128	RU	Russian Federation	anonymous	yes	yes	7 hours 12 mins ago
+1.231.81.166	3128	KR	South Korea	anonymous	no	yes	7 hours 13 mins ago
+152.42.195.165	8888	SG	Singapore	anonymous	no	yes	7 hours 13 mins ago
+103.104.99.89	80	ID	Indonesia	anonymous	no	yes	7 hours 13 mins ago
+207.254.71.62	8088	IE	Ireland	anonymous	no	yes	8 hours ago
+121.230.9.64	1080	CN	China	anonymous		yes	9 hours ago
+23.94.182.50	12345	US	United States	elite proxy	no	yes	9 hours ago
+186.116.148.52	8080	CO	Colombia	anonymous	yes	yes	9 hours 11 mins ago
+154.37.208.132	30000	US	United States	elite proxy	yes	yes	10 hours 21 mins ago
+101.47.73.135	3128	HK	Hong Kong	anonymous	no	yes	11 hours 9 mins ago
+154.31.114.40	10001	JP	Japan	elite proxy	yes	yes	11 hours 10 mins ago
+120.26.147.60	7890	CN	China	anonymous		yes	11 hours 40 mins ago
+95.85.252.153	21064	DE	Germany	elite proxy	yes	yes	11 hours 51 mins ago
+45.132.255.53	1080	VG	Virgin Islands, British	elite proxy	no	yes	12 hours 20 mins ago
+47.77.193.180	1080	US	United States	elite proxy	no	yes	12 hours 41 mins ago
+47.238.203.170	50000	HK	Hong Kong	elite proxy	no	yes	13 hours 40 mins ago
+103.143.81.46	3128	HK	Hong Kong	anonymous	no	yes	14 hours 21 mins ago
+222.184.48.236	22222	CN	China	anonymous	no	yes	16 hours 41 mins ago
+37.187.92.9	1029	FR	France	anonymous	no	yes	16 hours 51 mins ago
+95.31.11.204	2080	RU	Russian Federation	elite proxy	no	yes	17 hours ago
+103.165.128.171	8080	ID	Indonesia	anonymous		yes	18 hours 51 mins ago
+185.136.185.120	8080	RU	Russian Federation	anonymous		yes	18 hours 51 mins ago
+66.231.77.68	999	EC	Ecuador	anonymous		yes	18 hours 51 mins ago
+176.117.106.126	8080	TR	Turkey	anonymous		yes	18 hours 51 mins ago
+116.80.82.220	3172	JP	Japan	anonymous		yes	18 hours 51 mins ago
+45.236.112.9	60399	BR	Brazil	anonymous		yes	18 hours 51 mins ago
+186.148.160.13	999	CO	Colombia	anonymous		yes	18 hours 51 mins ago
+37.187.109.70	10111	FR	France	anonymous		yes	18 hours 51 mins ago
+15.204.151.141	3128	US	United States	anonymous		yes	18 hours 51 mins ago
+212.108.115.39	8080	TR	Turkey	anonymous		yes	18 hours 51 mins ago
+132.145.148.124	3128	US	United States	anonymous		yes	18 hours 51 mins ago
+5.102.109.41	999	MX	Mexico	anonymous		yes	18 hours 51 mins ago
+103.81.64.89	8080	ID	Indonesia	anonymous		yes	18 hours 51 mins ago
+45.249.77.145	83	IN	India	anonymous		yes	18 hours 51 mins ago
+103.172.71.107	1111	ID	Indonesia	anonymous		yes	18 hours 51 mins ago
+202.137.8.150	8080	ID	Indonesia	anonymous		yes	18 hours 51 mins ago
+103.210.22.17	3128	SG	Singapore	anonymous		yes	18 hours 51 mins ago
+103.242.105.65	7200	ID	Indonesia	anonymous		yes	18 hours 51 mins ago
+185.241.5.57	3128	IL	Israel	anonymous		yes	18 hours 51 mins ago
+45.136.198.40	3128	BG	Bulgaria	anonymous		yes	18 hours 51 mins ago
+181.78.195.137	999	EC	Ecuador	anonymous		yes	18 hours 51 mins ago

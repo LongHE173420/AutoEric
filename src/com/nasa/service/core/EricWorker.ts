@@ -2,6 +2,7 @@ import { AuthServiceApi } from "../../api/auth/authApiService";
 import { maskPassword, maskToken, Log } from "../../utils/log";
 import { getStoredTokens, setStoredTokens, clearTokensForUser } from "../../storage/tokenStore";
 import { getMeWithAutoAuth, loginWithOtpFlow } from "../auth/LoginFlowService";
+import { saveTokensToDb } from "../../data/mysqlStore";
 import { FeedApiService } from "../../api/feed/feedApiService";
 import { FriendApiService } from "../../api/friend/friendApiService";
 import { UserApiService } from "../../api/user/userApiService";
@@ -107,7 +108,10 @@ export class EricWorker {
                 return { success: false, relogin: false, alreadyOk: false, reason: lr.reason };
             }
             const final = getStoredTokens(phone);
-            if (final?.accessToken) {
+            if (final?.accessToken && final?.refreshToken) {
+                if (final.accessToken !== this.acc.accessToken || final.refreshToken !== this.acc.refreshToken) {
+                    await saveTokensToDb(phone, final.accessToken, final.refreshToken).catch(e => this.logger.error("DB_SAVE_TOKEN_FAIL", { err: String(e) }));
+                }
                 if (!this.acc.deviceId) {
                     this.acc.deviceId = activeDeviceId; // Sync back to memory 
                 }
@@ -147,12 +151,13 @@ export class EricWorker {
         // 3. Mission: Content Consumption & Engagement
         let feedHome: any = null;
         await this.doMission("FeedHome", async () => {
-            const res = await FeedApiService.getFeedHome(accessToken, h, 10, 0, agent);
+            const res = await FeedApiService.getFeedHome(accessToken, h, "", Date.now(), 10, agent);
             feedHome = res.data;
             return res;
         }, ctx);
 
-        await this.doMission("SurfHome", () => SurfApiService.getSurfHome(accessToken, h, 10, 0, agent), ctx);
+        await this.doMission("SurfHome", () => SurfApiService.getSurfHome(accessToken, h, "", Math.floor(Date.now() / 1000), 4, agent), ctx);
+
 
         // 4. Mission: Active Interaction (Dependent)
         if (feedHome && feedHome.data && Array.isArray(feedHome.data.items) && feedHome.data.items.length > 0) {
