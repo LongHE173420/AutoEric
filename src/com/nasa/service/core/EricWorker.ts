@@ -3,6 +3,7 @@ import { maskPassword, maskToken, Log } from "../../utils/log";
 import { getStoredTokens, setStoredTokens, clearTokensForUser } from "../../storage/tokenStore";
 import { getMeWithAutoAuth, loginWithOtpFlow } from "../auth/LoginFlowService";
 import { saveTokensToDb } from "../../data/mysqlStore";
+import { ProxyManager } from "./ProxyManager";
 import { FeedApiService } from "../../api/feed/feedApiService";
 import { FriendApiService } from "../../api/friend/friendApiService";
 import { UserApiService } from "../../api/user/userApiService";
@@ -15,6 +16,8 @@ import { v4 as uuidv4 } from "uuid";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { ENV } from "../../config/env";
 import { buildHeaders } from "../../utils/headers";
+import { getRandomComment, getRandomStatus, getRandomReaction } from "../../utils/botContent";
+import { isNetworkError } from "../../utils/errorUtils";
 
 export type UserServiceResult = {
     success: boolean;
@@ -34,7 +37,8 @@ export class EricWorker {
         private readonly acc: any,
         parentLogger: AppLogger,
         private readonly defaultDeviceId: string,
-        private readonly rowNo: number
+        private readonly rowNo: number,
+        private readonly proxyManager?: ProxyManager
     ) {
         this.logger = parentLogger;
         if (this.acc.proxy) {
@@ -68,11 +72,8 @@ export class EricWorker {
         try {
             const stored = getStoredTokens(phone);
 
-            // Auto-fallback to previously stored device configuration if not present in payload
             const activeDeviceId = this.acc.deviceId || stored?.deviceId || uuidv4();
             const activeUserAgent = this.acc.userAgent || stored?.userAgent;
-
-            // Sync active config backward so downstream API calls match perfectly
             this.acc.deviceId = activeDeviceId;
             this.acc.userAgent = activeUserAgent;
 
@@ -90,13 +91,17 @@ export class EricWorker {
                 const me = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger, this.proxyAgent);
                 if (me.ok) {
                     this.logger.info("SESSION_OK", { ...ctx, me: me.data });
-                    // Only call runMissions if the token is proven to be fully valid and active
-                    await this.runMissions(stored.accessToken, activeDeviceId, ctx);
+                    const freshStored = getStoredTokens(phone);
+                    const tokenToUse = freshStored?.accessToken || stored.accessToken;
+                    try { await this.runMissions(tokenToUse, activeDeviceId, ctx); }
+                    catch (mErr: any) {
+                        this.logger.error("MISSIONS_ABORTED", { ...ctx, err: mErr?.message });
+                        throw mErr;
+                    }
                     return { success: true, relogin: false, alreadyOk: true };
                 } else {
                     this.logger.info("SESSION_ME_CHECK_FAILED", { ...ctx, reason: me.message });
                     clearTokensForUser(phone);
-                    // Do NOT runMissions here. Let it fall through to loginWithOtpFlow below.
                 }
             }
 
@@ -113,7 +118,7 @@ export class EricWorker {
                     await saveTokensToDb(phone, final.accessToken, final.refreshToken).catch(e => this.logger.error("DB_SAVE_TOKEN_FAIL", { err: String(e) }));
                 }
                 if (!this.acc.deviceId) {
-                    this.acc.deviceId = activeDeviceId; // Sync back to memory 
+                    this.acc.deviceId = activeDeviceId;
                 }
                 const me2 = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger, this.proxyAgent);
                 if (me2.ok) {
@@ -121,61 +126,197 @@ export class EricWorker {
                 } else {
                     this.logger.info("LOGIN_OK_ME_SKIP", { ...ctx, reason: me2.message });
                 }
-                // Always call runMissions after login success
-                await this.runMissions(final.accessToken, activeDeviceId, ctx);
+                try { await this.runMissions(final.accessToken, activeDeviceId, ctx); }
+                catch (mErr: any) {
+                    this.logger.error("MISSIONS_ABORTED", { ...ctx, err: mErr?.message });
+                    throw mErr;
+                }
             }
 
             return { success: true, relogin: !!stored, alreadyOk: false };
 
         } catch (err: any) {
-            // LOG CHI TIẾT LỖI TỪ BACKEND REPORT LÊN!
             const errorDetails = err?.response?.data || err?.message || String(err);
             this.logger.error("ACCOUNT_PROCESS_ERROR", { ...ctx, err: errorDetails });
-            return { success: false, relogin: false, alreadyOk: false, reason: "EXCEPTION" };
+            throw err;
+        }
+    }
+    private async runMissions(accessToken: string, deviceId: string, ctx: any) {
+        try {
+            this.logger.info("BOT_MISSIONS_START", ctx);
+            const h = buildHeaders(deviceId, this.acc.userAgent);
+
+            await this.handleProfileAndSocial(accessToken, h, ctx);
+            await this.handleFeedAndInteract(accessToken, h, ctx);
+            await this.handleAutoCreatePost(accessToken, h, ctx);
+            await this.handleActivityGeneration(accessToken, h, ctx);
+            await this.handleFriendManagement(accessToken, h, ctx);
+
+            this.logger.info("BOT_MISSIONS_COMPLETE", ctx);
+        } catch (e: any) {
+            this.logger.error("MISSIONS_SYSTEM_ERROR", { ...ctx, err: e?.message || String(e) });
+            throw e;
         }
     }
 
-    private async runMissions(accessToken: string, deviceId: string, ctx: any) {
-        this.logger.info("BOT_MISSIONS_START", ctx);
-        const agent = this.proxyAgent;
-        const h = buildHeaders(deviceId, this.acc.userAgent);
-
-        // 1. Mission: Profile Awareness
-        await this.doMission("ProfileMe", () => UserApiService.getProfileMe(accessToken, h, agent), ctx);
-        await this.doMission("Missions", () => MissionApiService.getCurrentUserMissions(accessToken, h, agent), ctx);
-
-        // 2. Mission: Social Discovery
-        await this.doMission("MyFriends", () => FriendApiService.getMyFriends(accessToken, h, agent), ctx);
-        await this.doMission("Notifications", () => NotificationApiService.listNotifications(accessToken, h, 10, 0, agent), ctx);
-
-        // 3. Mission: Content Consumption & Engagement
-        let feedHome: any = null;
-        await this.doMission("FeedHome", async () => {
-            const res = await FeedApiService.getFeedHome(accessToken, h, "", Date.now(), 10, agent);
-            feedHome = res.data;
-            return res;
-        }, ctx);
-
-        await this.doMission("SurfHome", () => SurfApiService.getSurfHome(accessToken, h, "", Math.floor(Date.now() / 1000), 4, agent), ctx);
-
-
-        // 4. Mission: Active Interaction (Dependent)
-        if (feedHome && feedHome.data && Array.isArray(feedHome.data.items) && feedHome.data.items.length > 0) {
-            const firstPost = feedHome.data.items[0];
-            const postId = firstPost.id;
-            this.logger.info("MISSION_ACTION_DEPENDENT_START", { ...ctx, postId });
-
-            await this.doMission("PostReaction", () => ReactionApiService.sendReaction(accessToken, postId, "LIKE", h, agent), ctx);
-            await this.doMission("PostComment", () => CommentApiService.createComment(accessToken, { postId, content: "Nice post! (Bot Auto)" }, h, agent), ctx);
+    private async handleProfileAndSocial(accessToken: string, h: any, ctx: any) {
+        try {
+            await this.doMission("ProfileMe", () => UserApiService.getProfileMe(accessToken, h, this.proxyAgent), ctx);
+            await this.doMission("Missions", () => MissionApiService.getCurrentUserMissions(accessToken, h, this.proxyAgent), ctx);
+            await this.doMission("MyFriends", () => FriendApiService.getMyFriends(accessToken, h, this.proxyAgent), ctx);
+            await this.doMission("Notifications", () => NotificationApiService.listNotifications(accessToken, h, 10, 0, this.proxyAgent), ctx);
+        } catch (e: any) {
+            throw e;
         }
+    }
 
-        // 5. Mission: Activity Generation
-        await this.doMission("BackgroundColor", () => FeedApiService.getFeedBackgroundColor(accessToken, h, agent), ctx);
+    private async handleFeedAndInteract(accessToken: string, h: any, ctx: any) {
+        try {
+            let feedHome: any = null;
+            await this.doMission("FeedHome", async () => {
+                let res = await FeedApiService.getFeedHome(accessToken, h, "", Date.now(), 10, this.proxyAgent);
+                let isEmpty = true;
+                if (res.data) {
+                    if (Array.isArray(res.data) && res.data.length > 0) isEmpty = false;
+                    else if (Array.isArray(res.data.data) && res.data.data.length > 0) isEmpty = false;
+                    else if (res.data.data && Array.isArray(res.data.data.items) && res.data.data.items.length > 0) isEmpty = false;
+                    else if (Array.isArray(res.data.items) && res.data.items.length > 0) isEmpty = false;
+                }
+                if (isEmpty) {
+                    res = await FeedApiService.getFeedHomeFree(h, 10, 0, this.proxyAgent);
+                }
+                feedHome = res.data;
+                return res;
+            }, ctx);
 
-        // 6. Mission: List Reactions
-        await this.doMission("ReactionList", () => ReactionApiService.listReactions(accessToken, h, 10, 0, agent), ctx);
+            await this.doMission("SurfHome", () => SurfApiService.getSurfHome(accessToken, h, "", Math.floor(Date.now() / 1000), 4, this.proxyAgent), ctx);
 
-        this.logger.info("BOT_MISSIONS_COMPLETE", ctx);
+            let items: any[] = [];
+            if (feedHome) {
+                if (Array.isArray(feedHome)) items = feedHome;
+                else if (Array.isArray(feedHome.data)) items = feedHome.data;
+                else if (feedHome.data && Array.isArray(feedHome.data.items)) items = feedHome.data.items;
+                else if (Array.isArray(feedHome.items)) items = feedHome.items;
+                else if (feedHome.data && feedHome.data.data && Array.isArray(feedHome.data.data)) items = feedHome.data.data;
+            }
+
+            this.logger.info("DEBUG_FEEDHOME", { itemsLength: items.length, feedHomeType: typeof feedHome });
+
+            if (items.length > 0) {
+                const interactItems = items.slice(0, 5);
+                this.logger.info("MISSION_ACTION_DEPENDENT_START", { ...ctx, parsedItemCount: interactItems.length });
+                for (let i = 0; i < interactItems.length; i++) {
+                    const post = interactItems[i];
+                    const postId = post.id;
+                    if (true) {
+                        const rType = getRandomReaction();
+                        await this.doMission(`PostReaction_${postId}`, () => ReactionApiService.sendReaction(accessToken, postId, rType, h, this.proxyAgent), ctx);
+                    }
+                    if (true) {
+                        const cText = getRandomComment();
+                        await this.doMission(`PostComment_${postId}`, () => CommentApiService.createComment(accessToken, { postId, content: cText }, h, this.proxyAgent), ctx);
+                    }
+                    if (true) {
+                        await this.doMission(`PostShare_${postId}`, () => FeedApiService.repostPost(accessToken, postId, h, this.proxyAgent), ctx);
+                    }
+                }
+            }
+        } catch (e: any) {
+            throw e;
+        }
+    }
+
+    private async handleAutoCreatePost(accessToken: string, h: any, ctx: any) {
+        try {
+            if (true) {
+                const t = getRandomStatus();
+                const postPayload = {
+                    content: t, mediaType: "TEXT", hashtags: "[]", mentions: "[]",
+                    type: "POST", privacy: "PUBLIC", checkinLocation: null, tags: "[]", backgroundColor: null
+                };
+                await this.doMission("CreatePost", async () => {
+                    try {
+                        return await FeedApiService.createPost(accessToken, postPayload, h, this.proxyAgent);
+                    } catch (e: any) {
+                        console.log("[DEBUG_CREATEPOST] CÓ LỖI TẠO BÀI (STATUS " + e.response?.status + "):", JSON.stringify(e.response?.data).substring(0, 500));
+                        throw e;
+                    }
+                }, ctx);
+            }
+        } catch (e: any) {
+            throw e;
+        }
+    }
+
+    private async handleActivityGeneration(accessToken: string, h: any, ctx: any) {
+        try {
+            await this.doMission("BackgroundColor", () => FeedApiService.getFeedBackgroundColor(accessToken, h, this.proxyAgent), ctx);
+            await this.doMission("ReactionList", () => ReactionApiService.listReactions(accessToken, h, 10, 0, this.proxyAgent), ctx);
+        } catch (e: any) {
+            throw e;
+        }
+    }
+
+    private async handleFriendManagement(accessToken: string, h: any, ctx: any) {
+        try {
+            let receivedReqs: any = null;
+            await this.doMission("GetReceivedFriendRequests", async () => {
+                const res = await FriendApiService.getReceivedRequests(accessToken, h, 10, 0, this.proxyAgent);
+                receivedReqs = res.data;
+                return res;
+            }, ctx);
+            if (receivedReqs?.data && Array.isArray(receivedReqs.data.items) && receivedReqs.data.items.length > 0) {
+                for (const req of receivedReqs.data.items) {
+                    const senderId = req.senderId || req.userId || req.id;
+                    if (senderId) {
+                        await this.doMission(`AcceptFriend_${senderId}`, () =>
+                            FriendApiService.acceptFriendRequest(accessToken, String(senderId), h, this.proxyAgent), ctx);
+                    }
+                }
+            }
+
+            let suggests: any = null;
+            try {
+                const keywords = ["Anh", "Minh", "Trang", "Hùng", "Bách", "Ngọc", "Linh", "Hải", "Tuấn", "Vy", "Huyền", "Phương"];
+                const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
+                const res = await FriendApiService.searchSuggests(accessToken, randomKeyword, h, 5, 0, this.proxyAgent);
+                suggests = res.data;
+                this.logger.info("OK: GetFriendSuggests", ctx);
+            } catch (e: any) {
+                const errData = e.response?.data || e.message;
+                this.logger.warn("MISSION_ERROR_IGNORED: GetFriendSuggests", { ...ctx, error: errData, status: e.response?.status });
+            }
+
+            if (suggests?.data && Array.isArray(suggests.data.items) && suggests.data.items.length > 0) {
+                const toAdd = suggests.data.items.slice(0, 3);
+                for (const user of toAdd) {
+                    const receiverId = user.userId || user.id;
+                    if (receiverId) {
+                        await this.doMission(`SendFriendRequest_${receiverId}`, () =>
+                            FriendApiService.sendFriendRequest(accessToken, String(receiverId), h, this.proxyAgent), ctx);
+                    }
+                }
+            }
+        } catch (e: any) {
+            throw e;
+        }
+    }
+
+    private async switchProxy(ctx: any): Promise<boolean> {
+        try {
+            if (!this.proxyManager) return false;
+            const oldProxy = this.acc.proxy;
+            if (oldProxy) this.proxyManager.markFailed(oldProxy);
+            const newProxy = await this.proxyManager.getWorkingProxy();
+            if (!newProxy || newProxy === oldProxy) return false;
+            this.acc.proxy = newProxy;
+            this.proxyAgent = new HttpsProxyAgent(newProxy) as any;
+            this.logger.info("PROXY_SWITCHED", { ...ctx, oldProxy, newProxy });
+            return true;
+        } catch (e: any) {
+            this.logger.error("SWITCH_PROXY_ERROR", { ...ctx, err: e?.message || String(e) });
+            return false;
+        }
     }
 
     private async doMission(name: string, action: () => Promise<any>, ctx: any) {
@@ -185,6 +326,22 @@ export class EricWorker {
         } catch (e: any) {
             const errData = e.response?.data || e.message;
             this.logger.error(`MISSION_ERROR: ${name}`, { ...ctx, error: errData, status: e.response?.status });
+
+            if (isNetworkError(e) && this.acc.proxy) {
+                const switched = await this.switchProxy(ctx);
+                if (switched) {
+                    try {
+                        await action();
+                        this.logger.info(`OK: ${name} (retry)`, ctx);
+                        return;
+                    } catch (retryErr: any) {
+                        const retryData = retryErr?.response?.data || retryErr?.message;
+                        this.logger.error(`RETRY_FAILED: ${name}`, { ...ctx, error: retryData });
+                        throw retryErr;
+                    }
+                }
+            }
+            throw e;
         }
     }
 }

@@ -17,15 +17,6 @@ export type LoginFlowResult = {
   usedOtp?: string;
 };
 
-export type EnsureLoginResult = {
-  ok: boolean;
-  tokens?: Tokens;
-  reason?: string;
-  method: "ALREADY_VALID" | "REFRESHED" | "LOGIN_PASS" | "LOGIN_OTP" | "FAIL";
-  usedOtp?: string;
-};
-
-// --- OTP HELPERS ---
 
 type WaitOtpOptions = {
   timeoutMs?: number;
@@ -104,33 +95,7 @@ async function promptOtp(phone: string, logger?: AppLogger): Promise<string> {
   return otp;
 }
 
-export async function ensureLogin(
-  api: AuthServiceApi,
-  acc: Account,
-  activeDeviceId: string,
-  headers: any,
-  logger?: AppLogger
-): Promise<EnsureLoginResult> {
-  const phone = String(acc.phone || "").trim();
 
-  const stored = getStoredTokens(phone);
-  if (stored) {
-    const valid = await ensureValidAccessToken(api, phone, activeDeviceId, stored, logger);
-    if (valid.ok && valid.accessToken) {
-      const finalTokens = getStoredTokens(phone) || { accessToken: valid.accessToken, refreshToken: stored.refreshToken };
-      logger?.debug("SESSION_OK", {});
-      return { ok: true, tokens: finalTokens, method: valid.refreshed ? "REFRESHED" : "ALREADY_VALID" };
-    }
-    logger?.debug("SESSION_EXPIRED", { reason: valid.reason });
-  }
-
-  const res = await loginWithOtpFlow(api, acc, headers, logger);
-  if (res.ok && res.tokens) {
-    return { ok: true, tokens: res.tokens, method: res.usedOtp ? "LOGIN_OTP" : "LOGIN_PASS", usedOtp: res.usedOtp };
-  }
-
-  return { ok: false, reason: res.reason, method: "FAIL" };
-}
 
 export async function loginWithOtpFlow(
   api: AuthServiceApi,

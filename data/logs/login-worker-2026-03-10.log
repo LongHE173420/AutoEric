@@ -1,0 +1,128 @@
+{"level":30,"time":"10:11:20.702","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"10:11:20.703","logger":"LoginService","proxy":"http://94.176.3.43:7443","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"10:11:20.703","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"10:11:20.705","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","accessToken":"eyJraWQi...FhQ2WQ","refreshToken":"eyJraWQi...pAanfw","msg":"TOKENS_FOUND"}
+{"level":30,"time":"10:11:20.706","logger":"LoginService","proxy":"http://94.176.3.43:7443","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"10:11:20.706","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"10:11:20.707","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","accessToken":"eyJraWQi...paJGMw","refreshToken":"eyJraWQi...2s9S8A","msg":"TOKENS_FOUND"}
+{"level":30,"time":"10:11:24.033","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"SESSION_OK"}
+{"level":30,"time":"10:11:24.035","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"10:11:25.018","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","me":{"id":8646911284551533000,"firstName":"Hoang","lastName":"To","userName":"hoangto.1772770640568936351","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"yivamag857@him6.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"SESSION_OK"}
+{"level":30,"time":"10:11:25.018","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"10:11:27.675","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":30,"time":"10:11:32.519","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: Missions"}
+{"level":30,"time":"10:11:34.645","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: ProfileMe"}
+{"level":30,"time":"10:11:36.356","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: MyFriends"}
+{"level":30,"time":"10:11:36.941","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: Missions"}
+{"level":50,"time":"10:11:44.231","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"socket hang up","msg":"MISSION_ERROR: Notifications"}
+{"level":50,"time":"10:11:44.598","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","error":"read ECONNRESET","msg":"MISSION_ERROR: MyFriends"}
+{"level":30,"time":"10:11:47.583","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","oldProxy":"http://94.176.3.43:7443","newProxy":"http://194.213.18.200:443","msg":"PROXY_SWITCHED"}
+{"level":30,"time":"10:11:47.981","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","oldProxy":"http://94.176.3.43:7443","newProxy":"http://194.213.18.200:443","msg":"PROXY_SWITCHED"}
+{"level":30,"time":"10:11:50.352","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: Notifications (retry)"}
+{"level":30,"time":"10:11:50.387","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: MyFriends (retry)"}
+{"level":30,"time":"10:11:52.706","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: Notifications"}
+{"level":30,"time":"10:11:54.399","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: FeedHome"}
+{"level":30,"time":"10:11:55.957","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: SurfHome"}
+{"level":30,"time":"10:11:55.957","logger":"LoginService","itemsLength":0,"feedHomeType":"object","msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"10:11:56.170","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: FeedHome"}
+{"level":30,"time":"10:11:58.671","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: CreatePost"}
+{"level":30,"time":"10:11:58.683","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: SurfHome"}
+{"level":30,"time":"10:11:58.684","logger":"LoginService","itemsLength":0,"feedHomeType":"object","msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"10:12:00.057","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: BackgroundColor"}
+{"level":50,"time":"10:12:00.524","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","error":"Cannot read properties of undefined (reading 'substring')","msg":"MISSION_ERROR: CreatePost"}
+{"level":50,"time":"10:12:00.524","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","err":"Cannot read properties of undefined (reading 'substring')","msg":"MISSIONS_ABORTED"}
+{"level":50,"time":"10:12:00.525","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","err":"Cannot read properties of undefined (reading 'substring')","msg":"ACCOUNT_PROCESS_ERROR"}
+{"level":30,"time":"10:12:01.438","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ReactionList"}
+{"level":30,"time":"10:12:04.165","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: GetReceivedFriendRequests"}
+{"level":40,"time":"10:12:05.730","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"Đã có lỗi xảy ra, vui lòng thử lại.","data":""},"status":500,"msg":"MISSION_ERROR_IGNORED: GetFriendSuggests"}
+{"level":30,"time":"10:12:05.730","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"10:12:05.730","logger":"LoginService","msg":"LOGIN summary: success=1 alreadyOk=1 relogin=0 fail=1"}
+{"level":30,"time":"10:13:05.749","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"10:13:05.749","logger":"LoginService","proxy":"http://194.213.18.200:443","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"10:13:05.749","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"10:13:05.751","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","accessToken":"eyJraWQi...FhQ2WQ","refreshToken":"eyJraWQi...pAanfw","msg":"TOKENS_FOUND"}
+{"level":30,"time":"10:13:05.751","logger":"LoginService","proxy":"http://194.213.18.200:443","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"10:13:05.751","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"10:13:05.752","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","accessToken":"eyJraWQi...paJGMw","refreshToken":"eyJraWQi...2s9S8A","msg":"TOKENS_FOUND"}
+{"level":30,"time":"10:13:21.542","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"SESSION_OK"}
+{"level":30,"time":"10:13:21.543","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"10:13:22.603","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","me":{"id":8646911284551533000,"firstName":"Hoang","lastName":"To","userName":"hoangto.1772770640568936351","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"yivamag857@him6.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"SESSION_OK"}
+{"level":30,"time":"10:13:22.604","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"10:13:28.438","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":30,"time":"10:13:40.244","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: ProfileMe"}
+{"level":50,"time":"10:13:54.822","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"read ECONNRESET","msg":"MISSION_ERROR: Missions"}
+{"level":30,"time":"10:13:56.987","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: Missions"}
+{"level":30,"time":"10:13:57.315","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","oldProxy":"http://194.213.18.200:443","newProxy":"http://86.53.183.16:1080","msg":"PROXY_SWITCHED"}
+{"level":30,"time":"10:13:59.337","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: Missions (retry)"}
+{"level":30,"time":"10:14:01.037","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: MyFriends"}
+{"level":30,"time":"10:14:02.226","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: MyFriends"}
+{"level":30,"time":"10:14:03.477","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: Notifications"}
+{"level":30,"time":"10:14:05.658","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: Notifications"}
+{"level":30,"time":"10:14:06.538","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: FeedHome"}
+{"level":30,"time":"10:14:07.858","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: SurfHome"}
+{"level":30,"time":"10:14:07.858","logger":"LoginService","itemsLength":0,"feedHomeType":"object","msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"10:14:09.306","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: CreatePost"}
+{"level":30,"time":"10:14:10.741","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: BackgroundColor"}
+{"level":30,"time":"10:14:11.946","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ReactionList"}
+{"level":30,"time":"10:14:12.942","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: FeedHome"}
+{"level":30,"time":"10:14:13.446","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: GetReceivedFriendRequests"}
+{"level":40,"time":"10:14:14.717","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"Đã có lỗi xảy ra, vui lòng thử lại.","data":""},"status":500,"msg":"MISSION_ERROR_IGNORED: GetFriendSuggests"}
+{"level":30,"time":"10:14:14.717","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"10:14:16.036","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: SurfHome"}
+{"level":30,"time":"10:14:16.036","logger":"LoginService","itemsLength":0,"feedHomeType":"object","msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"10:14:17.569","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: CreatePost"}
+{"level":30,"time":"10:14:19.559","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: BackgroundColor"}
+{"level":30,"time":"10:14:21.032","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: ReactionList"}
+{"level":30,"time":"10:14:22.618","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: GetReceivedFriendRequests"}
+{"level":40,"time":"10:14:24.020","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","error":{"message":"Đã có lỗi xảy ra, vui lòng thử lại.","data":""},"status":500,"msg":"MISSION_ERROR_IGNORED: GetFriendSuggests"}
+{"level":30,"time":"10:14:24.020","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"10:14:24.020","logger":"LoginService","msg":"LOGIN summary: success=2 alreadyOk=2 relogin=0 fail=0"}
+{"level":30,"time":"10:15:05.752","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"10:15:05.752","logger":"LoginService","proxy":"http://86.53.183.16:1080","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"10:15:05.752","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"10:15:05.754","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","accessToken":"eyJraWQi...FhQ2WQ","refreshToken":"eyJraWQi...pAanfw","msg":"TOKENS_FOUND"}
+{"level":30,"time":"10:15:05.754","logger":"LoginService","proxy":"http://86.53.183.16:1080","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"10:15:05.754","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"10:15:05.756","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","accessToken":"eyJraWQi...paJGMw","refreshToken":"eyJraWQi...2s9S8A","msg":"TOKENS_FOUND"}
+{"level":30,"time":"10:35:31.810","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":30,"time":"10:35:31.810","logger":"LoginService","proxy":"http://138.124.53.25:7443","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"10:35:31.811","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"10:35:31.814","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","accessToken":"eyJraWQi...FhQ2WQ","refreshToken":"eyJraWQi...pAanfw","msg":"TOKENS_FOUND"}
+{"level":30,"time":"10:35:31.815","logger":"LoginService","proxy":"http://138.124.53.25:7443","msg":"WORKER_INITIALIZED_WITH_PROXY"}
+{"level":30,"time":"10:35:31.815","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"10:35:31.816","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","accessToken":"eyJraWQi...paJGMw","refreshToken":"eyJraWQi...2s9S8A","msg":"TOKENS_FOUND"}
+{"level":30,"time":"10:35:33.396","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","reason":"REFRESH_FAIL","msg":"SESSION_ME_CHECK_FAILED"}
+{"level":30,"time":"10:35:37.516","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","me":{"id":4035225266124144600,"firstName":"le","lastName":"bach","userName":"lebach.1772691588671376887","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"xabay92980@keecs.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"10:35:37.517","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"10:35:39.167","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":30,"time":"10:35:40.168","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","reason":"REFRESH_FAIL","msg":"SESSION_ME_CHECK_FAILED"}
+{"level":30,"time":"10:35:43.635","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","me":{"id":8646911284551533000,"firstName":"Hoang","lastName":"To","userName":"hoangto.1772770640568936351","isOfficial":false,"isVerified":false,"totpEnabled":false,"avatar":"","cover":"","email":"yivamag857@him6.com","phone":"","nationalId":"","dateOfBirth":"2008-02-02","hometown":"","publicKey":"","keyVersion":0,"gender":"MALE","ericWalletId":"0","location":{"lat":"","lon":"","source":""},"tier":"ERIC","privacy":"PUBLIC","educationLevel":"NONE","schoolName":"","workplace":"","placeOfResidence":"","maritalStatus":"NONE","friendshipStatus":"NONE","intro":"","totalFriends":0,"ericBalance":"0"},"msg":"LOGIN_OK_ME_OK"}
+{"level":30,"time":"10:35:43.635","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"10:35:46.221","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: ProfileMe"}
+{"level":30,"time":"10:35:47.471","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: Missions"}
+{"level":30,"time":"10:35:49.009","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: MyFriends"}
+{"level":50,"time":"10:36:00.213","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":"connect ETIMEDOUT 138.124.53.25:7443","msg":"MISSION_ERROR: Missions"}
+{"level":30,"time":"10:36:05.480","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: Notifications"}
+{"level":30,"time":"10:36:05.738","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","oldProxy":"http://138.124.53.25:7443","newProxy":"http://194.213.18.200:443","msg":"PROXY_SWITCHED"}
+{"level":30,"time":"10:36:07.722","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: Missions (retry)"}
+{"level":30,"time":"10:36:09.543","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: MyFriends"}
+{"level":30,"time":"10:36:10.939","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: Notifications"}
+{"level":30,"time":"10:36:13.167","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: FeedHome"}
+{"level":30,"time":"10:36:14.297","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: FeedHome"}
+{"level":30,"time":"10:36:14.394","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: SurfHome"}
+{"level":30,"time":"10:36:14.394","logger":"LoginService","itemsLength":0,"feedHomeType":"object","msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"10:36:17.052","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: CreatePost"}
+{"level":30,"time":"10:36:17.057","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: SurfHome"}
+{"level":30,"time":"10:36:17.057","logger":"LoginService","itemsLength":0,"feedHomeType":"object","msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"10:36:18.187","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: BackgroundColor"}
+{"level":30,"time":"10:36:19.193","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: CreatePost"}
+{"level":30,"time":"10:36:19.308","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: ReactionList"}
+{"level":30,"time":"10:36:21.226","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: BackgroundColor"}
+{"level":30,"time":"10:36:23.302","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ReactionList"}
+{"level":30,"time":"10:36:23.770","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: GetReceivedFriendRequests"}
+{"level":40,"time":"10:36:25.637","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","error":{"message":"Đã có lỗi xảy ra, vui lòng thử lại.","data":""},"status":500,"msg":"MISSION_ERROR_IGNORED: GetFriendSuggests"}
+{"level":30,"time":"10:36:25.637","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"10:36:27.208","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: GetReceivedFriendRequests"}
+{"level":40,"time":"10:36:30.219","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","error":{"message":"Đã có lỗi xảy ra, vui lòng thử lại.","data":""},"status":500,"msg":"MISSION_ERROR_IGNORED: GetFriendSuggests"}
+{"level":30,"time":"10:36:30.219","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"10:36:30.219","logger":"LoginService","msg":"LOGIN summary: success=2 alreadyOk=0 relogin=2 fail=0"}

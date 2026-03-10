@@ -1,6 +1,7 @@
 import { getDeviceId } from "../../utils/device";
 import { EricWorker } from "./EricWorker";
 import { Log } from "../../utils/log";
+import { ProxyManager } from "./ProxyManager";
 
 export type LoginSummary = {
     success: number;
@@ -20,7 +21,7 @@ export class MasterWorker {
         this.defaultDeviceId = getDeviceId();
     }
 
-    async run(accounts: any[]): Promise<LoginSummary> {
+    async run(accounts: any[], proxyManager?: ProxyManager): Promise<LoginSummary> {
         const summary: LoginSummary = {
             success: 0,
             alreadyOk: 0,
@@ -35,7 +36,7 @@ export class MasterWorker {
             summary.accounts = accounts.length;
             this.logger.debug("ACCOUNTS_LOADED", { accounts: accounts.length, deviceId: this.defaultDeviceId });
 
-            const BATCH_SIZE = 5;
+            const BATCH_SIZE = 2;
             for (let i = 0; i < accounts.length; i += BATCH_SIZE) {
                 const batch = accounts.slice(i, i + BATCH_SIZE);
                 await Promise.all(
@@ -44,16 +45,21 @@ export class MasterWorker {
                             acc,
                             this.logger,
                             this.defaultDeviceId,
-                            i + idx + 1
+                            i + idx + 1,
+                            proxyManager
                         );
 
-                        const result = await worker.run();
+                        try {
+                            const result = await worker.run();
 
-                        if (result.success) {
-                            summary.success++;
-                            if (result.alreadyOk) summary.alreadyOk++;
-                            if (result.relogin) summary.relogin++;
-                        } else {
+                            if (result.success) {
+                                summary.success++;
+                                if (result.alreadyOk) summary.alreadyOk++;
+                                if (result.relogin) summary.relogin++;
+                            } else {
+                                summary.fail++;
+                            }
+                        } catch (e: any) {
                             summary.fail++;
                         }
                     })
@@ -65,7 +71,8 @@ export class MasterWorker {
 
         } catch (err: any) {
             this.logger.error("MASTER_WORKER_CRASH", { err: err?.message ?? String(err) });
-            return summary;
+            this.logger.error("SYSTEM_HALT", { reason: "Mission failure — stopping process" });
+            process.exit(1);
         }
     }
 }

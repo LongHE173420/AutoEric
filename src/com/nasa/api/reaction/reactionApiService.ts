@@ -4,7 +4,7 @@ import { buildHeaders } from '../../utils/headers';
 
 export class ReactionApiService {
     static async sendReaction(accessToken: string, postId: string, type: string, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/v1/posts/reaction/send`, { postId, type }, {
+        return axios.post(`${ENV.KONG_URL}/api/posts/reaction/send`, { postId, type }, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });

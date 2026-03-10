@@ -38,7 +38,7 @@ export class FriendApiService {
     static async searchSuggests(accessToken: string, keyword: string, headers = buildHeaders(), limit = 10, offset = 0, agent?: any) {
         return axios.get(`${ENV.KONG_URL}/api/friend/search-suggests`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            params: { keyword, limit, offset },
+            params: keyword ? { keyword, limit, offset } : { limit, offset },
             httpsAgent: agent
         });
     }

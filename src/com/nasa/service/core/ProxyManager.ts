@@ -8,8 +8,6 @@ export class ProxyManager {
     private failedProxies: Set<string> = new Set();
     private workingProxies: Set<string> = new Set();
     private currentIndex = 0;
-    private currentProxyUsage = 0;
-    private readonly MAX_PER_PROXY = 5;
 
     constructor() {
         this.loadProxies();
@@ -45,19 +43,29 @@ export class ProxyManager {
     public async getWorkingProxy(): Promise<string | null> {
         if (this.proxies.length === 0) return null;
 
-        // Try to reuse the current proxy if it hasn't exceeded 5 uses
         const proxyIdx = this.currentIndex % this.proxies.length;
         const currentProxy = this.proxies[proxyIdx];
 
-        if (this.currentProxyUsage < this.MAX_PER_PROXY && !this.failedProxies.has(currentProxy)) {
-            this.currentProxyUsage++;
+        // Đã xác nhận working từ trước → dùng lại không cần test
+        if (!this.failedProxies.has(currentProxy) && this.workingProxies.has(currentProxy)) {
             return currentProxy;
         }
 
-        // Reset usage for the next proxy
-        this.currentProxyUsage = 0;
+        // Chưa test lần nào → test trước khi dùng
+        if (!this.failedProxies.has(currentProxy)) {
+            console.log(`[ProxyManager] Testing proxy connectivity: ${currentProxy}...`);
+            const isWorking = await this.testProxy(currentProxy);
+            if (isWorking) {
+                console.log(`[ProxyManager] ✅ Proxy ${currentProxy} is working!`);
+                this.workingProxies.add(currentProxy);
+                return currentProxy;
+            } else {
+                console.log(`[ProxyManager] ❌ Proxy ${currentProxy} failed.`);
+                this.failedProxies.add(currentProxy);
+            }
+        }
 
-        // Find the next working proxy starting from the next index
+        // Proxy hiện tại đã fail → tìm proxy tiếp theo
         const startIdx = (this.currentIndex + 1) % this.proxies.length;
         for (let i = 0; i < this.proxies.length; i++) {
             const idx = (startIdx + i) % this.proxies.length;
@@ -71,7 +79,6 @@ export class ProxyManager {
             if (isWorking) {
                 console.log(`[ProxyManager] ✅ Proxy ${proxy} is working!`);
                 this.workingProxies.add(proxy);
-                this.currentProxyUsage = 1;
                 return proxy;
             } else {
                 console.log(`[ProxyManager] ❌ Proxy ${proxy} failed.`);
@@ -88,12 +95,19 @@ export class ProxyManager {
             const agent = new HttpsProxyAgent(proxyUrl);
             await axios.get('https://social.eric.pro.vn/api/user/me', {
                 httpsAgent: agent,
-                timeout: 5000,
+                timeout: 10000,
                 validateStatus: () => true // Reject only on network errors, not HTTP status
             });
             return true;
         } catch (e) {
             return false;
+        }
+    }
+
+    public markFailed(proxy: string) {
+        if (proxy && !this.failedProxies.has(proxy)) {
+            console.log(`[ProxyManager] ⚠️ Proxy ${proxy} marked as failed from real usage.`);
+            this.failedProxies.add(proxy);
         }
     }
 }

@@ -4,28 +4,28 @@ import { buildHeaders } from '../../utils/headers';
 
 export class FeedApiService {
     static async createPost(accessToken: string, postData: any, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/v1/posts/create`, postData, {
+        return axios.post(`${ENV.KONG_URL}/api/posts/create`, postData, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
     }
 
     static async updatePost(accessToken: string, postData: any, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/v1/posts/update`, postData, {
+        return axios.post(`${ENV.KONG_URL}/api/posts/update`, postData, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
     }
 
     static async deletePost(accessToken: string, postId: number, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/v1/posts/delete`, { id: postId }, {
+        return axios.post(`${ENV.KONG_URL}/api/posts/delete`, { id: postId }, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
     }
 
     static async hidePost(accessToken: string, postId: number, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/v1/posts/hide`, { id: postId }, {
+        return axios.post(`${ENV.KONG_URL}/api/posts/hide`, { id: postId }, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
@@ -53,14 +53,14 @@ export class FeedApiService {
     }
 
     static async getListFeeling(accessToken: string, headers = buildHeaders(), agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/v1/posts/feeling`, {
+        return axios.get(`${ENV.KONG_URL}/api/posts/feeling`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
     }
 
     static async getListBackgroundColor(accessToken: string, headers = buildHeaders(), agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/v1/posts/background-color`, {
+        return axios.get(`${ENV.KONG_URL}/api/posts/background-color`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
@@ -74,7 +74,7 @@ export class FeedApiService {
     }
 
     static async getListCheckinPosition(accessToken: string, headers = buildHeaders(), agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/v1/posts/checkin-position`, {
+        return axios.get(`${ENV.KONG_URL}/api/posts/checkin-position`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
@@ -104,7 +104,7 @@ export class FeedApiService {
     }
 
     static async getFeedHomeFree(headers = buildHeaders(), limit = 10, offset = 0, agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/v1/feed/home-free`, {
+        return axios.get(`${ENV.KONG_URL}/api/feed/home-free`, {
             headers: { ...headers },
             params: { limit, offset },
             httpsAgent: agent

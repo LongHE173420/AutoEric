@@ -10,6 +10,7 @@ applyStandardInterceptors(axios, "global-system");
 
 let isRunning = false;
 let started = false;
+const proxyManager = new ProxyManager();
 
 async function runOnce(reason: string) {
   if (isRunning) return;
@@ -50,7 +51,6 @@ async function runOnce(reason: string) {
     logger.debug("JOB_START", { reason });
 
     const master = new MasterWorker(logger);
-    const proxyManager = new ProxyManager();
 
     const dbAccounts = await getAccountsFromDb();
     const accountsInfo = [];
@@ -67,7 +67,7 @@ async function runOnce(reason: string) {
     }
 
     logger.debug(`Loaded ${accountsInfo.length} accounts from database.`);
-    const summary = await master.run(accountsInfo);
+    const summary = await master.run(accountsInfo, proxyManager);
 
     logger.debug("JOB_DONE", { summary });
 
