@@ -2,6 +2,7 @@ import { getDeviceId } from "../../utils/device";
 import { EricWorker } from "./EricWorker";
 import { Log } from "../../utils/log";
 import { ProxyManager } from "./ProxyManager";
+import { recordRunInDb } from "../../data/mysqlStore";
 
 export type LoginSummary = {
     success: number;
@@ -51,9 +52,9 @@ export class MasterWorker {
 
                         try {
                             const result = await worker.run();
-
                             if (result.success) {
                                 summary.success++;
+                                await recordRunInDb(acc.phone);
                                 if (result.alreadyOk) summary.alreadyOk++;
                                 if (result.relogin) summary.relogin++;
                             } else {

@@ -56,12 +56,76 @@ export class EricWorker {
         return { row: this.rowNo, phone };
     }
 
+    private async attemptRunProcess(phone: string, password: string, ctx: any): Promise<UserServiceResult> {
+        const stored = getStoredTokens(phone);
+
+        const activeDeviceId = this.acc.deviceId || stored?.deviceId || uuidv4();
+        const activeUserAgent = this.acc.userAgent || stored?.userAgent;
+        this.acc.deviceId = activeDeviceId;
+        this.acc.userAgent = activeUserAgent;
+
+        if ((this.acc as any).accessToken && (this.acc as any).refreshToken) {
+            setStoredTokens(phone, (this.acc as any).accessToken, (this.acc as any).refreshToken, activeDeviceId, activeUserAgent);
+        }
+        if (stored) {
+            this.logger.info("TOKENS_FOUND", {
+                ...ctx,
+                accessToken: maskToken(stored.accessToken),
+                refreshToken: maskToken(stored.refreshToken),
+            });
+            const me = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger, this.proxyAgent);
+            if (me.ok) {
+                this.logger.info("SESSION_OK", { ...ctx, me: me.data });
+                const freshStored = getStoredTokens(phone);
+                const tokenToUse = freshStored?.accessToken || stored.accessToken;
+                try { await this.runMissions(tokenToUse, activeDeviceId, ctx); }
+                catch (mErr: any) {
+                    this.logger.error("MISSIONS_ABORTED", { ...ctx, err: mErr?.message });
+                    throw mErr;
+                }
+                return { success: true, relogin: false, alreadyOk: true };
+            } else {
+                this.logger.info("SESSION_ME_CHECK_FAILED", { ...ctx, reason: me.message });
+                clearTokensForUser(phone);
+            }
+        }
+
+        const headers = buildHeaders(activeDeviceId, this.acc.userAgent);
+        const lr = await loginWithOtpFlow(this.api, { phone, password }, headers, this.logger);
+
+        if (!lr.ok) {
+            this.logger.info("LOGIN_FLOW_FAIL", { ...ctx, reason: lr.reason });
+            return { success: false, relogin: false, alreadyOk: false, reason: lr.reason };
+        }
+        const final = getStoredTokens(phone);
+        if (final?.accessToken && final?.refreshToken) {
+            if (final.accessToken !== this.acc.accessToken || final.refreshToken !== this.acc.refreshToken) {
+                await saveTokensToDb(phone, final.accessToken, final.refreshToken).catch(e => this.logger.error("DB_SAVE_TOKEN_FAIL", { err: String(e) }));
+            }
+            if (!this.acc.deviceId) {
+                this.acc.deviceId = activeDeviceId;
+            }
+            const me2 = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger, this.proxyAgent);
+            if (me2.ok) {
+                this.logger.info("LOGIN_OK_ME_OK", { ...ctx, me: me2.data });
+            } else {
+                this.logger.info("LOGIN_OK_ME_SKIP", { ...ctx, reason: me2.message });
+            }
+            try { await this.runMissions(final.accessToken, activeDeviceId, ctx); }
+            catch (mErr: any) {
+                this.logger.error("MISSIONS_ABORTED", { ...ctx, err: mErr?.message });
+                throw mErr;
+            }
+        }
+
+        return { success: true, relogin: !!stored, alreadyOk: false };
+    }
+
     async run(): Promise<UserServiceResult> {
         const phone = String(this.acc.phone || this.acc.username || "").trim();
         const password = String(this.acc.password || "").trim();
 
         const ctx = this.logContext();
-
         this.logger.info("ACCOUNT_START", { ...ctx, password: maskPassword(password) });
 
         if (!phone || !password) {
@@ -69,77 +133,30 @@ export class EricWorker {
             return { success: false, relogin: false, alreadyOk: false, reason: "INVALID_CREDENTIALS" };
         }
 
-        try {
-            const stored = getStoredTokens(phone);
+        let lastErrorDetails = "";
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+                return await this.attemptRunProcess(phone, password, ctx);
+            } catch (err: any) {
+                const errorDetails = err?.response?.data || err?.message || String(err);
+                lastErrorDetails = errorDetails;
 
-            const activeDeviceId = this.acc.deviceId || stored?.deviceId || uuidv4();
-            const activeUserAgent = this.acc.userAgent || stored?.userAgent;
-            this.acc.deviceId = activeDeviceId;
-            this.acc.userAgent = activeUserAgent;
-
-            if ((this.acc as any).accessToken && (this.acc as any).refreshToken) {
-                setStoredTokens(phone, (this.acc as any).accessToken, (this.acc as any).refreshToken, activeDeviceId, activeUserAgent);
-            }
-            if (stored) {
-                this.logger.info("TOKENS_FOUND",
-                    {
-                        ...ctx,
-                        accessToken: maskToken(stored.accessToken),
-                        refreshToken: maskToken(stored.refreshToken),
+                if (isNetworkError(err) && this.acc.proxy && attempt === 1) {
+                    this.logger.warn("LOGIN_NETWORK_ERROR_RETRY", { ...ctx, error: errorDetails, attempt });
+                    const switched = await this.switchProxy(ctx);
+                    if (switched) {
+                        this.logger.info("LOGIN_RETRY_WILL_START", ctx);
+                        this.api = new AuthServiceApi(this.acc.deviceId || this.defaultDeviceId, ENV.KONG_URL, this.proxyAgent);
+                        continue;
                     }
-                );
-                const me = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger, this.proxyAgent);
-                if (me.ok) {
-                    this.logger.info("SESSION_OK", { ...ctx, me: me.data });
-                    const freshStored = getStoredTokens(phone);
-                    const tokenToUse = freshStored?.accessToken || stored.accessToken;
-                    try { await this.runMissions(tokenToUse, activeDeviceId, ctx); }
-                    catch (mErr: any) {
-                        this.logger.error("MISSIONS_ABORTED", { ...ctx, err: mErr?.message });
-                        throw mErr;
-                    }
-                    return { success: true, relogin: false, alreadyOk: true };
-                } else {
-                    this.logger.info("SESSION_ME_CHECK_FAILED", { ...ctx, reason: me.message });
-                    clearTokensForUser(phone);
                 }
+
+                this.logger.error("ACCOUNT_PROCESS_ERROR", { ...ctx, err: errorDetails });
+                throw err;
             }
-
-            const headers = buildHeaders(activeDeviceId, this.acc.userAgent);
-            const lr = await loginWithOtpFlow(this.api, { phone, password }, headers, this.logger);
-
-            if (!lr.ok) {
-                this.logger.info("LOGIN_FLOW_FAIL", { ...ctx, reason: lr.reason });
-                return { success: false, relogin: false, alreadyOk: false, reason: lr.reason };
-            }
-            const final = getStoredTokens(phone);
-            if (final?.accessToken && final?.refreshToken) {
-                if (final.accessToken !== this.acc.accessToken || final.refreshToken !== this.acc.refreshToken) {
-                    await saveTokensToDb(phone, final.accessToken, final.refreshToken).catch(e => this.logger.error("DB_SAVE_TOKEN_FAIL", { err: String(e) }));
-                }
-                if (!this.acc.deviceId) {
-                    this.acc.deviceId = activeDeviceId;
-                }
-                const me2 = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger, this.proxyAgent);
-                if (me2.ok) {
-                    this.logger.info("LOGIN_OK_ME_OK", { ...ctx, me: me2.data });
-                } else {
-                    this.logger.info("LOGIN_OK_ME_SKIP", { ...ctx, reason: me2.message });
-                }
-                try { await this.runMissions(final.accessToken, activeDeviceId, ctx); }
-                catch (mErr: any) {
-                    this.logger.error("MISSIONS_ABORTED", { ...ctx, err: mErr?.message });
-                    throw mErr;
-                }
-            }
-
-            return { success: true, relogin: !!stored, alreadyOk: false };
-
-        } catch (err: any) {
-            const errorDetails = err?.response?.data || err?.message || String(err);
-            this.logger.error("ACCOUNT_PROCESS_ERROR", { ...ctx, err: errorDetails });
-            throw err;
         }
+
+        throw new Error(lastErrorDetails);
     }
     private async runMissions(accessToken: string, deviceId: string, ctx: any) {
         try {
@@ -172,38 +189,52 @@ export class EricWorker {
 
     private async handleFeedAndInteract(accessToken: string, h: any, ctx: any) {
         try {
-            let feedHome: any = null;
-            await this.doMission("FeedHome", async () => {
-                let res = await FeedApiService.getFeedHome(accessToken, h, "", Date.now(), 10, this.proxyAgent);
-                let isEmpty = true;
-                if (res.data) {
-                    if (Array.isArray(res.data) && res.data.length > 0) isEmpty = false;
-                    else if (Array.isArray(res.data.data) && res.data.data.length > 0) isEmpty = false;
-                    else if (res.data.data && Array.isArray(res.data.data.items) && res.data.data.items.length > 0) isEmpty = false;
-                    else if (Array.isArray(res.data.items) && res.data.items.length > 0) isEmpty = false;
-                }
-                if (isEmpty) {
-                    res = await FeedApiService.getFeedHomeFree(h, 10, 0, this.proxyAgent);
-                }
-                feedHome = res.data;
-                return res;
-            }, ctx);
+            let allItems: any[] = [];
+            let lastPostId = "";
+            let lastCreatedAt = Date.now();
+
+            for (let page = 0; page < 3; page++) {
+                await this.doMission(`FeedHome_Page_${page + 1}`, async () => {
+                    let res = await FeedApiService.getFeedHome(accessToken, h, lastPostId, lastCreatedAt, 10, this.proxyAgent);
+                    let isEmpty = true;
+                    if (res.data) {
+                        if (Array.isArray(res.data) && res.data.length > 0) isEmpty = false;
+                        else if (Array.isArray(res.data.data) && res.data.data.length > 0) isEmpty = false;
+                        else if (res.data.data && Array.isArray(res.data.data.items) && res.data.data.items.length > 0) isEmpty = false;
+                        else if (Array.isArray(res.data.items) && res.data.items.length > 0) isEmpty = false;
+                    }
+                    if (isEmpty && page === 0) {
+                        res = await FeedApiService.getFeedHomeFree(h, 10, 0, this.proxyAgent);
+                    }
+
+                    let items: any[] = [];
+                    if (res.data) {
+                        if (Array.isArray(res.data)) items = res.data;
+                        else if (Array.isArray(res.data.data)) items = res.data.data;
+                        else if (res.data.data && Array.isArray(res.data.data.items)) items = res.data.data.items;
+                        else if (Array.isArray(res.data.items)) items = res.data.items;
+                        else if (res.data.data && res.data.data.data && Array.isArray(res.data.data.data)) items = res.data.data.data;
+                    }
+
+                    if (items.length > 0) {
+                        const lastItem = items[items.length - 1];
+                        lastPostId = lastItem.id || "";
+                        lastCreatedAt = lastItem.createdAt || Date.now();
+                        allItems = allItems.concat(items);
+                    }
+                    return res;
+                }, ctx);
+
+                if (page < 2) await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1500));
+            }
 
             await this.doMission("SurfHome", () => SurfApiService.getSurfHome(accessToken, h, "", Math.floor(Date.now() / 1000), 4, this.proxyAgent), ctx);
 
-            let items: any[] = [];
-            if (feedHome) {
-                if (Array.isArray(feedHome)) items = feedHome;
-                else if (Array.isArray(feedHome.data)) items = feedHome.data;
-                else if (feedHome.data && Array.isArray(feedHome.data.items)) items = feedHome.data.items;
-                else if (Array.isArray(feedHome.items)) items = feedHome.items;
-                else if (feedHome.data && feedHome.data.data && Array.isArray(feedHome.data.data)) items = feedHome.data.data;
-            }
+            this.logger.info("DEBUG_FEEDHOME", { itemsLength: allItems.length, pagesScrolled: 3 });
 
-            this.logger.info("DEBUG_FEEDHOME", { itemsLength: items.length, feedHomeType: typeof feedHome });
-
-            if (items.length > 0) {
-                const interactItems = items.slice(0, 5);
+            if (allItems.length > 0) {
+                const uniqueItems = Array.from(new Map(allItems.map(i => [i.id, i])).values());
+                const interactItems = uniqueItems.sort(() => 0.5 - Math.random()).slice(0, 5);
                 this.logger.info("MISSION_ACTION_DEPENDENT_START", { ...ctx, parsedItemCount: interactItems.length });
                 for (let i = 0; i < interactItems.length; i++) {
                     const post = interactItems[i];

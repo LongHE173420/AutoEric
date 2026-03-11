@@ -96,7 +96,7 @@ export class ProxyManager {
             await axios.get('https://social.eric.pro.vn/api/user/me', {
                 httpsAgent: agent,
                 timeout: 10000,
-                validateStatus: () => true // Reject only on network errors, not HTTP status
+                validateStatus: () => true
             });
             return true;
         } catch (e) {
