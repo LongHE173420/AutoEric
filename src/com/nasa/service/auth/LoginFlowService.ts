@@ -1,5 +1,4 @@
 
-import readline from "readline";
 import { AuthServiceApi, Tokens } from "../../api/auth/authApiService";
 import { ENV } from "../../config/env";
 import { setStoredTokens, clearTokensForUser, getStoredTokens, clearAllData } from "../../storage/tokenStore";
@@ -86,17 +85,6 @@ async function waitForOtp(
   return null;
 }
 
-async function promptOtp(phone: string, logger?: AppLogger): Promise<string> {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const answer = await new Promise<string>(r => rl.question(`Nhập OTP cho ${phone}: `, r));
-  rl.close();
-  const otp = answer.trim();
-  logger?.info("OTP_USER_INPUT", { otp: maskOtp(otp) });
-  return otp;
-}
-
-
-
 export async function loginWithOtpFlow(
   api: AuthServiceApi,
   acc: Account,
@@ -143,8 +131,6 @@ export async function loginWithOtpFlow(
         logger?.debug("OTP_MISSING_FAST_FAIL", { phone });
         return { ok: false, reason: "OTP_TIMEOUT" };
       }
-    } else if (ENV.PROMPT_OTP) {
-      otp = await promptOtp(phone, logger);
     }
 
     if (!otp) return { ok: false, reason: "OTP_MISSING" };

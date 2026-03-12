@@ -40,7 +40,6 @@ export const ENV = {
 
   AUTO_FETCH_OTP: bool("AUTO_FETCH_OTP", true),
   AUTO_RESEND: bool("AUTO_RESEND", true),
-  PROMPT_OTP: bool("PROMPT_OTP", false),
 
   OTP_DEBUG_PATH_REDIS: str("OTP_DEBUG_PATH_REDIS", "/auth/debug/redis-otp"),
 
