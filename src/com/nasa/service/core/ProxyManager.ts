@@ -22,7 +22,7 @@ export class ProxyManager {
                     const trimmed = line.trim();
                     if (!trimmed || trimmed.startsWith('IP Address')) continue;
 
-                    const parts = trimmed.split(/\s+/);
+                    const parts = trimmed.split(/[:\s]+/);
                     if (parts.length >= 2) {
                         const ip = parts[0];
                         const port = parts[1];

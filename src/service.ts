@@ -32,7 +32,6 @@ async function runOnce(reason: string) {
           RUN_ONCE: ENV.RUN_ONCE,
           AUTO_FETCH_OTP: ENV.AUTO_FETCH_OTP,
           AUTO_RESEND: ENV.AUTO_RESEND,
-          PROMPT_OTP: ENV.PROMPT_OTP,
           OTP_TIMEOUT_MS: ENV.OTP_TIMEOUT_MS,
           OTP_POLL_MS: ENV.OTP_POLL_MS,
           OTP_VERIFY_RETRY: ENV.OTP_VERIFY_RETRY,
