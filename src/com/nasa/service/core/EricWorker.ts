@@ -36,7 +36,6 @@ export class EricWorker {
     constructor(
         private readonly acc: any,
         parentLogger: AppLogger,
-        private readonly defaultDeviceId: string,
         private readonly rowNo: number,
         private readonly proxyManager?: ProxyManager
     ) {
@@ -47,7 +46,8 @@ export class EricWorker {
         } else {
             this.logger.info("WORKER_INITIALIZED_DIRECT_NO_PROXY", {});
         }
-        const activeDeviceId = this.acc.deviceId || this.defaultDeviceId;
+        const activeDeviceId = this.acc.deviceId || uuidv4(); // Generate uuid fallback instead of default device id
+        this.acc.deviceId = activeDeviceId;
         this.api = new AuthServiceApi(activeDeviceId, ENV.KONG_URL, this.proxyAgent);
 
     }
@@ -146,7 +146,7 @@ export class EricWorker {
                     const switched = await this.switchProxy(ctx);
                     if (switched) {
                         this.logger.info("LOGIN_RETRY_WILL_START", ctx);
-                        this.api = new AuthServiceApi(this.acc.deviceId || this.defaultDeviceId, ENV.KONG_URL, this.proxyAgent);
+                        this.api = new AuthServiceApi(this.acc.deviceId || uuidv4(), ENV.KONG_URL, this.proxyAgent);
                         continue;
                     }
                 }
@@ -307,21 +307,30 @@ export class EricWorker {
             }
 
             let suggests: any = null;
+            let suggestItems: any[] = [];
             try {
                 const keywords = ["Anh", "Minh", "Trang", "Hùng", "Bách", "Ngọc", "Linh", "Hải", "Tuấn", "Vy", "Huyền", "Phương"];
                 const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
-                const res = await FriendApiService.searchSuggests(accessToken, randomKeyword, h, 5, 0, this.proxyAgent);
+                const res = await FriendApiService.searchFriends(accessToken, randomKeyword, h, 5, 0, this.proxyAgent);
                 suggests = res.data;
-                this.logger.info("OK: GetFriendSuggests", ctx);
+                this.logger.info("OK: searchFriends", { ...ctx, rawDataPreview: JSON.stringify(suggests).substring(0, 300) });
+                
+                if (suggests) {
+                    if (Array.isArray(suggests)) suggestItems = suggests;
+                    else if (Array.isArray(suggests.data)) suggestItems = suggests.data;
+                    else if (suggests.data && Array.isArray(suggests.data.items)) suggestItems = suggests.data.items;
+                    else if (Array.isArray(suggests.items)) suggestItems = suggests.items;
+                    else if (suggests.data && suggests.data.data && Array.isArray(suggests.data.data)) suggestItems = suggests.data.data;
+                }
             } catch (e: any) {
                 const errData = e.response?.data || e.message;
-                this.logger.warn("MISSION_ERROR_IGNORED: GetFriendSuggests", { ...ctx, error: errData, status: e.response?.status });
+                this.logger.warn("MISSION_ERROR_IGNORED: searchFriends", { ...ctx, error: errData, status: e.response?.status });
             }
 
-            if (suggests?.data && Array.isArray(suggests.data.items) && suggests.data.items.length > 0) {
-                const toAdd = suggests.data.items.slice(0, 3);
+            if (suggestItems && suggestItems.length > 0) {
+                const toAdd = suggestItems.slice(0, 3);
                 for (const user of toAdd) {
-                    const receiverId = user.userId || user.id;
+                    const receiverId = user.userId || user.accountId || user.id;
                     if (receiverId) {
                         await this.doMission(`SendFriendRequest_${receiverId}`, () =>
                             FriendApiService.sendFriendRequest(accessToken, String(receiverId), h, this.proxyAgent), ctx);

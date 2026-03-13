@@ -8,6 +8,7 @@ export function isNetworkError(err: any): boolean {
         msg.includes("socket disconnected") ||
         msg.includes("TLS") ||
         msg.includes("aborted") ||
+        msg.includes("Proxy connection ended before receiving CONNECT response") ||
         status === 502 ||
         status === 503 ||
         status === 504;

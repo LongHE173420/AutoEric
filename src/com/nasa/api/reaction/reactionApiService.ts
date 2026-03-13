@@ -11,7 +11,7 @@ export class ReactionApiService {
     }
 
     static async removeReaction(accessToken: string, postId: string, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/v1/posts/reaction/remove`, { postId }, {
+        return axios.post(`${ENV.KONG_URL}/api/posts/reaction/remove`, { postId }, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });

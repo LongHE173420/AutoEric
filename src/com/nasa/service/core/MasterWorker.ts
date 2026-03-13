@@ -1,4 +1,3 @@
-import { getDeviceId } from "../../utils/device";
 import { EricWorker } from "./EricWorker";
 import { Log } from "../../utils/log";
 import { ProxyManager } from "./ProxyManager";
@@ -14,12 +13,9 @@ export type LoginSummary = {
 type AppLogger = ReturnType<typeof Log.getLogger>;
 
 export class MasterWorker {
-    private readonly defaultDeviceId: string;
-
     constructor(
         private readonly logger: AppLogger
     ) {
-        this.defaultDeviceId = getDeviceId();
     }
 
     async run(accounts: any[], proxyManager?: ProxyManager): Promise<LoginSummary> {
@@ -35,7 +31,7 @@ export class MasterWorker {
             this.logger.info("Starting login flow for accounts...");
 
             summary.accounts = accounts.length;
-            this.logger.debug("ACCOUNTS_LOADED", { accounts: accounts.length, deviceId: this.defaultDeviceId });
+            this.logger.debug("ACCOUNTS_LOADED", { accounts: accounts.length });
 
             const BATCH_SIZE = 2;
             for (let i = 0; i < accounts.length; i += BATCH_SIZE) {
@@ -45,7 +41,6 @@ export class MasterWorker {
                         const worker = new EricWorker(
                             acc,
                             this.logger,
-                            this.defaultDeviceId,
                             i + idx + 1,
                             proxyManager
                         );
