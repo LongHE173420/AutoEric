@@ -2,6 +2,8 @@ import axios from 'axios';
 import { ENV } from '../../config/env';
 import { buildHeaders } from '../../utils/headers';
 
+const buildPayload = (data: any) => typeof data === 'string' ? data : JSON.stringify(data).replace(/"(id|postId|commentId|parentId|userId|accountId|surfId|senderId|receiverId)"\s*:\s*"(\d+)"/g, '"$1":$2');
+
 export class FriendApiService {
 
     static async getFollowers(accessToken: string, userId: string, headers = buildHeaders(), limit = 10, offset = 0, agent?: any) {
@@ -43,16 +45,16 @@ export class FriendApiService {
         });
     }
 
-    static async sendFriendRequest(accessToken: string, receiverId: string, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/friend/requests`, { receiverId }, {
-            headers: { ...headers, Authorization: `Bearer ${accessToken}` },
+    static async sendFriendRequest(accessToken: string, receiverId: string | number, headers = buildHeaders(), agent?: any) {
+        return axios.post(`${ENV.KONG_URL}/api/friend/requests`, buildPayload({ receiverId: String(receiverId) }), {
+            headers: { ...headers, Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
             httpsAgent: agent
         });
     }
 
     static async acceptFriendRequest(accessToken: string, senderId: string, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/friend/requests/accept`, { senderId }, {
-            headers: { ...headers, Authorization: `Bearer ${accessToken}` },
+        return axios.post(`${ENV.KONG_URL}/api/friend/requests/accept`, buildPayload({ senderId }), {
+            headers: { ...headers, Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
             httpsAgent: agent
         });
     }

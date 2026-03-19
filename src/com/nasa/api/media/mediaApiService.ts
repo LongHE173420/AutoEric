@@ -3,12 +3,12 @@ import { ENV } from '../../config/env';
 import { buildHeaders } from '../../utils/headers';
 
 export class MediaApiService {
-    static async uploadMedia(accessToken: string, formData: FormData, headers = buildHeaders(), agent?: any) {
+    static async uploadMedia(accessToken: string, formData: any, headers = buildHeaders(), agent?: any) {
         return axios.post(`${ENV.KONG_URL}/api/media/upload`, formData, {
             headers: {
                 ...headers,
                 Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'multipart/form-data'
+                ...(formData.getHeaders ? formData.getHeaders() : { 'Content-Type': 'multipart/form-data' })
             },
             httpsAgent: agent
         });

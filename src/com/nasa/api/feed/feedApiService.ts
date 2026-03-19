@@ -2,44 +2,46 @@ import axios from 'axios';
 import { ENV } from '../../config/env';
 import { buildHeaders } from '../../utils/headers';
 
+const buildPayload = (data: any) => typeof data === 'string' ? data : JSON.stringify(data).replace(/"(id|postId|commentId|parentId|userId|accountId|surfId|senderId|receiverId)"\s*:\s*"(\d+)"/g, '"$1":$2');
+
 export class FeedApiService {
     static async createPost(accessToken: string, postData: any, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/posts/create`, postData, {
+        return axios.post(`${ENV.KONG_URL}/api/posts/create`, buildPayload(postData), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
     }
 
     static async updatePost(accessToken: string, postData: any, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/posts/update`, postData, {
+        return axios.post(`${ENV.KONG_URL}/api/posts/update`, buildPayload(postData), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
     }
 
-    static async deletePost(accessToken: string, postId: number, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/posts/delete`, { id: postId }, {
+    static async deletePost(accessToken: string, postId: string | number, headers = buildHeaders(), agent?: any) {
+        return axios.post(`${ENV.KONG_URL}/api/posts/delete`, buildPayload({ id: String(postId) }), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
     }
 
-    static async hidePost(accessToken: string, postId: number, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/posts/hide`, { id: postId }, {
+    static async hidePost(accessToken: string, postId: string | number, headers = buildHeaders(), agent?: any) {
+        return axios.post(`${ENV.KONG_URL}/api/posts/hide`, buildPayload({ id: String(postId) }), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
     }
 
-    static async repostPost(accessToken: string, id: number, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/posts/repost`, { id }, {
+    static async repostPost(accessToken: string, id: string | number, headers = buildHeaders(), agent?: any) {
+        return axios.post(`${ENV.KONG_URL}/api/posts/repost`, buildPayload({ id: String(id) }), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
     }
 
-    static async reportPost(accessToken: string, id: number, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/posts/report`, { id }, {
+    static async reportPost(accessToken: string, id: string | number, headers = buildHeaders(), agent?: any) {
+        return axios.post(`${ENV.KONG_URL}/api/posts/report`, buildPayload({ id: String(id) }), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             httpsAgent: agent
         });
@@ -89,9 +91,21 @@ export class FeedApiService {
     }
 
     static async getFeedHome(accessToken: string, headers = buildHeaders(), postId = "", createdAt = Date.now(), limit = 10, agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/feed/home`, { postId, createdAt, limit }, {
+        return axios.post(`${ENV.KONG_URL}/api/feed/home`, buildPayload({ postId, createdAt, limit }), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            httpsAgent: agent
+            httpsAgent: agent,
+            transformResponse: [(data) => {
+                if (typeof data === 'string') {
+                    // Prevent large number precision loss by wrapping IDs in quotes
+                    const transformed = data.replace(/"(id|postId|commentId|parentId|userId|accountId|surfId|senderId|receiverId)"\s*:\s*(\d+)/g, '"$1": "$2"');
+                    try {
+                        return JSON.parse(transformed);
+                    } catch (e) {
+                        return data;
+                    }
+                }
+                return data;
+            }]
         });
     }
 
@@ -107,7 +121,19 @@ export class FeedApiService {
         return axios.get(`${ENV.KONG_URL}/api/feed/home-free`, {
             headers: { ...headers },
             params: { limit, offset },
-            httpsAgent: agent
+            httpsAgent: agent,
+            transformResponse: [(data) => {
+                if (typeof data === 'string') {
+                    // Prevent large number precision loss by wrapping IDs in quotes
+                    const transformed = data.replace(/"(id|postId|commentId|parentId|userId|accountId)"\s*:\s*(\d+)/g, '"$1": "$2"');
+                    try {
+                        return JSON.parse(transformed);
+                    } catch (e) {
+                        return data;
+                    }
+                }
+                return data;
+            }]
         });
     }
 }

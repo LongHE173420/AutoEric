@@ -62,7 +62,8 @@ export const ENV = {
   DB_HOST: str("DB_HOST", "127.0.0.1"),
   DB_USER: str("DB_USER", "root"),
   DB_PASS: str("DB_PASS", "Long2002@"),
-  DB_NAME: str("DB_NAME", "auth_service")
+  DB_NAME: str("DB_NAME", "auth_service"),
+
 };
 
 export type Env = typeof ENV;

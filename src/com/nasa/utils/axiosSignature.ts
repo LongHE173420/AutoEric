@@ -45,10 +45,16 @@ export function applyStandardInterceptors(axiosInstance: AxiosInstance | any, de
             if (!hasHeader("X-Forwarded-Proto")) setHeader("X-Forwarded-Proto", "https");
 
             let body = "";
-            if (config.data && typeof config.data === 'object') {
-                body = config.data.constructor.name === "FormData" ? '' : JSON.stringify(config.data);
-            } else {
-                body = config.data || '';
+            if (config.data) {
+                if (typeof config.data === 'string') {
+                    // It's already a string (possibly our manually constructed JSON)
+                    // The backend might parse and re-stringify without spaces.
+                    body = config.data;
+                } else if (config.data.constructor && config.data.constructor.name === "FormData") {
+                    body = '';
+                } else if (typeof config.data === 'object') {
+                    body = JSON.stringify(config.data);
+                }
             }
 
             const timestamp = Math.floor(Date.now() / 1000).toString();

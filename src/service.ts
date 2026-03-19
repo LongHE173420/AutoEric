@@ -1,9 +1,9 @@
 import { ENV } from "./com/nasa/config/env";
 import { cleanupOldLogs, getTodayLogPath, Log } from "./com/nasa/utils/log";
-import { MasterWorker } from "./com/nasa/service/core/MasterWorker";
+import { MasterWorker } from "./com/nasa/worker/MasterWorker";
 import axios from "axios";
 import { applyStandardInterceptors } from "./com/nasa/utils/axiosSignature";
-import { ProxyManager } from "./com/nasa/service/core/ProxyManager";
+import { ProxyManager } from "./com/nasa/core/ProxyManager";
 import { getAccountsFromDb } from "./com/nasa/data/mysqlStore";
 
 applyStandardInterceptors(axios, "global-system");
@@ -61,7 +61,7 @@ async function runOnce(reason: string) {
         userAgent: acc.userAgent,
         accessToken: acc.accessToken,
         refreshToken: acc.refreshToken,
-        //proxy: await proxyManager.getWorkingProxy() || undefined
+        proxy: await proxyManager.getWorkingProxy() || undefined
       });
     }
 
@@ -89,6 +89,7 @@ async function runOnce(reason: string) {
 
 export async function startService() {
   try {
+
     await runOnce("startup");
 
     if (!ENV.RUN_ONCE) {

@@ -1,7 +1,7 @@
 import { EricWorker } from "./EricWorker";
-import { Log } from "../../utils/log";
-import { ProxyManager } from "./ProxyManager";
-import { recordRunInDb } from "../../data/mysqlStore";
+import { Log } from "../utils/log";
+import { ProxyManager } from "../core/ProxyManager";
+import { recordRunInDb } from "../data/mysqlStore";
 
 export type LoginSummary = {
     success: number;

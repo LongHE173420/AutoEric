@@ -22,7 +22,7 @@ export const STATUS_TEXTS = [
     "Công việc thật sự áp lực nhưng sẽ cố gắng!"
 ];
 
-export const REACTION_TYPES = ["LIKE", "LOVE", "HAHA", "WOW", "SAD", "ANGRY"];
+export const REACTION_TYPES = ["WOW", "ANGRY", "BORED", "SMILE", "SAD", "FUNNY", "LIKE", "EMPATHETIC"];
 
 export function getRandomComment(): string {
     return COMMENT_TEXTS[Math.floor(Math.random() * COMMENT_TEXTS.length)];

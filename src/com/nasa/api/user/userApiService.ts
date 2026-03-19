@@ -43,7 +43,19 @@ export class UserApiService {
         return axios.get(`${ENV.KONG_URL}/api/user/search`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             params: { keyword, hometown, education, workplace, limit, offset },
-            httpsAgent: agent
+            httpsAgent: agent,
+            transformResponse: [(data) => {
+                if (typeof data === 'string') {
+                    // Prevent large number precision loss by wrapping IDs in quotes
+                    const transformed = data.replace(/"(userId|accountId|id|senderId|receiverId)"\s*:\s*(\d+)/g, '"$1": "$2"');
+                    try {
+                        return JSON.parse(transformed);
+                    } catch (e) {
+                        return data;
+                    }
+                }
+                return data;
+            }]
         });
     }
 }
