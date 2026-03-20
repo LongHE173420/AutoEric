@@ -3,7 +3,6 @@ import * as path from "path";
 import { MediaApiService } from "../../api/media/mediaApiService";
 import { PostApiService } from "../../api/post/postApiService";
 import { deleteVideoFromQueue, getNextVideoToPost, markVideoPosted } from "../../data/mysqlStore";
-import { getRandomStatus } from "../../utils/botContent";
 import { Log } from "../../utils/log";
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegInstaller = require("@ffmpeg-installer/ffmpeg");
@@ -318,7 +317,7 @@ export class PostService {
 
                 const completePayload = {
                     id: String(postId),
-                    content: this.createPostContent(video.caption || getRandomStatus(), layout),
+                    content: this.createPostContent("", layout),
                     type: "POST",
                     privacy: "PUBLIC",
                     hashtags: this.normalizeArrayString(video.hashtags),
@@ -380,9 +379,8 @@ export class PostService {
         }
 
         this.logger.info("NO_VIDEO_AVAILABLE_FALLBACK_TEXT", ctx);
-        const t = getRandomStatus();
         const postPayload = {
-            content: this.createPostContent(t, null),
+            content:"[]",
             type: "POST",
             privacy: "PUBLIC",
             hashtags: "[]",

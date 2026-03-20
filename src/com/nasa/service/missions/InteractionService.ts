@@ -1,8 +1,6 @@
 import { FeedApiService } from "../../api/feed/feedApiService";
 import { SurfApiService } from "../../api/surf/surfApiService";
 import { ReactionApiService } from "../../api/reaction/reactionApiService";
-import { CommentApiService } from "../../api/comment/commentApiService";
-import { getRandomComment } from "../../utils/botContent";
 import { Log } from "../../utils/log";
 
 type AppLogger = ReturnType<typeof Log.getLogger>;
@@ -92,9 +90,6 @@ export class InteractionService {
                 
                 const rType = "LIKE";
                 await doMission(`PostReaction_${postId}`, () => ReactionApiService.sendReaction(accessToken, postId, rType, h, this.proxyAgent), ctx);
-                
-                const cText = getRandomComment();
-                await doMission(`PostComment_${postId}`, () => CommentApiService.createComment(accessToken, { postId, content: cText }, h, this.proxyAgent), ctx);
                 
                 await doMission(`PostShare_${postId}`, () => FeedApiService.repostPost(accessToken, postId, h, this.proxyAgent), ctx);
             }
