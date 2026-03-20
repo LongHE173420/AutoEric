@@ -1,0 +1,97 @@
+{"level":20,"time":"02:04:44.344","logger":"LoginService","config":{"KONG_URL":"https://social.eric.pro.vn","INTERVAL_MS":60000,"RUN_ONCE":false,"AUTO_FETCH_OTP":true,"AUTO_RESEND":true,"OTP_TIMEOUT_MS":30000,"OTP_POLL_MS":300,"OTP_VERIFY_RETRY":5,"VERIFY_WINDOW_MS":10000,"RESEND_WINDOW_MS":10000,"MAX_RESEND":2,"OTP_DEBUG_PATH_REDIS":"/auth/debug/redis-otp","LOG_LEVEL":"debug","LOG_VERBOSE":false,"UPSTASH_REDIS_REST_URL":"","UPSTASH_REDIS_REST_TOKEN":""},"msg":"Service_CONFIG"}
+{"level":20,"time":"02:04:44.344","logger":"LoginService","reason":"startup","msg":"JOB_START"}
+{"level":20,"time":"02:04:44.396","logger":"LoginService","msg":"Loaded 2 accounts from database."}
+{"level":30,"time":"02:04:44.396","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":20,"time":"02:04:44.396","logger":"LoginService","accounts":2,"msg":"ACCOUNTS_LOADED"}
+{"level":30,"time":"02:04:44.397","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"02:04:44.411","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"02:04:44.851","logger":"LoginService","phone":"yivamag857@him6.com","error":"Request failed with status code 401","status":401,"data":"Invalid JWT signature or expired","msg":"GET_ME_ERROR_DETAIL"}
+{"level":30,"time":"02:04:44.881","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"02:04:45.027","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ProfileMe"}
+{"level":20,"time":"02:04:45.213","logger":"LoginService","msg":"LOGIN_PASS_SUCCESS"}
+{"level":30,"time":"02:04:45.247","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"02:04:45.361","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: Missions"}
+{"level":30,"time":"02:04:45.432","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: ProfileMe"}
+{"level":30,"time":"02:04:45.531","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: MyFriends"}
+{"level":30,"time":"02:04:45.637","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: Missions"}
+{"level":30,"time":"02:04:45.739","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: Notifications"}
+{"level":30,"time":"02:04:45.739","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","reactionCodes":["LIKE"],"msg":"REACTION_CODES_READY"}
+{"level":30,"time":"02:04:45.810","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: MyFriends"}
+{"level":30,"time":"02:04:45.971","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: Notifications"}
+{"level":30,"time":"02:04:45.971","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","reactionCodes":["LIKE"],"msg":"REACTION_CODES_READY"}
+{"level":30,"time":"02:04:45.989","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: FeedHome_Page_1"}
+{"level":30,"time":"02:04:46.177","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: FeedHome_Page_1"}
+{"level":30,"time":"02:04:47.469","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: FeedHome_Page_2"}
+{"level":30,"time":"02:04:48.275","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: FeedHome_Page_2"}
+{"level":30,"time":"02:04:48.559","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: FeedHome_Page_3"}
+{"level":30,"time":"02:04:48.760","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: SurfHome"}
+{"level":30,"time":"02:04:48.761","logger":"LoginService","itemsLength":21,"pagesScrolled":3,"msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"02:04:48.761","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","parsedItemCount":5,"msg":"MISSION_ACTION_DEPENDENT_START"}
+{"level":40,"time":"02:04:49.016","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_293056882736771072"}
+{"level":30,"time":"02:04:49.356","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: PostComment_293056882736771072"}
+{"level":30,"time":"02:04:49.587","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: PostShare_293056882736771072"}
+{"level":40,"time":"02:04:49.793","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_293062698135072768"}
+{"level":30,"time":"02:04:49.951","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: PostComment_293062698135072768"}
+{"level":30,"time":"02:04:50.114","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: PostShare_293062698135072768"}
+{"level":30,"time":"02:04:50.259","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: FeedHome_Page_3"}
+{"level":40,"time":"02:04:50.315","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_292989096874356736"}
+{"level":30,"time":"02:04:50.424","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: SurfHome"}
+{"level":30,"time":"02:04:50.424","logger":"LoginService","itemsLength":30,"pagesScrolled":3,"msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"02:04:50.424","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","parsedItemCount":5,"msg":"MISSION_ACTION_DEPENDENT_START"}
+{"level":30,"time":"02:04:50.517","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: PostComment_292989096874356736"}
+{"level":30,"time":"02:04:50.625","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: PostReaction_293064454717976576"}
+{"level":30,"time":"02:04:50.695","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: PostShare_292989096874356736"}
+{"level":30,"time":"02:04:50.762","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: PostComment_293064454717976576"}
+{"level":40,"time":"02:04:50.878","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_293043860693725184"}
+{"level":30,"time":"02:04:50.946","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: PostShare_293064454717976576"}
+{"level":30,"time":"02:04:51.014","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: PostComment_293043860693725184"}
+{"level":40,"time":"02:04:51.096","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_293019006074499072"}
+{"level":30,"time":"02:04:51.171","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: PostShare_293043860693725184"}
+{"level":30,"time":"02:04:51.224","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: PostComment_293019006074499072"}
+{"level":40,"time":"02:04:51.372","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_293064460120240128"}
+{"level":30,"time":"02:04:51.384","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: PostShare_293019006074499072"}
+{"level":30,"time":"02:04:51.516","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: PostComment_293064460120240128"}
+{"level":40,"time":"02:04:51.571","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_292989096874356736"}
+{"level":30,"time":"02:04:51.675","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: PostShare_293064460120240128"}
+{"level":30,"time":"02:04:51.692","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","videoId":469,"source":"https://www.tiktok.com/@theanh28entertainment/video/7618562637466569991","attempt":1,"msg":"VIDEO_POST_START"}
+{"level":30,"time":"02:04:51.695","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: PostComment_292989096874356736"}
+{"level":30,"time":"02:04:51.845","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: PostShare_292989096874356736"}
+{"level":40,"time":"02:04:52.024","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_292296766475350016"}
+{"level":30,"time":"02:04:52.127","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","postId":"293203207214215168","msg":"VIDEO_POST_ID_GENERATED"}
+{"level":30,"time":"02:04:52.127","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","postId":"293203207214215168","fileName":"tt_raw_7618562637466569991.mp4","fileSizeBytes":4842429,"thumbnailFileName":"tt_raw_7618562637466569991.jpg","uploadMode":"presigned+complete","width":1080,"height":1920,"duration":99.666667,"msg":"VIDEO_UPLOAD_REQUEST_PREPARED"}
+{"level":30,"time":"02:04:52.150","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: PostComment_292296766475350016"}
+{"level":30,"time":"02:04:52.295","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: PostShare_292296766475350016"}
+{"level":40,"time":"02:04:52.483","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_293049252622512128"}
+{"level":30,"time":"02:04:52.670","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: PostComment_293049252622512128"}
+{"level":30,"time":"02:04:52.836","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: PostShare_293049252622512128"}
+{"level":30,"time":"02:04:52.851","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","videoId":470,"source":"https://www.tiktok.com/@vtvcab.tintuc/video/7618775898078055696","attempt":1,"msg":"VIDEO_POST_START"}
+{"level":30,"time":"02:04:53.109","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","filePath":"tt_raw_7618562637466569991.jpg","uploadAttempt":"post-multipart-file","msg":"VIDEO_THUMBNAIL_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:04:53.135","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","postId":"293203211475628032","msg":"VIDEO_POST_ID_GENERATED"}
+{"level":30,"time":"02:04:53.135","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","postId":"293203211475628032","fileName":"tt_raw_7618775898078055696.mp4","fileSizeBytes":1806560,"thumbnailFileName":"tt_raw_7618775898078055696.jpg","uploadMode":"presigned+complete","width":720,"height":1280,"duration":38.166667,"msg":"VIDEO_UPLOAD_REQUEST_PREPARED"}
+{"level":30,"time":"02:04:53.778","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","filePath":"tt_raw_7618775898078055696.jpg","uploadAttempt":"post-multipart-file","msg":"VIDEO_THUMBNAIL_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:04:54.395","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","filePath":"tt_raw_7618562637466569991.mp4","uploadAttempt":"post-multipart-file","msg":"VIDEO_FILE_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:04:54.396","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","postId":"293203207214215168","msg":"VIDEO_POST_COMPLETE_REQUEST"}
+{"level":30,"time":"02:04:54.551","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","filePath":"tt_raw_7618775898078055696.mp4","uploadAttempt":"post-multipart-file","msg":"VIDEO_FILE_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:04:54.552","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","postId":"293203211475628032","msg":"VIDEO_POST_COMPLETE_REQUEST"}
+{"level":30,"time":"02:04:54.624","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","postId":"293203207214215168","status":201,"msg":"VIDEO_POST_COMPLETE_RESPONSE"}
+{"level":30,"time":"02:04:54.659","logger":"LoginService","videoId":469,"msg":"SOURCE_VIDEO_DELETED_AFTER_MAX_POSTS"}
+{"level":30,"time":"02:04:54.659","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: CreateVideoPost"}
+{"level":30,"time":"02:04:54.724","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","postId":"293203211475628032","status":201,"msg":"VIDEO_POST_COMPLETE_RESPONSE"}
+{"level":30,"time":"02:04:54.750","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: CreateVideoPost"}
+{"level":30,"time":"02:04:54.793","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: BackgroundColor"}
+{"level":30,"time":"02:04:54.895","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: BackgroundColor"}
+{"level":30,"time":"02:04:54.974","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: ReactionList"}
+{"level":30,"time":"02:04:55.039","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: ReactionList"}
+{"level":30,"time":"02:04:55.132","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"OK: GetReceivedFriendRequests"}
+{"level":30,"time":"02:04:55.132","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"TRYING_KEYWORD: thang (Attempt 1)"}
+{"level":30,"time":"02:04:55.203","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: GetReceivedFriendRequests"}
+{"level":30,"time":"02:04:55.203","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"TRYING_KEYWORD: thang (Attempt 1)"}
+{"level":30,"time":"02:04:55.355","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","total":1,"users":[{"userId":"864691128455285276","name":"Tieu Cong Thang","friendshipStatus":"FRIENDS"}],"msg":"FRIEND_SEARCH_RESULTS"}
+{"level":30,"time":"02:04:55.356","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","total":1,"users":[{"userId":"864691128455285276","name":"Tieu Cong Thang","friendshipStatus":"FRIENDS"}],"msg":"ALREADY_FRIENDS_LIST"}
+{"level":30,"time":"02:04:55.356","logger":"LoginService","row":1,"phone":"xabay92980@keecs.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"02:04:55.684","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","total":1,"users":[{"userId":"864691128455285276","name":"Tieu Cong Thang","friendshipStatus":"NONE"}],"msg":"FRIEND_SEARCH_RESULTS"}
+{"level":30,"time":"02:04:56.855","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"OK: SendFriendRequest_864691128455285276"}
+{"level":30,"time":"02:04:56.856","logger":"LoginService","row":2,"phone":"yivamag857@him6.com","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":20,"time":"02:04:56.880","logger":"LoginService","summary":{"success":2,"alreadyOk":1,"relogin":1,"fail":0,"accounts":2},"msg":"JOB_SUMMARY"}
+{"level":20,"time":"02:04:56.880","logger":"LoginService","summary":{"success":2,"alreadyOk":1,"relogin":1,"fail":0,"accounts":2},"msg":"JOB_DONE"}
+{"level":30,"time":"02:04:56.880","logger":"LoginService","msg":"LOGIN summary: success=2 alreadyOk=1 relogin=1 fail=0"}

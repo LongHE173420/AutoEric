@@ -61,7 +61,7 @@ async function runOnce(reason: string) {
         userAgent: acc.userAgent,
         accessToken: acc.accessToken,
         refreshToken: acc.refreshToken,
-        proxy: await proxyManager.getWorkingProxy() || undefined
+        //proxy: await proxyManager.getWorkingProxy() || undefined
       });
     }
 

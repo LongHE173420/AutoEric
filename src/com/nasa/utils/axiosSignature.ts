@@ -17,10 +17,7 @@ export function applyStandardInterceptors(axiosInstance: AxiosInstance | any, de
                 path = urlObj.pathname + urlObj.search;
             }
 
-            // Set mandatory headers first
             config.headers = config.headers || {};
-
-            // Apply standard identity headers if not already set
             const setHeader = (key: string, value: string) => {
                 if (typeof config.headers.set === "function") {
                     config.headers.set(key, value);
@@ -45,16 +42,27 @@ export function applyStandardInterceptors(axiosInstance: AxiosInstance | any, de
             if (!hasHeader("X-Forwarded-Proto")) setHeader("X-Forwarded-Proto", "https");
 
             let body = "";
-            if (config.data) {
-                if (typeof config.data === 'string') {
-                    // It's already a string (possibly our manually constructed JSON)
-                    // The backend might parse and re-stringify without spaces.
-                    body = config.data;
-                } else if (config.data.constructor && config.data.constructor.name === "FormData") {
+            let contentType = "";
+            for (const key of Object.keys(config.headers)) {
+                if (key.toLowerCase() === 'content-type') contentType = String(config.headers[key]);
+            }
+
+            if (contentType.includes("multipart/form-data")) {
+                body = "";
+            } else if (contentType.includes("application/json")) {
+                if (config.data !== undefined && config.data !== null) {
+                    body = typeof config.data === "string" ? config.data : JSON.stringify(config.data);
+                }
+            } else if (config.data && typeof config.data === "object") {
+
+                if (config.data.constructor && config.data.constructor.name === "FormData") {
                     body = '';
-                } else if (typeof config.data === 'object') {
+                } else {
                     body = JSON.stringify(config.data);
                 }
+            } else if (config.data !== undefined && config.data !== null) {
+
+                body = String(config.data);
             }
 
             const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -78,6 +86,7 @@ export function applyStandardInterceptors(axiosInstance: AxiosInstance | any, de
 
             const rawData = method + "|" + path + "|" + timestamp + "|" + body;
             const signature = getSignature(rawData, token);
+
             console.log(`[AxiosSignature] ${method} ${path} -> Sign: ${signature} (Device: ${actualDeviceId})`);
 
             setHeader("X-Timestamp", timestamp);
@@ -85,6 +94,21 @@ export function applyStandardInterceptors(axiosInstance: AxiosInstance | any, de
             if (!hasHeader("Idempotency-Key")) {
                 setHeader("Idempotency-Key", uuidv4());
             }
+
+            config.__signatureDebug = {
+                method,
+                path,
+                timestamp,
+                signature,
+                deviceId: actualDeviceId,
+                clientType: typeof config.headers.get === "function" ? config.headers.get("X-Client-Type") : (config.headers["X-Client-Type"] || config.headers["x-client-type"]),
+                forwardedProto: typeof config.headers.get === "function" ? config.headers.get("X-Forwarded-Proto") : (config.headers["X-Forwarded-Proto"] || config.headers["x-forwarded-proto"]),
+                language: typeof config.headers.get === "function" ? config.headers.get("Accept-Language") : config.headers["Accept-Language"],
+                contentType,
+                contentLength: typeof config.headers.get === "function" ? config.headers.get("Content-Length") : (config.headers["Content-Length"] || config.headers["content-length"]),
+                hasAuthorization: !!token,
+                bodyPreview: body ? String(body).slice(0, 500) : ""
+            };
 
             return config;
         },

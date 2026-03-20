@@ -130,6 +130,20 @@ export async function markVideoPosted(
 }
 
 /** Dọn dẹp file local của các video đã đăng đủ số lần (safety net) */
+export async function deleteVideoFromQueue(videoId: number): Promise<void> {
+    const conn = await getConnection();
+    try {
+        await conn.execute(
+            `UPDATE crawled_videos
+             SET local_path = NULL, downloaded = 0
+             WHERE id = ?`,
+            [videoId]
+        );
+    } finally {
+        await conn.end();
+    }
+}
+
 export async function cleanupFullyPostedVideos(): Promise<number> {
     const conn = await getConnection();
     try {

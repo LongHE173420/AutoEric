@@ -142,15 +142,69 @@ export class EricWorker {
         return true;
     }
 
+    private extractBackendErrorDetail(data: any) {
+        const raw =
+            typeof data === "string"
+                ? data
+                : data !== undefined
+                    ? JSON.stringify(data)
+                    : "";
+
+        const message =
+            data?.message ||
+            data?.error ||
+            data?.detail ||
+            data?.msg ||
+            data?.data?.message ||
+            data?.data?.error ||
+            "";
+
+        const code =
+            data?.code ||
+            data?.errorCode ||
+            data?.statusCode ||
+            data?.data?.code ||
+            data?.data?.errorCode ||
+            "";
+
+        const errors =
+            data?.errors ||
+            data?.data?.errors ||
+            data?.violations ||
+            data?.data?.violations ||
+            undefined;
+
+        return {
+            backendMessage: message || undefined,
+            backendCode: code || undefined,
+            backendErrors: errors,
+            backendRaw: raw ? raw.slice(0, 1500) : undefined,
+        };
+    }
+
     private async doMission(name: string, action: () => Promise<any>, ctx: any) {
         try {
             await action();
             this.logger.info(`OK: ${name}`, ctx);
         } catch (e: any) {
             const status = e.response?.status;
-            if (status === 400 || status === 404) {
-                this.logger.warn(`MISSION_IGNORED (${status}): ${name}`, { ...ctx });
+            const backendError = this.extractBackendErrorDetail(e.response?.data);
+            if (status === 400 || status === 403 || status === 404) {
+                this.logger.warn(`MISSION_IGNORED (${status}): ${name}`, {
+                    ...ctx,
+                    detail: e.response?.data,
+                    ...backendError,
+                    failedUrl: e.config?.url
+                });
                 return;
+            }
+            if (status >= 500) {
+                this.logger.error(`MISSION_FAILED (${status}): ${name}`, {
+                    ...ctx,
+                    detail: e.response?.data,
+                    ...backendError,
+                    failedUrl: e.config?.url
+                });
             }
             if (isNetworkError(e) && this.acc.proxy) {
                 if (await this.switchProxy(ctx)) {

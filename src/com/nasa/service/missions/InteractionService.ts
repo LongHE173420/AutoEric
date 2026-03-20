@@ -2,7 +2,7 @@ import { FeedApiService } from "../../api/feed/feedApiService";
 import { SurfApiService } from "../../api/surf/surfApiService";
 import { ReactionApiService } from "../../api/reaction/reactionApiService";
 import { CommentApiService } from "../../api/comment/commentApiService";
-import { getRandomComment, getRandomReaction } from "../../utils/botContent";
+import { getRandomComment } from "../../utils/botContent";
 import { Log } from "../../utils/log";
 
 type AppLogger = ReturnType<typeof Log.getLogger>;
@@ -14,10 +14,34 @@ export class InteractionService {
         private readonly proxyAgent: any
     ) {}
 
+    private extractReactionCodes(payload: any): string[] {
+        const candidates: any[] = [];
+
+        if (Array.isArray(payload)) candidates.push(...payload);
+        if (Array.isArray(payload?.data)) candidates.push(...payload.data);
+        if (Array.isArray(payload?.data?.data)) candidates.push(...payload.data.data);
+        if (Array.isArray(payload?.data?.items)) candidates.push(...payload.data.items);
+        if (Array.isArray(payload?.items)) candidates.push(...payload.items);
+
+        const codes = candidates
+            .map((item) => String(
+                item?.reactionTypeCode ||
+                item?.code ||
+                item?.type ||
+                item?.name ||
+                ""
+            ).trim().toUpperCase())
+            .filter(Boolean);
+
+        return Array.from(new Set(codes));
+    }
+
     async handleFeedAndInteract(accessToken: string, h: any, ctx: any, doMission: Function) {
         let allItems: any[] = [];
         let lastPostId = "";
         let lastCreatedAt = Date.now();
+        const reactionCodes = ["LIKE"];
+        this.logger.info("REACTION_CODES_READY", { ...ctx, reactionCodes });
 
         for (let page = 0; page < 3; page++) {
             await doMission(`FeedHome_Page_${page + 1}`, async () => {
@@ -66,7 +90,7 @@ export class InteractionService {
                 const post = interactItems[i];
                 const postId = post.id;
                 
-                const rType = getRandomReaction();
+                const rType = "LIKE";
                 await doMission(`PostReaction_${postId}`, () => ReactionApiService.sendReaction(accessToken, postId, rType, h, this.proxyAgent), ctx);
                 
                 const cText = getRandomComment();

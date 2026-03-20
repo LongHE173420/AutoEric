@@ -81,7 +81,35 @@ const multistream = (pino as any).multistream as (streams: any[]) => any;
 
 export class Log {
   private static root: PinoLogger;
+  private static consoleRoot?: PinoLogger;
+  private static fileRoot?: PinoLogger;
   private static initialized = false;
+
+  private static shouldWriteToFile(msg: string) {
+    return !(
+      msg.includes("_PRESIGNED_REQUEST") ||
+      msg.includes("_PRESIGNED_RESPONSE") ||
+      msg === "VIDEO_POST_CREATE_REQUEST"
+    );
+  }
+
+  private static compactForFile(msg: string, obj?: any) {
+    if (!obj || typeof obj !== "object") return obj;
+
+    const clone: any = { ...obj };
+    delete clone.payload;
+    delete clone.responseData;
+    delete clone.uploadFields;
+    delete clone.requestDebug;
+    delete clone.requestHeaders;
+    delete clone.responseHeaders;
+
+    if (clone.detail && typeof clone.detail === "object") {
+      clone.detail = "[object]";
+    }
+
+    return clone;
+  }
 
   static init(opts?: {
     appName?: string;
@@ -102,14 +130,17 @@ export class Log {
 
     if (opts?.filePath) {
       const fileStream = pino.destination({ dest: opts.filePath, sync: false });
-      const streams = [{ stream: fileStream }];
+      this.fileRoot = pino(baseConfig, fileStream);
       if (process.env.LOG_CONSOLE === "true" || process.env.LOG_CONSOLE === "1") {
-        streams.push({ stream: pino.destination(1) });
+        this.consoleRoot = pino(baseConfig, pino.destination(1));
       }
+      const streams = [{ stream: fileStream }];
+      if (this.consoleRoot) streams.push({ stream: pino.destination(1) });
       this.root = pino(baseConfig, multistream(streams));
     } else {
       if (process.env.LOG_CONSOLE === "true" || process.env.LOG_CONSOLE === "1") {
-        this.root = pino(baseConfig);
+        this.consoleRoot = pino(baseConfig);
+        this.root = this.consoleRoot;
       } else {
         this.root = pino({ ...baseConfig, level: "silent" });
       }
@@ -124,12 +155,26 @@ export class Log {
     }
 
     const logger = this.root.child({ logger: name });
+    const consoleLogger = this.consoleRoot?.child({ logger: name });
+    const fileLogger = this.fileRoot?.child({ logger: name });
+
+    const write = (level: LogLevel, msg: string, obj?: any) => {
+      if (consoleLogger) {
+        (consoleLogger as any)[level](obj || {}, msg);
+      } else if (!fileLogger) {
+        (logger as any)[level](obj || {}, msg);
+      }
+
+      if (fileLogger && this.shouldWriteToFile(msg)) {
+        (fileLogger as any)[level](this.compactForFile(msg, obj) || {}, msg);
+      }
+    };
 
     return {
-      debug: (msg: string, obj?: any) => logger.debug(obj || {}, msg),
-      info: (msg: string, obj?: any) => logger.info(obj || {}, msg),
-      warn: (msg: string, obj?: any) => logger.warn(obj || {}, msg),
-      error: (msg: string, obj?: any) => logger.error(obj || {}, msg),
+      debug: (msg: string, obj?: any) => write("debug", msg, obj),
+      info: (msg: string, obj?: any) => write("info", msg, obj),
+      warn: (msg: string, obj?: any) => write("warn", msg, obj),
+      error: (msg: string, obj?: any) => write("error", msg, obj),
     };
   }
 }

@@ -9,7 +9,7 @@ export class RelationService {
         private readonly logger: AppLogger,
         private readonly api: any,
         private readonly proxyAgent: any
-    ) {}
+    ) { }
 
     async handleFriendManagement(accessToken: string, h: any, ctx: any, doMission: Function) {
         let receivedReqs: any = null;
@@ -32,7 +32,7 @@ export class RelationService {
         let suggestItems: any[] = [];
         let retryCount = 0;
         const maxRetries = 3;
-        const keywords = ["Anh", "Minh", "Trang", "Hùng", "Bách", "Ngọc", "Linh", "Hải", "Tuấn", "Vy", "Huyền", "Phương", "An"];
+        const keywords = ["thang"];
 
         try {
             while (suggestItems.length === 0 && retryCount < maxRetries) {
@@ -55,6 +55,34 @@ export class RelationService {
             }
         } catch (e: any) {
             this.logger.warn("MISSION_ERROR_IGNORED: searchUsers", { ...ctx, error: e.message });
+        }
+
+        if (suggestItems.length > 0) {
+            const friendUsers = suggestItems
+                .filter(u => u.friendshipStatus === "FRIENDS")
+                .map(u => ({
+                    userId: String(u.userId || u.accountId || u.id || ""),
+                    name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim(),
+                    friendshipStatus: u.friendshipStatus
+                }));
+
+            this.logger.info("FRIEND_SEARCH_RESULTS", {
+                ...ctx,
+                total: suggestItems.length,
+                users: suggestItems.map(u => ({
+                    userId: String(u.userId || u.accountId || u.id || ""),
+                    name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim(),
+                    friendshipStatus: u.friendshipStatus || ""
+                }))
+            });
+
+            if (friendUsers.length > 0) {
+                this.logger.info("ALREADY_FRIENDS_LIST", {
+                    ...ctx,
+                    total: friendUsers.length,
+                    users: friendUsers
+                });
+            }
         }
 
         if (suggestItems.length > 0) {
