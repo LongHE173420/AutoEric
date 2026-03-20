@@ -29,21 +29,7 @@ export class FriendApiService {
         });
     }
 
-    static async searchFriends(accessToken: string, keyword: string, headers = buildHeaders(), limit = 10, offset = 0, agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/friend/search`, {
-            headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            params: { keyword, limit, offset },
-            httpsAgent: agent
-        });
-    }
 
-    static async searchSuggests(accessToken: string, keyword: string, headers = buildHeaders(), limit = 10, offset = 0, agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/friend/search-suggests`, {
-            headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            params: keyword ? { keyword, limit, offset } : { limit, offset },
-            httpsAgent: agent
-        });
-    }
 
     static async sendFriendRequest(accessToken: string, receiverId: string | number, headers = buildHeaders(), agent?: any) {
         return axios.post(`${ENV.KONG_URL}/api/friend/requests`, buildPayload({ receiverId: String(receiverId) }), {
@@ -92,7 +78,18 @@ export class FriendApiService {
         return axios.get(`${ENV.KONG_URL}/api/friend/requests/received`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             params: { limit, offset },
-            httpsAgent: agent
+            httpsAgent: agent,
+            transformResponse: [(data) => {
+                if (typeof data === 'string') {
+                    const transformed = data.replace(/"(userId|accountId|id|senderId|receiverId)"\s*:\s*(\d+)/g, '"$1": "$2"');
+                    try {
+                        return JSON.parse(transformed);
+                    } catch (e) {
+                        return data;
+                    }
+                }
+                return data;
+            }]
         });
     }
 }

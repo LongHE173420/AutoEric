@@ -10,19 +10,11 @@ async function getConnection() {
     });
 }
 
-async function initDbColumns(connection: mysql.Connection) {
-    try {
-        await connection.execute("ALTER TABLE users ADD COLUMN daily_run_count INT DEFAULT 0");
-    } catch (e) { }
-    try {
-        await connection.execute("ALTER TABLE users ADD COLUMN last_run_date DATE");
-    } catch (e) { }
-}
+
 
 export async function getAccountsFromDb(): Promise<any[]> {
     const connection = await getConnection();
     try {
-        await initDbColumns(connection);
         const [rows] = await connection.execute(`
             SELECT phone, password, deviceId, userAgent, accessToken, refreshToken 
             FROM users 
@@ -31,6 +23,53 @@ export async function getAccountsFromDb(): Promise<any[]> {
                OR last_run_date IS NULL
         `);
         return rows as any[];
+    } finally {
+        await connection.end();
+    }
+}
+
+export async function saveAppUserId(phone: string, appUserId: string) {
+    const connection = await getConnection();
+    try {
+        await connection.execute("UPDATE users SET app_user_id = ? WHERE phone = ?", [appUserId, phone]);
+    } catch (e: any) {
+        console.error("Failed to save app_user_id for", phone, e.message);
+    } finally {
+        await connection.end();
+    }
+}
+
+export async function getUsersForFriendRequest(currentPhone: string, limit: number): Promise<any[]> {
+    const connection = await getConnection();
+    try {
+        const [rows] = await connection.execute(`
+            SELECT phone, app_user_id 
+            FROM users 
+            WHERE app_user_id IS NOT NULL 
+              AND phone != ?
+              AND phone NOT IN (
+                  SELECT receiver_phone FROM friend WHERE sender_phone = ?
+                  UNION
+                  SELECT sender_phone FROM friend WHERE receiver_phone = ?
+              )
+            ORDER BY id ASC
+            LIMIT ${Number(limit)}
+        `, [currentPhone, currentPhone, currentPhone]);
+        return rows as any[];
+    } finally {
+        await connection.end();
+    }
+}
+
+export async function recordFriendRequest(senderPhone: string, receiverPhone: string, receiverId: string) {
+    const connection = await getConnection();
+    try {
+        await connection.execute(`
+            INSERT IGNORE INTO friend (sender_phone, receiver_phone, receiver_id, status)
+            VALUES (?, ?, ?, 'PENDING')
+        `, [senderPhone, receiverPhone, receiverId]);
+    } catch (e: any) {
+        console.error("Failed to record friend request", senderPhone, "->", receiverPhone, e.message);
     } finally {
         await connection.end();
     }
@@ -48,7 +87,7 @@ export async function saveTokensToDb(phone: string, accessToken: string, refresh
 export async function recordRunInDb(phone: string) {
     const connection = await getConnection();
     try {
-        await initDbColumns(connection);
+
         await connection.execute(`
             UPDATE users 
             SET 
@@ -170,5 +209,19 @@ export async function cleanupFullyPostedVideos(): Promise<number> {
         return cleaned;
     } finally {
         await conn.end();
+    }
+}
+
+export async function updateFriendRequestStatus(senderId: string, receiverPhone: string, status: string) {
+    const connection = await getConnection();
+    try {
+        await connection.execute(`
+            UPDATE friend f
+            INNER JOIN users u ON u.phone = f.sender_phone
+            SET f.status = ?
+            WHERE f.receiver_phone = ? AND u.app_user_id = ?
+        `, [status, receiverPhone, senderId]);
+    } catch (error) {
+        console.error("Error updating friend request status:", error);
     }
 }

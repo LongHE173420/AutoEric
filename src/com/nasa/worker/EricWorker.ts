@@ -2,7 +2,7 @@ import { AuthServiceApi } from "../api/auth/authApiService";
 import { maskPassword, maskToken, Log } from "../utils/log";
 import { getStoredTokens, setStoredTokens, clearTokensForUser } from "../storage/tokenStore";
 import { getMeWithAutoAuth, loginWithOtpFlow } from "../service/auth/LoginFlowService";
-import { saveTokensToDb } from "../data/mysqlStore";
+import { saveTokensToDb, saveAppUserId } from "../data/mysqlStore";
 import { ProxyManager } from "../core/ProxyManager";
 import { v4 as uuidv4 } from "uuid";
 import { HttpsProxyAgent } from "https-proxy-agent";
@@ -86,6 +86,10 @@ export class EricWorker {
         if (stored) {
             const me = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger, this.proxyAgent);
             if (me.ok) {
+                const userId = me.data?.id || me.data?.userId || me.data?.accountId;
+                if (userId) {
+                    await saveAppUserId(phone, String(userId));
+                }
                 const tokenToUse = getStoredTokens(phone)?.accessToken || stored.accessToken;
                 await this.runMissions(tokenToUse, activeDeviceId, ctx);
                 return { success: true, relogin: false, alreadyOk: true };
@@ -101,6 +105,15 @@ export class EricWorker {
         const final = getStoredTokens(phone);
         if (final?.accessToken && final?.refreshToken) {
             await saveTokensToDb(phone, final.accessToken, final.refreshToken).catch(() => { });
+            
+            const me = await getMeWithAutoAuth(this.api, phone, activeDeviceId, this.logger, this.proxyAgent);
+            if (me.ok) {
+                const userId = me.data?.id || me.data?.userId || me.data?.accountId;
+                if (userId) {
+                    await saveAppUserId(phone, String(userId));
+                }
+            }
+
             await this.runMissions(final.accessToken, activeDeviceId, ctx);
         }
         return { success: true, relogin: !!stored, alreadyOk: false };
@@ -112,7 +125,7 @@ export class EricWorker {
 
         const accountSvc = new AccountMissionService(this.logger, this.api, this.proxyAgent);
         const interactSvc = new InteractionService(this.logger, this.api, this.proxyAgent);
-        const relationSvc = new RelationService(this.logger, this.api, this.proxyAgent);
+        const relationSvc = new RelationService(this.logger, this.api, this.proxyAgent, this.acc.phone || this.acc.username);
         const postSvc = new PostService(this.logger, this.acc, this.proxyAgent);
 
         const boundDoMission = this.doMission.bind(this);
@@ -189,7 +202,7 @@ export class EricWorker {
         } catch (e: any) {
             const status = e.response?.status;
             const backendError = this.extractBackendErrorDetail(e.response?.data);
-            if (status === 400 || status === 403 || status === 404) {
+            if (status === 400 || status === 403 || status === 404 || status === 409) {
                 this.logger.warn(`MISSION_IGNORED (${status}): ${name}`, {
                     ...ctx,
                     detail: e.response?.data,

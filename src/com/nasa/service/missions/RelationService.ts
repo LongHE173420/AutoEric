@@ -1,5 +1,5 @@
 import { FriendApiService } from "../../api/friend/friendApiService";
-import { UserApiService } from "../../api/user/userApiService";
+import { getUsersForFriendRequest, recordFriendRequest, updateFriendRequestStatus } from "../../data/mysqlStore";
 import { Log } from "../../utils/log";
 
 type AppLogger = ReturnType<typeof Log.getLogger>;
@@ -8,7 +8,8 @@ export class RelationService {
     constructor(
         private readonly logger: AppLogger,
         private readonly api: any,
-        private readonly proxyAgent: any
+        private readonly proxyAgent: any,
+        private readonly currentPhone: string
     ) { }
 
     async handleFriendManagement(accessToken: string, h: any, ctx: any, doMission: Function) {
@@ -19,79 +20,60 @@ export class RelationService {
             return res;
         }, ctx);
 
-        if (receivedReqs?.data && Array.isArray(receivedReqs.data.items) && receivedReqs.data.items.length > 0) {
-            for (const req of receivedReqs.data.items) {
+        const items = Array.isArray(receivedReqs?.data) ? receivedReqs.data : (receivedReqs?.data?.items || []);
+        if (items.length > 0) {
+            for (const req of items) {
                 const senderId = req.senderId || req.userId || req.id;
                 if (senderId) {
-                    await doMission(`AcceptFriend_${senderId}`, () =>
-                        FriendApiService.acceptFriendRequest(accessToken, String(senderId), h, this.proxyAgent), ctx);
+                    let acceptSuccess = false;
+                    let acceptConflict = false;
+                    await doMission(`AcceptFriend_${senderId}`, async () => {
+                        try {
+                            const res = await FriendApiService.acceptFriendRequest(accessToken, String(senderId), h, this.proxyAgent);
+                            acceptSuccess = true;
+                            return res;
+                        } catch (e: any) {
+                            if (e.response?.status === 409) acceptConflict = true;
+                            throw e; // let doMission handle it
+                        }
+                    }, ctx);
+
+                    if (acceptSuccess || acceptConflict) {
+                        await updateFriendRequestStatus(String(senderId), this.currentPhone, 'ACCEPTED');
+                    }
                 }
             }
         }
 
-        let suggestItems: any[] = [];
-        let retryCount = 0;
-        const maxRetries = 3;
-        const keywords = ["thang"];
-
+        let targetUsers: any[] = [];
         try {
-            while (suggestItems.length === 0 && retryCount < maxRetries) {
-                const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)];
-                this.logger.info(`TRYING_KEYWORD: ${randomKeyword} (Attempt ${retryCount + 1})`, ctx);
-                const res = await UserApiService.searchUsers(accessToken, randomKeyword, undefined, undefined, undefined, 5, 0, h, this.proxyAgent);
-                const suggests: any = res.data;
-
-                if (suggests) {
-                    if (Array.isArray(suggests)) suggestItems = suggests;
-                    else if (Array.isArray(suggests.data)) suggestItems = suggests.data;
-                    else if (suggests.data && Array.isArray(suggests.data.items)) suggestItems = suggests.data.items;
-                    else if (Array.isArray(suggests.items)) suggestItems = suggests.items;
-                    else if (suggests.data && suggests.data.data && Array.isArray(suggests.data.data)) suggestItems = suggests.data.data;
-                }
-
-                if (suggestItems.length > 0) break;
-                retryCount++;
-                if (retryCount < maxRetries) await new Promise(resolve => setTimeout(resolve, 1500));
+            targetUsers = await getUsersForFriendRequest(this.currentPhone, 3);
+            if (targetUsers.length > 0) {
+                this.logger.info("INTERNAL_FRIEND_TARGETS_FOUND", {
+                    ...ctx,
+                    total: targetUsers.length,
+                    users: targetUsers
+                });
+            } else {
+                this.logger.info("NO_INTERNAL_FRIEND_TARGETS", ctx);
             }
         } catch (e: any) {
-            this.logger.warn("MISSION_ERROR_IGNORED: searchUsers", { ...ctx, error: e.message });
+            this.logger.error("FETCH_FRIEND_TARGETS_ERROR", { ...ctx, error: e.message });
         }
 
-        if (suggestItems.length > 0) {
-            const friendUsers = suggestItems
-                .filter(u => u.friendshipStatus === "FRIENDS")
-                .map(u => ({
-                    userId: String(u.userId || u.accountId || u.id || ""),
-                    name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim(),
-                    friendshipStatus: u.friendshipStatus
-                }));
+        for (const user of targetUsers) {
+            const receiverId = user.app_user_id;
+            const receiverPhone = user.phone;
+            if (receiverId) {
+                let success = false;
+                await doMission(`SendInternalFriendRequest_${receiverPhone}`, async () => {
+                    const res = await FriendApiService.sendFriendRequest(accessToken, receiverId, h, this.proxyAgent);
+                    success = true;
+                    return res;
+                }, ctx);
 
-            this.logger.info("FRIEND_SEARCH_RESULTS", {
-                ...ctx,
-                total: suggestItems.length,
-                users: suggestItems.map(u => ({
-                    userId: String(u.userId || u.accountId || u.id || ""),
-                    name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim(),
-                    friendshipStatus: u.friendshipStatus || ""
-                }))
-            });
-
-            if (friendUsers.length > 0) {
-                this.logger.info("ALREADY_FRIENDS_LIST", {
-                    ...ctx,
-                    total: friendUsers.length,
-                    users: friendUsers
-                });
-            }
-        }
-
-        if (suggestItems.length > 0) {
-            const validUsers = suggestItems.filter(u => u.friendshipStatus === "NONE").slice(0, 3);
-            for (const user of validUsers) {
-                const receiverId = String(user.userId || user.accountId || user.id);
-                if (receiverId && receiverId !== "undefined") {
-                    await doMission(`SendFriendRequest_${receiverId}`, () =>
-                        FriendApiService.sendFriendRequest(accessToken, receiverId, h, this.proxyAgent), ctx);
+                if (success) {
+                    await recordFriendRequest(this.currentPhone, receiverPhone, receiverId);
                 }
             }
         }
