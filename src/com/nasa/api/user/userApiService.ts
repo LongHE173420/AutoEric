@@ -1,12 +1,27 @@
 import axios from 'axios';
 import { ENV } from '../../config/env';
+import { applyStandardInterceptors } from '../../utils/axiosSignature';
 import { buildHeaders } from '../../utils/headers';
 
 export class UserApiService {
-    static async getProfileMe(accessToken: string, headers = buildHeaders(), agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/user/me`, {
-            headers: { ...headers, Authorization: `Bearer ${accessToken}` },
+    private static getDeviceId(headers: any) {
+        return headers?.["X-Device-Id"] || headers?.["x-device-id"];
+    }
+
+    private static getClient(deviceId?: string, agent?: any) {
+        const client = axios.create({
+            baseURL: ENV.KONG_URL,
             httpsAgent: agent,
+            timeout: 10000
+        });
+        applyStandardInterceptors(client, String(deviceId || ""));
+        return client;
+    }
+
+    static async getProfileMe(accessToken: string, headers = buildHeaders(), agent?: any) {
+        const client = this.getClient(this.getDeviceId(headers), agent);
+        return client.get(`/api/user/me`, {
+            headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             transformResponse: [(data) => {
                 if (typeof data === 'string') {
                     // Prevent large number precision loss by wrapping IDs in quotes
@@ -23,31 +38,31 @@ export class UserApiService {
     }
 
     static async getProfileById(accessToken: string, id: string, headers = buildHeaders(), agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/user/id/${id}`, {
+        const client = this.getClient(this.getDeviceId(headers), agent);
+        return client.get(`/api/user/id/${id}`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            httpsAgent: agent
         });
     }
 
     static async getProfileByUsername(accessToken: string, username: string, headers = buildHeaders(), agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/user/username/${username}`, {
+        const client = this.getClient(this.getDeviceId(headers), agent);
+        return client.get(`/api/user/username/${username}`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            httpsAgent: agent
         });
     }
 
     static async updateProfile(accessToken: string, profileData: any, headers = buildHeaders(), agent?: any) {
-        return axios.post(`${ENV.KONG_URL}/api/user/update-profile`, profileData, {
+        const client = this.getClient(this.getDeviceId(headers), agent);
+        return client.post(`/api/user/update-profile`, profileData, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            httpsAgent: agent
         });
     }
 
     static async getListImages(accessToken: string, userId: string, limit = 10, offset = 0, headers = buildHeaders(), agent?: any) {
-        return axios.get(`${ENV.KONG_URL}/api/user/list-images`, {
+        const client = this.getClient(this.getDeviceId(headers), agent);
+        return client.get(`/api/user/list-images`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             params: { userId, limit, offset },
-            httpsAgent: agent
         });
     }
 

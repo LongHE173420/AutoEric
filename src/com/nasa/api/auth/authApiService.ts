@@ -46,7 +46,7 @@ export class AuthServiceApi {
   constructor(deviceId: string, baseURL = ENV.KONG_URL, proxyAgent?: any) {
     const config: any = {
       baseURL,
-      timeout: 20_000,
+      timeout: 12_000,
     };
 
     if (proxyAgent) {

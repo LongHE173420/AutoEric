@@ -3,7 +3,7 @@ import { cleanupOldLogs, getTodayLogPath, Log } from "./com/nasa/utils/log";
 import { MasterWorker } from "./com/nasa/worker/MasterWorker";
 import axios from "axios";
 import { applyStandardInterceptors } from "./com/nasa/utils/axiosSignature";
-import { ProxyManager } from "./com/nasa/core/ProxyManager";
+import { ProxyManager } from "./com/nasa/proxy/ProxyManager";
 import { getAccountsFromDb } from "./com/nasa/data/mysqlStore";
 
 applyStandardInterceptors(axios, "global-system");
@@ -30,6 +30,7 @@ async function runOnce(reason: string) {
           KONG_URL: ENV.KONG_URL,
           INTERVAL_MS: ENV.INTERVAL_MS,
           RUN_ONCE: ENV.RUN_ONCE,
+          PROXY_REQUIRED: ENV.PROXY_REQUIRED,
           AUTO_FETCH_OTP: ENV.AUTO_FETCH_OTP,
           AUTO_RESEND: ENV.AUTO_RESEND,
           OTP_TIMEOUT_MS: ENV.OTP_TIMEOUT_MS,
@@ -61,7 +62,7 @@ async function runOnce(reason: string) {
         userAgent: acc.userAgent,
         accessToken: acc.accessToken,
         refreshToken: acc.refreshToken,
-        //proxy: await proxyManager.getWorkingProxy() || undefined
+        
       });
     }
 
@@ -93,7 +94,11 @@ export async function startService() {
     await runOnce("startup");
 
     if (!ENV.RUN_ONCE) {
-      setInterval(() => runOnce("interval"), ENV.INTERVAL_MS);
+      setInterval(() => {
+        runOnce("interval").catch(err => {
+          console.error("[FATAL] Unhandled error out of runOnce boundary", err);
+        });
+      }, ENV.INTERVAL_MS);
     }
   } catch (e) {
     console.error("Service startup fail", e);

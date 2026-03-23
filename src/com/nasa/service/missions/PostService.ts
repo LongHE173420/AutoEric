@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { MediaApiService } from "../../api/media/mediaApiService";
 import { PostApiService } from "../../api/post/postApiService";
-import { deleteVideoFromQueue, getNextVideoToPost, markVideoPosted } from "../../data/mysqlStore";
+import { deleteVideoFromQueue, getNextVideoToPost, markVideoPosted, releaseVideoReservation } from "../../data/mysqlStore";
 import { Log } from "../../utils/log";
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegInstaller = require("@ffmpeg-installer/ffmpeg");
@@ -320,7 +320,7 @@ export class PostService {
                     content: this.createPostContent("", layout),
                     type: "POST",
                     privacy: "PUBLIC",
-                    hashtags: this.normalizeArrayString(video.hashtags),
+                    hashtags: "[]",
                     mentions: "[]",
                     tags: "[]",
                     checkinLocation: JSON.stringify({ lat: 0, lon: 0, source: "GPS", name: "" }),
@@ -358,6 +358,7 @@ export class PostService {
                 }, ctx);
                 return;
             } catch (err: any) {
+                await releaseVideoReservation(video?.id);
                 const isBrokenLocalVideo =
                     err?.message?.includes("Video file not found") ||
                     err?.message?.includes("Video too large") ||
@@ -378,19 +379,6 @@ export class PostService {
             }
         }
 
-        this.logger.info("NO_VIDEO_AVAILABLE_FALLBACK_TEXT", ctx);
-        const postPayload = {
-            content:"[]",
-            type: "POST",
-            privacy: "PUBLIC",
-            hashtags: "[]",
-            mentions: "[]",
-            tags: "[]",
-            checkinLocation: JSON.stringify({ lat: 0, lon: 0, source: "GPS", name: "" }),
-            backgroundColor: 1,
-            feeling: 1
-        };
-
-        await doMission("CreatePost", () => PostApiService.createPost(accessToken, postPayload, h, this.proxyAgent), ctx);
+        this.logger.info("NO_VIDEO_AVAILABLE_SKIP_POST", ctx);
     }
 }

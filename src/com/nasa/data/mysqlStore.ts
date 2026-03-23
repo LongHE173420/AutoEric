@@ -10,6 +10,56 @@ async function getConnection() {
     });
 }
 
+const reservedVideoLocks = new Map<number, mysql.Connection>();
+
+function getVideoLockName(videoId: number) {
+    return `autoe:video:${videoId}`;
+}
+
+async function acquireVideoReservation(videoId: number): Promise<boolean> {
+    const existing = reservedVideoLocks.get(videoId);
+    if (existing) return false;
+
+    const conn = await getConnection();
+    try {
+        const [rows]: any = await conn.execute(
+            `SELECT GET_LOCK(?, 0) AS acquired`,
+            [getVideoLockName(videoId)]
+        );
+        const acquired = Number(rows?.[0]?.acquired || 0) === 1;
+        if (!acquired) {
+            await conn.end();
+            return false;
+        }
+
+        reservedVideoLocks.set(videoId, conn);
+        return true;
+    } catch (err) {
+        try { await conn.end(); } catch { }
+        return false;
+    }
+}
+
+export async function releaseVideoReservation(videoId?: number | null) {
+    if (typeof videoId !== "number" || !Number.isFinite(videoId)) {
+        return;
+    }
+
+    const conn = reservedVideoLocks.get(videoId);
+    if (!conn) {
+        return;
+    }
+
+    reservedVideoLocks.delete(videoId);
+    try {
+        await conn.execute(`SELECT RELEASE_LOCK(?)`, [getVideoLockName(videoId)]);
+    } catch {
+        // ignore release errors
+    } finally {
+        try { await conn.end(); } catch { }
+    }
+}
+
 
 
 export async function getAccountsFromDb(): Promise<any[]> {
@@ -124,11 +174,23 @@ export async function getNextVideoToPost(accountPhone: string): Promise<{
                  WHERE l.video_id = v.id AND l.account_phone = ?
                )
              ORDER BY v.created_at ASC
-             LIMIT 1`,
+             LIMIT 20`,
             [accountPhone]
         );
         if (!rows || rows.length === 0) return null;
-        return rows[0];
+
+        for (const row of rows as any[]) {
+            const videoId = Number(row?.id);
+            if (!Number.isFinite(videoId)) {
+                continue;
+            }
+            const acquired = await acquireVideoReservation(videoId);
+            if (acquired) {
+                return row;
+            }
+        }
+
+        return null;
     } finally {
         await conn.end();
     }
@@ -140,14 +202,17 @@ export async function markVideoPosted(
 ): Promise<{ localPath: string | null; fullyPosted: boolean }> {
     const conn = await getConnection();
     try {
-        await conn.execute(
+        const [insertRes]: any = await conn.execute(
             `INSERT IGNORE INTO video_post_log (video_id, account_phone) VALUES (?, ?)`,
             [videoId, accountPhone]
         );
-        await conn.execute(
-            `UPDATE crawled_videos SET post_count = post_count + 1 WHERE id = ?`,
-            [videoId]
-        );
+        const inserted = Number(insertRes?.affectedRows || 0) > 0;
+        if (inserted) {
+            await conn.execute(
+                `UPDATE crawled_videos SET post_count = post_count + 1 WHERE id = ?`,
+                [videoId]
+            );
+        }
         // Kiểm tra đã đăng đủ số lần chưa
         const [rows]: any = await conn.execute(
             `SELECT local_path, post_count, max_posts FROM crawled_videos WHERE id = ?`,
@@ -164,6 +229,7 @@ export async function markVideoPosted(
         }
         return { localPath: row?.local_path ?? null, fullyPosted };
     } finally {
+        await releaseVideoReservation(videoId);
         await conn.end();
     }
 }
@@ -179,6 +245,7 @@ export async function deleteVideoFromQueue(videoId: number): Promise<void> {
             [videoId]
         );
     } finally {
+        await releaseVideoReservation(videoId);
         await conn.end();
     }
 }

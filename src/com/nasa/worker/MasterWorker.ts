@@ -1,6 +1,6 @@
 import { EricWorker } from "./EricWorker";
 import { Log } from "../utils/log";
-import { ProxyManager } from "../core/ProxyManager";
+import { ProxyManager } from "../proxy/ProxyManager";
 import { recordRunInDb } from "../data/mysqlStore";
 
 export type LoginSummary = {

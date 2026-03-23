@@ -28,6 +28,7 @@ export const ENV = {
 
   INTERVAL_MS: num("INTERVAL_MS", 60_000),
   RUN_ONCE: bool("RUN_ONCE", false),
+  PROXY_REQUIRED: bool("PROXY_REQUIRED", false),
 
   DEVICE_ID: str("DEVICE_ID", ""),
 

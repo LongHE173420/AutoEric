@@ -1,0 +1,115 @@
+{"level":20,"time":"06:13:35.084","logger":"LoginService","config":{"KONG_URL":"https://social.eric.pro.vn","INTERVAL_MS":60000,"RUN_ONCE":false,"PROXY_REQUIRED":true,"AUTO_FETCH_OTP":true,"AUTO_RESEND":true,"OTP_TIMEOUT_MS":30000,"OTP_POLL_MS":300,"OTP_VERIFY_RETRY":5,"VERIFY_WINDOW_MS":10000,"RESEND_WINDOW_MS":10000,"MAX_RESEND":2,"OTP_DEBUG_PATH_REDIS":"/auth/debug/redis-otp","LOG_LEVEL":"debug","LOG_VERBOSE":false,"UPSTASH_REDIS_REST_URL":"","UPSTASH_REDIS_REST_TOKEN":""},"msg":"Service_CONFIG"}
+{"level":20,"time":"06:13:35.085","logger":"LoginService","reason":"startup","msg":"JOB_START"}
+{"level":20,"time":"06:13:35.114","logger":"LoginService","msg":"Loaded 2 accounts from database."}
+{"level":30,"time":"06:13:35.114","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":20,"time":"06:13:35.114","logger":"LoginService","accounts":2,"msg":"ACCOUNTS_LOADED"}
+{"level":30,"time":"06:13:35.115","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"06:13:35.116","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":20,"time":"06:14:01.353","logger":"LoginService","config":{"KONG_URL":"https://social.eric.pro.vn","INTERVAL_MS":60000,"RUN_ONCE":false,"PROXY_REQUIRED":true,"AUTO_FETCH_OTP":true,"AUTO_RESEND":true,"OTP_TIMEOUT_MS":30000,"OTP_POLL_MS":300,"OTP_VERIFY_RETRY":5,"VERIFY_WINDOW_MS":10000,"RESEND_WINDOW_MS":10000,"MAX_RESEND":2,"OTP_DEBUG_PATH_REDIS":"/auth/debug/redis-otp","LOG_LEVEL":"debug","LOG_VERBOSE":false,"UPSTASH_REDIS_REST_URL":"","UPSTASH_REDIS_REST_TOKEN":""},"msg":"Service_CONFIG"}
+{"level":20,"time":"06:14:01.354","logger":"LoginService","reason":"startup","msg":"JOB_START"}
+{"level":20,"time":"06:14:01.377","logger":"LoginService","msg":"Loaded 2 accounts from database."}
+{"level":30,"time":"06:14:01.377","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":20,"time":"06:14:01.377","logger":"LoginService","accounts":2,"msg":"ACCOUNTS_LOADED"}
+{"level":30,"time":"06:14:01.378","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"06:14:01.380","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":40,"time":"06:14:26.421","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","phase":"startup","waitMs":2000,"msg":"PROXY_WAITING_RETRY"}
+{"level":40,"time":"06:14:31.437","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","phase":"startup","waitMs":2000,"msg":"PROXY_WAITING_RETRY"}
+{"level":30,"time":"06:14:41.693","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","proxy":"http://43.99.54.236:5555","msg":"PROXY_ATTACHED"}
+{"level":30,"time":"06:14:41.694","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","proxy":"http://43.99.54.236:5555","msg":"PROXY_ATTACHED"}
+{"level":20,"time":"06:14:41.707","logger":"LoginService","phone":"5ba62e5ee2d9@drmail.in","msg":"REFRESHING"}
+{"level":20,"time":"06:14:41.719","logger":"LoginService","phone":"76560dee3b4d@drmail.in","msg":"REFRESHING"}
+{"level":30,"time":"06:14:42.698","logger":"LoginService","phone":"5ba62e5ee2d9@drmail.in","deviceId":"C4A8F1D7-9B2E-4D35-A7C1-0F6B3E2D9A5C","userAgent":"ERIC/1.0.0 (iOS; 18.6.2; iPhone 16 Plus)","access":{"present":true,"validJwt":true,"sub":"trongphuong.1773997437362226225","id":4611686018427598000,"clientType":"mobile","deviceId":"C4A8F1D7-9B2E-4D35-A7C1-0F6B3E2D9A5C","iat":1774160082,"exp":1774160982},"refresh":{"present":true,"validJwt":true,"sub":"trongphuong.1773997437362226225","id":4611686018427598000,"clientType":"mobile","deviceId":"C4A8F1D7-9B2E-4D35-A7C1-0F6B3E2D9A5C","iat":1774160082,"exp":1774764882},"msg":"LOGIN_PASS_TOKEN_SUMMARY"}
+{"level":20,"time":"06:14:42.698","logger":"LoginService","msg":"LOGIN_PASS_SUCCESS"}
+{"level":30,"time":"06:14:42.717","logger":"LoginService","phone":"76560dee3b4d@drmail.in","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","userAgent":"ERIC/1.2.0 (Android; 13; Oppo Find X6)","access":{"present":true,"validJwt":true,"sub":"congthang.1773995997109213261","id":2882303761517327400,"clientType":"mobile","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","iat":1774160082,"exp":1774160982},"refresh":{"present":true,"validJwt":true,"sub":"congthang.1773995997109213261","id":2882303761517327400,"clientType":"mobile","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","iat":1774160082,"exp":1774764882},"msg":"LOGIN_PASS_TOKEN_SUMMARY"}
+{"level":20,"time":"06:14:42.718","logger":"LoginService","msg":"LOGIN_PASS_SUCCESS"}
+{"level":30,"time":"06:14:42.738","logger":"LoginService","phone":"5ba62e5ee2d9@drmail.in","deviceId":"C4A8F1D7-9B2E-4D35-A7C1-0F6B3E2D9A5C","userAgent":"ERIC/1.0.0 (iOS; 18.6.2; iPhone 16 Plus)","access":{"present":true,"validJwt":true,"sub":"trongphuong.1773997437362226225","id":4611686018427598000,"clientType":"mobile","deviceId":"C4A8F1D7-9B2E-4D35-A7C1-0F6B3E2D9A5C","iat":1774160082,"exp":1774160982},"msg":"GET_ME_TOKEN_SUMMARY"}
+{"level":30,"time":"06:14:42.742","logger":"LoginService","phone":"76560dee3b4d@drmail.in","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","userAgent":"ERIC/1.2.0 (Android; 13; Oppo Find X6)","access":{"present":true,"validJwt":true,"sub":"congthang.1773995997109213261","id":2882303761517327400,"clientType":"mobile","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","iat":1774160082,"exp":1774160982},"msg":"GET_ME_TOKEN_SUMMARY"}
+{"level":30,"time":"06:14:43.101","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"06:14:43.104","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"06:14:43.400","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: ProfileMe"}
+{"level":30,"time":"06:14:43.402","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: ProfileMe"}
+{"level":30,"time":"06:14:43.881","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: Missions"}
+{"level":30,"time":"06:14:43.884","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: Missions"}
+{"level":30,"time":"06:14:44.190","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: MyFriends"}
+{"level":30,"time":"06:14:44.199","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: MyFriends"}
+{"level":30,"time":"06:14:44.543","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: Notifications"}
+{"level":30,"time":"06:14:44.543","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","reactionCodes":["LIKE"],"msg":"REACTION_CODES_READY"}
+{"level":30,"time":"06:14:44.547","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: Notifications"}
+{"level":30,"time":"06:14:44.547","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","reactionCodes":["LIKE"],"msg":"REACTION_CODES_READY"}
+{"level":30,"time":"06:14:44.888","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: FeedHome_Page_1"}
+{"level":30,"time":"06:14:44.889","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: FeedHome_Page_1"}
+{"level":30,"time":"06:14:46.443","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: FeedHome_Page_2"}
+{"level":30,"time":"06:14:46.627","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: FeedHome_Page_2"}
+{"level":30,"time":"06:14:48.092","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: FeedHome_Page_3"}
+{"level":30,"time":"06:14:48.274","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: FeedHome_Page_3"}
+{"level":30,"time":"06:14:48.491","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: SurfHome"}
+{"level":30,"time":"06:14:48.492","logger":"LoginService","itemsLength":30,"pagesScrolled":3,"msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"06:14:48.492","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","parsedItemCount":5,"msg":"MISSION_ACTION_DEPENDENT_START"}
+{"level":30,"time":"06:14:48.610","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: SurfHome"}
+{"level":30,"time":"06:14:48.610","logger":"LoginService","itemsLength":30,"pagesScrolled":3,"msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"06:14:48.610","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","parsedItemCount":5,"msg":"MISSION_ACTION_DEPENDENT_START"}
+{"level":40,"time":"06:14:48.852","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_293408385150365696"}
+{"level":30,"time":"06:14:48.867","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: PostReaction_293980583321808896"}
+{"level":30,"time":"06:14:49.171","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: PostShare_293408385150365696"}
+{"level":30,"time":"06:14:49.214","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: PostShare_293980583321808896"}
+{"level":40,"time":"06:14:49.460","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_293409216931180544"}
+{"level":30,"time":"06:14:49.465","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: PostReaction_293986105550843904"}
+{"level":30,"time":"06:14:49.718","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: PostShare_293986105550843904"}
+{"level":30,"time":"06:14:49.724","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: PostShare_293409216931180544"}
+{"level":30,"time":"06:14:49.971","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: PostReaction_293987738129149952"}
+{"level":30,"time":"06:14:49.981","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: PostReaction_293986105550843904"}
+{"level":30,"time":"06:14:50.254","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: PostShare_293986105550843904"}
+{"level":30,"time":"06:14:50.280","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: PostShare_293987738129149952"}
+{"level":40,"time":"06:14:50.514","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_293952179713224704"}
+{"level":40,"time":"06:14:50.569","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_293409802716065792"}
+{"level":30,"time":"06:14:50.834","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: PostShare_293409802716065792"}
+{"level":30,"time":"06:14:50.837","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: PostShare_293952179713224704"}
+{"level":40,"time":"06:14:51.105","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_279877148339220480"}
+{"level":40,"time":"06:14:51.153","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","detail":"[object]","backendMessage":"Thả cảm xúc không thành công","backendRaw":"{\"isSucceed\":false,\"message\":\"Thả cảm xúc không thành công\",\"data\":null}","failedUrl":"https://social.eric.pro.vn/api/posts/reaction/send","msg":"MISSION_IGNORED (400): PostReaction_293411298522312704"}
+{"level":30,"time":"06:14:51.362","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: PostShare_279877148339220480"}
+{"level":30,"time":"06:14:51.385","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","videoId":563,"source":"https://www.tiktok.com/@vinhtech/video/7109082710286601499","attempt":1,"msg":"VIDEO_POST_START"}
+{"level":30,"time":"06:14:51.501","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: PostShare_293411298522312704"}
+{"level":30,"time":"06:14:51.517","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","videoId":567,"source":"https://www.tiktok.com/@caocuongvu/video/7615821128358972673","attempt":1,"msg":"VIDEO_POST_START"}
+{"level":30,"time":"06:14:51.906","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","postId":"293990896305844224","msg":"VIDEO_POST_ID_GENERATED"}
+{"level":30,"time":"06:14:51.907","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","postId":"293990896305844224","fileName":"tt_raw_7109082710286601499.mp4","fileSizeBytes":2342999,"thumbnailFileName":"tt_raw_7109082710286601499.jpg","uploadMode":"presigned+complete","width":720,"height":1280,"duration":48.833333,"msg":"VIDEO_UPLOAD_REQUEST_PREPARED"}
+{"level":30,"time":"06:14:52.015","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","postId":"293990896746246144","msg":"VIDEO_POST_ID_GENERATED"}
+{"level":30,"time":"06:14:52.015","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","postId":"293990896746246144","fileName":"tt_raw_7615821128358972673.mp4","fileSizeBytes":4735015,"thumbnailFileName":"tt_raw_7615821128358972673.jpg","uploadMode":"presigned+complete","width":1080,"height":1920,"duration":62.9,"msg":"VIDEO_UPLOAD_REQUEST_PREPARED"}
+{"level":30,"time":"06:14:52.658","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","filePath":"tt_raw_7109082710286601499.jpg","uploadAttempt":"post-multipart-file","msg":"VIDEO_THUMBNAIL_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"06:14:52.841","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","filePath":"tt_raw_7615821128358972673.jpg","uploadAttempt":"post-multipart-file","msg":"VIDEO_THUMBNAIL_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"06:14:53.807","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","filePath":"tt_raw_7109082710286601499.mp4","uploadAttempt":"post-multipart-file","msg":"VIDEO_FILE_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"06:14:53.809","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","postId":"293990896305844224","msg":"VIDEO_POST_COMPLETE_REQUEST"}
+{"level":30,"time":"06:14:54.857","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","filePath":"tt_raw_7615821128358972673.mp4","uploadAttempt":"post-multipart-file","msg":"VIDEO_FILE_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"06:14:54.858","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","postId":"293990896746246144","msg":"VIDEO_POST_COMPLETE_REQUEST"}
+{"level":30,"time":"06:14:57.437","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","postId":"293990896746246144","status":201,"msg":"VIDEO_POST_COMPLETE_RESPONSE"}
+{"level":30,"time":"06:14:57.468","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: CreateVideoPost"}
+{"level":30,"time":"06:14:57.480","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","videoId":568,"source":"https://www.tiktok.com/@caocuongvu/video/7615456932027010312","attempt":1,"msg":"SURF_VIDEO_START"}
+{"level":30,"time":"06:14:58.098","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","surfId":"293990922188894208","msg":"SURF_ID_GENERATED"}
+{"level":30,"time":"06:14:58.613","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","filePath":"56925301-130f-428a-9cc7-8e561a633cc0.jpg","objectRef":"eric/20260322/293990922188894208/origin/56925301-130f-428a-9cc7-8e561a633cc0.jpg","uploadAttempt":"post-multipart-file","msg":"SURF_THUMBNAIL_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"06:15:00.100","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","filePath":"tt_raw_7615456932027010312_compressed.mp4","objectRef":"eric/20260322/293990922188894208/origin/56925301-130f-428a-9cc7-8e561a633cc0.mp4","uploadAttempt":"post-multipart-file","msg":"SURF_VIDEO_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"06:15:00.102","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","surfId":"293990922188894208","uploadRefs":{"thumbnailObjectRef":"eric/20260322/293990922188894208/origin/56925301-130f-428a-9cc7-8e561a633cc0.jpg","videoObjectRef":"eric/20260322/293990922188894208/origin/56925301-130f-428a-9cc7-8e561a633cc0.mp4","thumbnailFileName":"56925301-130f-428a-9cc7-8e561a633cc0.jpg","videoFileName":"56925301-130f-428a-9cc7-8e561a633cc0.mp4"},"msg":"SURF_COMPLETE_REQUEST"}
+{"level":30,"time":"06:15:00.527","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","surfId":"293990922188894208","status":201,"msg":"SURF_COMPLETE_RESPONSE"}
+{"level":30,"time":"06:15:00.555","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: CreateSurf"}
+{"level":30,"time":"06:15:00.880","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: BackgroundColor"}
+{"level":30,"time":"06:15:01.187","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: ReactionList"}
+{"level":30,"time":"06:15:01.520","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"OK: GetReceivedFriendRequests"}
+{"level":30,"time":"06:15:01.534","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"NO_INTERNAL_FRIEND_TARGETS"}
+{"level":30,"time":"06:15:01.534","logger":"LoginService","row":2,"phone":"5ba62e5ee2d9@drmail.in","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"06:15:04.116","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","postId":"293990896305844224","status":201,"msg":"VIDEO_POST_COMPLETE_RESPONSE"}
+{"level":30,"time":"06:15:04.145","logger":"LoginService","videoId":563,"msg":"SOURCE_VIDEO_DELETED_AFTER_MAX_POSTS"}
+{"level":30,"time":"06:15:04.145","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: CreateVideoPost"}
+{"level":30,"time":"06:15:04.155","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","videoId":565,"source":"https://www.tiktok.com/@caocuongvu/video/7618583283290819860","attempt":1,"msg":"SURF_VIDEO_START"}
+{"level":30,"time":"06:15:04.678","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","surfId":"293990949799997440","msg":"SURF_ID_GENERATED"}
+{"level":30,"time":"06:15:05.106","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","filePath":"96d6eb3c-71bd-4649-9bfb-87837f8aa8ed.jpg","objectRef":"eric/20260322/293990949799997440/origin/96d6eb3c-71bd-4649-9bfb-87837f8aa8ed.jpg","uploadAttempt":"post-multipart-file","msg":"SURF_THUMBNAIL_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"06:15:06.673","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","filePath":"tt_raw_7618583283290819860_compressed.mp4","objectRef":"eric/20260322/293990949799997440/origin/96d6eb3c-71bd-4649-9bfb-87837f8aa8ed.mp4","uploadAttempt":"post-multipart-file","msg":"SURF_VIDEO_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"06:15:06.674","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","surfId":"293990949799997440","uploadRefs":{"thumbnailObjectRef":"eric/20260322/293990949799997440/origin/96d6eb3c-71bd-4649-9bfb-87837f8aa8ed.jpg","videoObjectRef":"eric/20260322/293990949799997440/origin/96d6eb3c-71bd-4649-9bfb-87837f8aa8ed.mp4","thumbnailFileName":"96d6eb3c-71bd-4649-9bfb-87837f8aa8ed.jpg","videoFileName":"96d6eb3c-71bd-4649-9bfb-87837f8aa8ed.mp4"},"msg":"SURF_COMPLETE_REQUEST"}
+{"level":30,"time":"06:15:07.044","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","surfId":"293990949799997440","status":201,"msg":"SURF_COMPLETE_RESPONSE"}
+{"level":30,"time":"06:15:07.083","logger":"LoginService","videoId":565,"msg":"SOURCE_SURF_VIDEO_DELETED_AFTER_MAX_POSTS"}
+{"level":30,"time":"06:15:07.083","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: CreateSurf"}
+{"level":30,"time":"06:15:07.370","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: BackgroundColor"}
+{"level":30,"time":"06:15:07.678","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: ReactionList"}
+{"level":30,"time":"06:15:08.027","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"OK: GetReceivedFriendRequests"}
+{"level":30,"time":"06:15:08.040","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"NO_INTERNAL_FRIEND_TARGETS"}
+{"level":30,"time":"06:15:08.040","logger":"LoginService","row":1,"phone":"76560dee3b4d@drmail.in","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":20,"time":"06:15:08.048","logger":"LoginService","summary":{"success":2,"alreadyOk":0,"relogin":2,"fail":0,"accounts":2},"msg":"JOB_SUMMARY"}
+{"level":20,"time":"06:15:08.048","logger":"LoginService","summary":{"success":2,"alreadyOk":0,"relogin":2,"fail":0,"accounts":2},"msg":"JOB_DONE"}
+{"level":30,"time":"06:15:08.049","logger":"LoginService","msg":"LOGIN summary: success=2 alreadyOk=0 relogin=2 fail=0"}

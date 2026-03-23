@@ -87,8 +87,7 @@ export class Log {
 
   private static shouldWriteToFile(msg: string) {
     return !(
-      msg.includes("_PRESIGNED_REQUEST") ||
-      msg.includes("_PRESIGNED_RESPONSE") ||
+      (msg.includes("_PRESIGNED_REQUEST") || msg.includes("_PRESIGNED_RESPONSE")) ||
       msg === "VIDEO_POST_CREATE_REQUEST"
     );
   }

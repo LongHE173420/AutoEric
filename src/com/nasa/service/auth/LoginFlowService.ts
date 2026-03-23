@@ -3,7 +3,7 @@ import { AuthServiceApi, Tokens } from "../../api/auth/authApiService";
 import { ENV } from "../../config/env";
 import { setStoredTokens, clearTokensForUser, getStoredTokens, clearAllData } from "../../storage/tokenStore";
 import { maskToken, maskOtp, Log } from "../../utils/log";
-import { isAccessExpired, isRefreshExpired } from "../../utils/tokenUtils";
+import { decodeJwtPayload, isAccessExpired, isRefreshExpired } from "../../utils/tokenUtils";
 import { buildHeaders } from "../../utils/headers";
 import { UserApiService } from "../../api/user/userApiService";
 type AppLogger = ReturnType<typeof Log.getLogger>;
@@ -25,6 +25,27 @@ type WaitOtpOptions = {
   logger?: AppLogger;
   headers?: any;
 };
+
+function summarizeToken(token?: string | null) {
+  const payload = token ? decodeJwtPayload(token) : null;
+  if (!token || !payload) {
+    return {
+      present: !!token,
+      validJwt: false
+    };
+  }
+
+  return {
+    present: true,
+    validJwt: true,
+    sub: payload.sub,
+    id: payload.id,
+    clientType: payload.clientType,
+    deviceId: payload.deviceId,
+    iat: payload.iat,
+    exp: payload.exp
+  };
+}
 
 function parseOtp(data: any): { otp: string | null; tsMs: number | null } {
   if (!data) return { otp: null, tsMs: null };
@@ -111,6 +132,13 @@ export async function loginWithOtpFlow(
     const sDevice = headers["X-Device-Id"] || headers["x-device-id"];
     const sUa = headers["User-Agent"] || headers["user-agent"];
     setStoredTokens(phone, tokens.accessToken, tokens.refreshToken, sDevice, sUa);
+    logger?.info("LOGIN_PASS_TOKEN_SUMMARY", {
+      phone,
+      deviceId: sDevice,
+      userAgent: sUa,
+      access: summarizeToken(tokens.accessToken),
+      refresh: summarizeToken(tokens.refreshToken)
+    });
     logger?.debug("LOGIN_PASS_SUCCESS", {});
     return { ok: true, tokens };
   }
@@ -144,6 +172,13 @@ export async function loginWithOtpFlow(
           const sDevice = headers["X-Device-Id"] || headers["x-device-id"];
           const sUa = headers["User-Agent"] || headers["user-agent"];
           setStoredTokens(phone, tokens.accessToken, tokens.refreshToken, sDevice, sUa);
+          logger?.info("LOGIN_OTP_TOKEN_SUMMARY", {
+            phone,
+            deviceId: sDevice,
+            userAgent: sUa,
+            access: summarizeToken(tokens.accessToken),
+            refresh: summarizeToken(tokens.refreshToken)
+          });
           logger?.debug("LOGIN_OTP_SUCCESS", {});
           return { ok: true, tokens, usedOtp: otp };
         }
@@ -192,6 +227,13 @@ export async function ensureValidAccessToken(
 
     if (newTokens) {
       setStoredTokens(phone, newTokens.accessToken, newTokens.refreshToken, deviceId, currentTokens.userAgent);
+      logger?.info("REFRESH_TOKEN_SUMMARY", {
+        phone,
+        deviceId,
+        userAgent: currentTokens.userAgent,
+        access: summarizeToken(newTokens.accessToken),
+        refresh: summarizeToken(newTokens.refreshToken)
+      });
       logger?.info("REFRESH_SUCCESS", {});
       return { ok: true, accessToken: newTokens.accessToken, refreshed: true };
     }
@@ -215,7 +257,13 @@ export async function getMeWithAutoAuth(
   if (!valid.ok || !valid.accessToken) return { ok: false, message: valid.reason };
 
   try {
-    const headers = buildHeaders(deviceId);
+    const headers = buildHeaders(deviceId, stored?.userAgent);
+    logger?.info("GET_ME_TOKEN_SUMMARY", {
+      phone,
+      deviceId,
+      userAgent: stored?.userAgent,
+      access: summarizeToken(valid.accessToken)
+    });
     const res = await UserApiService.getProfileMe(valid.accessToken, headers, agent);
     const d = res.data;
     // Support both {isSucceed: true, data: {...}} and direct {id, userName, ...} responses
