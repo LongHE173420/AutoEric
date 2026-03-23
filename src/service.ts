@@ -62,7 +62,7 @@ async function runOnce(reason: string) {
         userAgent: acc.userAgent,
         accessToken: acc.accessToken,
         refreshToken: acc.refreshToken,
-        
+
       });
     }
 
@@ -94,11 +94,7 @@ export async function startService() {
     await runOnce("startup");
 
     if (!ENV.RUN_ONCE) {
-      setInterval(() => {
-        runOnce("interval").catch(err => {
-          console.error("[FATAL] Unhandled error out of runOnce boundary", err);
-        });
-      }, ENV.INTERVAL_MS);
+      setInterval(() => runOnce("interval"), ENV.INTERVAL_MS);
     }
   } catch (e) {
     console.error("Service startup fail", e);

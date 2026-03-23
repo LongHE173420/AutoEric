@@ -1,7 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { ENV } from "../../config/env";
 import { applyStandardInterceptors } from "../../utils/axiosSignature";
-import { buildHeaders } from "../../utils/headers";
 
 export type ApiRes<T> = {
   isSucceed: boolean;

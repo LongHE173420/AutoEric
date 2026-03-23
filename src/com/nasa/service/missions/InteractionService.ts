@@ -39,6 +39,18 @@ export class InteractionService {
         let lastPostId = "";
         let lastCreatedAt = Date.now();
         const reactionCodes = ["LIKE"];
+
+        try {
+            const reactionRes = await ReactionApiService.listReactions(accessToken, h, 50, 0, this.proxyAgent);
+            const codes = this.extractReactionCodes(reactionRes.data);
+            if (codes.length > 0) {
+                reactionCodes.length = 0;
+                reactionCodes.push(...codes);
+            }
+        } catch (err: any) {
+            this.logger.warn("FAILED_TO_FETCH_REACTION_CODES", { ...ctx, err: err?.message });
+        }
+
         this.logger.info("REACTION_CODES_READY", { ...ctx, reactionCodes });
 
         for (let page = 0; page < 3; page++) {
@@ -88,7 +100,7 @@ export class InteractionService {
                 const post = interactItems[i];
                 const postId = post.id;
                 
-                const rType = "LIKE";
+                const rType = reactionCodes[Math.floor(Math.random() * reactionCodes.length)] || "LIKE";
                 await doMission(`PostReaction_${postId}`, () => ReactionApiService.sendReaction(accessToken, postId, rType, h, this.proxyAgent), ctx);
                 
                 await doMission(`PostShare_${postId}`, () => FeedApiService.repostPost(accessToken, postId, h, this.proxyAgent), ctx);

@@ -1,25 +1,14 @@
 import axios from 'axios';
 import FormData from 'form-data';
 import { ENV } from '../../config/env';
+import { ApiClient } from '../../utils/ApiClient';
 import { buildHeaders } from '../../utils/headers';
-import { applyStandardInterceptors } from '../../utils/axiosSignature';
-
-const buildPayload = (data: any) => typeof data === 'string' ? data : JSON.stringify(data).replace(/"(id|postId|commentId|parentId|userId|accountId|surfId|senderId|receiverId|entityId)"\s*:\s*"?(\d+)"?/g, '"$1":"$2"');
-
-const createSignedClient = (headers: any, agent?: any) => {
-    const deviceId = headers?.["X-Device-Id"] || headers?.["x-device-id"];
-    const client = axios.create({
-        httpsAgent: agent
-    });
-    applyStandardInterceptors(client, String(deviceId || ""));
-    return client;
-};
 
 export class MediaApiService {
     static async requestUploadUrl(accessToken: string, payload: any, headers = buildHeaders(), agent?: any) {
-        // Use buildPayload to ensure entityId etc. are stringified correctly to avoid signature/validation 403s
-        const strPayload = typeof payload === 'string' ? payload : buildPayload(payload);
-        return createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/media/upload`, strPayload, {
+        // Use ApiClient.buildPayload to ensure entityId etc. are stringified correctly to avoid signature/validation 403s
+        const strPayload = typeof payload === 'string' ? payload : ApiClient.buildPayload(payload);
+        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/media/upload`, strPayload, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         });
     }
@@ -68,7 +57,7 @@ export class MediaApiService {
             });
         } catch (e) {}
 
-        return createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/media/upload`, formData, {
+        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/media/upload`, formData, {
             headers: {
                 ...headers,
                 Authorization: `Bearer ${accessToken}`,
@@ -93,7 +82,7 @@ export class MediaApiService {
 
         const surfHeaders = { ...headers, "X-Client-Type": "web" };
 
-        return createSignedClient(surfHeaders, agent).post(`${ENV.KONG_URL}/api/media/upload-surf`, formData, {
+        return ApiClient.createSignedClient(surfHeaders, agent).post(`${ENV.KONG_URL}/api/media/upload-surf`, formData, {
             headers: {
                 ...surfHeaders,
                 Authorization: `Bearer ${accessToken}`,
@@ -106,7 +95,7 @@ export class MediaApiService {
     }
 
     static async getPresignedUrl(accessToken: string, objectKey: string, headers = buildHeaders(), agent?: any) {
-        return createSignedClient(headers, agent).get(`${ENV.KONG_URL}/api/media/presigned`, {
+        return ApiClient.createSignedClient(headers, agent).get(`${ENV.KONG_URL}/api/media/presigned`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             params: { objectKey }
         });
@@ -114,14 +103,14 @@ export class MediaApiService {
 
 
     static async getImagesByUser(accessToken: string, userId: string, headers = buildHeaders(), limit = 10, offset = 0, agent?: any) {
-        return createSignedClient(headers, agent).get(`${ENV.KONG_URL}/api/media/images/by-user`, {
+        return ApiClient.createSignedClient(headers, agent).get(`${ENV.KONG_URL}/api/media/images/by-user`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             params: { userId, limit, offset }
         });
     }
 
     static async uploadAvatar(accessToken: string, formData: FormData, headers = buildHeaders(), agent?: any) {
-        return createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/media/profile/upload-avatar`, formData, {
+        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/media/profile/upload-avatar`, formData, {
             headers: {
                 ...headers,
                 Authorization: `Bearer ${accessToken}`,
@@ -131,7 +120,7 @@ export class MediaApiService {
     }
 
     static async uploadCover(accessToken: string, formData: FormData, headers = buildHeaders(), agent?: any) {
-        return createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/media/profile/upload-cover`, formData, {
+        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/media/profile/upload-cover`, formData, {
             headers: {
                 ...headers,
                 Authorization: `Bearer ${accessToken}`,
