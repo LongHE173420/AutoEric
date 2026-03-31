@@ -8,4 +8,22 @@ export class MissionApiService {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` }
         });
     }
+
+    static async claimMissionReward(accessToken: string, missionId: number, headers = buildHeaders(), agent?: any) {
+        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/point/claim-mission-reward`, { missionId }, {
+            headers: { ...headers, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
+        });
+    }
+
+    static async claimStreakMissionReward(accessToken: string, missionId: number, currentValue: number, headers = buildHeaders(), agent?: any) {
+        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/point/claim-streak-mission-reward`, { missionId, currentValue }, {
+            headers: { ...headers, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
+        });
+    }
+
+    static async getPointBalance(accessToken: string, headers = buildHeaders(), agent?: any) {
+        return ApiClient.createSignedClient(headers, agent).get(`${ENV.KONG_URL}/api/point/balance`, {
+            headers: { ...headers, Authorization: `Bearer ${accessToken}` }
+        });
+    }
 }

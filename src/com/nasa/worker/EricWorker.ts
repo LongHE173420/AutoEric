@@ -68,26 +68,25 @@ export class EricWorker {
 
             if (!phone || !password) return { success: false, relogin: false, alreadyOk: false, reason: "INVALID_CREDENTIALS" };
 
-            for (let attempt = 1; attempt <= 2; attempt++) {
-                try {
-                    if (attempt === 1 && !this.acc.proxy) {
-                        await this.proxyHelper.attachInitialProxy(ctx);
-                        if (this.proxyHelper.proxyAgent) {
-                            this.api = new AuthServiceApi(this.acc.deviceId || uuidv4(), ENV.KONG_URL, this.proxyHelper.proxyAgent);
-                        }
+            const executeAttempt = async (attempt: number): Promise<UserServiceResult> => {
+                if (attempt === 1 && !this.acc.proxy) {
+                    //await this.proxyHelper.attachInitialProxy(ctx);
+                    if (this.proxyHelper.proxyAgent) {
+                        this.api = new AuthServiceApi(this.acc.deviceId || uuidv4(), ENV.KONG_URL, this.proxyHelper.proxyAgent);
                     }
-                    return await this.attemptRunProcess(phone, password, ctx);
-                } catch (err: any) {
-                    if ((isNetworkError(err) || err?.__proxyAuthIssue) && this.acc.proxy && attempt === 1) {
-                        if (await this.proxyHelper.switchProxy(ctx)) {
-                            this.api = new AuthServiceApi(this.acc.deviceId || uuidv4(), ENV.KONG_URL, this.proxyHelper.proxyAgent);
-                            continue;
-                        }
-                    }
-                    throw err;
                 }
-            }
-            throw new Error("Failed after retries");
+                return await this.attemptRunProcess(phone, password, ctx);
+            };
+
+            return await executeAttempt(1).catch(async (err: any) => {
+                if ((isNetworkError(err) || err?.__proxyAuthIssue) && this.acc.proxy) {
+                    if (await this.proxyHelper.switchProxy(ctx)) {
+                        this.api = new AuthServiceApi(this.acc.deviceId || uuidv4(), ENV.KONG_URL, this.proxyHelper.proxyAgent);
+                        return await executeAttempt(2);
+                    }
+                }
+                throw err;
+            });
         } catch (e: any) {
             this.logger?.error("WORKER_RUN_ERROR", { err: e.message });
             return { success: false, relogin: false, alreadyOk: false, reason: e.message || "WORKER_RUN_ERROR" };
@@ -182,20 +181,16 @@ export class EricWorker {
 
             const boundDoMission = this.doMission.bind(this);
 
-            try {
-                await accountSvc.handleProfileAndSocial(accessToken, h, ctx, boundDoMission);
-                await interactSvc.handleFeedAndInteract(accessToken, h, ctx, boundDoMission);
-                await postSvc.handleAutoCreatePost(accessToken, h, ctx, boundDoMission);
-                await surfSvc.handleAutoCreateSurf(accessToken, h, ctx, boundDoMission);
-                await accountSvc.handleActivityGeneration(accessToken, h, ctx, boundDoMission);
-                await relationSvc.handleFriendManagement(accessToken, h, ctx, boundDoMission);
+            await accountSvc.handleProfileAndSocial(accessToken, h, ctx, boundDoMission);
+            await interactSvc.handleFeedAndInteract(accessToken, h, ctx, boundDoMission);
+            await postSvc.handleAutoCreatePost(accessToken, h, ctx, boundDoMission);
+            await surfSvc.handleAutoCreateSurf(accessToken, h, ctx, boundDoMission);
+            await accountSvc.handleActivityGeneration(accessToken, h, ctx, boundDoMission);
+            await relationSvc.handleFriendManagement(accessToken, h, ctx, boundDoMission);
 
-                this.logger.info("BOT_MISSIONS_COMPLETE", ctx);
-            } catch (e: any) {
-                this.logger.error("MISSIONS_SYSTEM_ERROR", { ...ctx, err: e.message });
-                throw e;
-            }
+            this.logger.info("BOT_MISSIONS_COMPLETE", ctx);
         } catch (e: any) {
+            this.logger.error("MISSIONS_SYSTEM_ERROR", { ...ctx, err: e.message });
             this.logger?.error("RUN_MISSIONS_FATAL_ERROR", { ...ctx, err: e.message });
             throw e;
         }
@@ -221,55 +216,57 @@ export class EricWorker {
 
     private async doMission(name: string, action: () => Promise<any>, ctx: any) {
         try {
-            await action();
-            this.logger.info(`OK: ${name}`, ctx);
-        } catch (e: any) {
-            try {
+            const handleFailure = async (e: any) => {
                 const status = e.response?.status;
                 const backendError = this.extractBackendErrorDetail(e.response?.data);
+
                 if (status === 401) {
                     this.logger.error(`MISSION_FAILED (401): ${name}`, {
-                        ...ctx,
-                        detail: e.response?.data,
-                        ...backendError,
-                        failedUrl: e.config?.url,
-                        usingProxy: this.acc.proxy || undefined
+                        ...ctx, detail: e.response?.data, ...backendError,
+                        failedUrl: e.config?.url, usingProxy: this.acc.proxy || undefined
                     });
-                    if (this.acc.proxy) {
-                        e.__proxyAuthIssue = true;
-                    }
+                    if (this.acc.proxy) e.__proxyAuthIssue = true;
                     throw e;
                 }
+
                 if (status === 400 || status === 403 || status === 404 || status === 409) {
                     this.logger.warn(`MISSION_IGNORED (${status}): ${name}`, {
-                        ...ctx,
-                        detail: e.response?.data,
-                        ...backendError,
-                        failedUrl: e.config?.url
+                        ...ctx, detail: e.response?.data, ...backendError, failedUrl: e.config?.url
                     });
-                    return;
+                    return { _ignored: true };
                 }
+
                 if (status >= 500) {
                     this.logger.error(`MISSION_FAILED (${status}): ${name}`, {
-                        ...ctx,
-                        detail: e.response?.data,
-                        ...backendError,
-                        failedUrl: e.config?.url
+                        ...ctx, detail: e.response?.data, ...backendError, failedUrl: e.config?.url
                     });
                 }
+
                 if (isNetworkError(e) && this.acc.proxy) {
                     if (await this.proxyHelper.switchProxy(ctx)) {
-                        try {
-                            await action();
-                            this.logger.info(`OK: ${name} (retry)`, ctx);
-                            return;
-                        } catch (retryErr: any) { throw retryErr; }
+                        const retryRes = await action();
+                        this.logger.info(`OK: ${name} (retry)`, ctx);
+                        return { _retried: true, data: retryRes };
                     }
                 }
+
                 throw e;
-            } catch (innerE: any) {
-                throw e;
+            };
+
+            const result = await action().catch(handleFailure);
+
+            if (result && result._ignored) {
+                return null;
             }
+
+            if (result && result._retried) {
+                return result.data;
+            }
+
+            this.logger.info(`OK: ${name}`, ctx);
+            return result;
+        } catch (e: any) {
+            throw e;
         }
     }
 }

@@ -45,19 +45,18 @@ export class MasterWorker {
                             proxyManager
                         );
 
-                        try {
-                            const result = await worker.run();
+                        await worker.run().then(async (result) => {
                             if (result.success) {
                                 summary.success++;
-                                await recordRunInDb(acc.phone);
+                                await recordRunInDb(acc.phone).catch(() => {});
                                 if (result.alreadyOk) summary.alreadyOk++;
                                 if (result.relogin) summary.relogin++;
                             } else {
                                 summary.fail++;
                             }
-                        } catch (e: any) {
+                        }).catch((e: any) => {
                             summary.fail++;
-                        }
+                        });
                     })
                 );
             }

@@ -36,14 +36,36 @@ export class MediaHelper {
     }
 
     async createVideoThumbnail(videoPath: string, outputPath: string): Promise<string> {
-        await new Promise<void>((resolve, reject) => {
+        const trySceneDetection = await new Promise<boolean>((resolve) => {
             ffmpeg(videoPath)
-                .outputOptions(["-frames:v 1", "-q:v 2"])
+                .outputOptions([
+                    "-vf", "select=gt(scene\\,0.3)",
+                    "-vsync", "vfr",
+                    "-frames:v", "1",
+                    "-q:v", "2"
+                ])
                 .output(outputPath)
-                .on("end", () => resolve())
-                .on("error", (err: any) => reject(err))
+                .on("end", () => {
+                    resolve(fs.existsSync(outputPath));
+                })
+                .on("error", (err: any) => {
+                    this.logger.warn("SCENE_DETECTION_FAILED", { err: err.message, videoPath });
+                    resolve(false);
+                })
                 .run();
         });
+
+        if (!trySceneDetection) {
+            await new Promise<void>((resolve, reject) => {
+                ffmpeg(videoPath)
+                    .seekInput(1.5)
+                    .outputOptions(["-frames:v 1", "-q:v 2"])
+                    .output(outputPath)
+                    .on("end", () => resolve())
+                    .on("error", (err: any) => reject(err))
+                    .run();
+            });
+        }
 
         return outputPath;
     }

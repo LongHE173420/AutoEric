@@ -1,0 +1,190 @@
+{
+  "isSucceed": true,
+  "message": "L?y danh s�ch th�nh c�ng",
+  "data": [
+    {
+      "missionId": 9,
+      "status": "NEW",
+      "currentValue": 0,
+      "targetValue": 3,
+      "name": "Thả cảm xúc",
+      "type": "DAILY",
+      "lastStreakDate": 0,
+      "rewardAmount": [
+        {
+          "targetValue": 3,
+          "amount": 30
+        }
+      ],
+      "actionType": "LIKE"
+    },
+    {
+      "missionId": 10,
+      "status": "NEW",
+      "currentValue": 0,
+      "targetValue": 3,
+      "name": "Bình luận",
+      "type": "DAILY",
+      "lastStreakDate": 0,
+      "rewardAmount": [
+        {
+          "targetValue": 3,
+          "amount": 40
+        }
+      ],
+      "actionType": "COMMENT"
+    },
+    {
+      "missionId": 11,
+      "status": "NEW",
+      "currentValue": 0,
+      "targetValue": 3,
+      "name": "Chia sẻ bài viết",
+      "type": "DAILY",
+      "lastStreakDate": 0,
+      "rewardAmount": [
+        {
+          "targetValue": 3,
+          "amount": 35
+        }
+      ],
+      "actionType": "SHARE"
+    },
+    {
+      "missionId": 12,
+      "status": "NEW",
+      "currentValue": 0,
+      "targetValue": 2,
+      "name": "Kết bạn mới",
+      "type": "DAILY",
+      "lastStreakDate": 0,
+      "rewardAmount": [
+        {
+          "targetValue": 2,
+          "amount": 60
+        }
+      ],
+      "actionType": "ADD_FRIEND"
+    },
+    {
+      "missionId": 13,
+      "status": "NEW",
+      "currentValue": 0,
+      "targetValue": 2,
+      "name": "Người thả cảm xúc siêu hạng",
+      "type": "WEEKLY",
+      "lastStreakDate": 0,
+      "rewardAmount": [
+        {
+          "targetValue": 2,
+          "amount": 500
+        }
+      ],
+      "actionType": "LIKE"
+    },
+    {
+      "missionId": 14,
+      "status": "NEW",
+      "currentValue": 0,
+      "targetValue": 2,
+      "name": "Đăng bài đều đặn",
+      "type": "WEEKLY",
+      "lastStreakDate": 0,
+      "rewardAmount": [
+        {
+          "targetValue": 2,
+          "amount": 750
+        }
+      ],
+      "actionType": "POST"
+    },
+    {
+      "missionId": 15,
+      "status": "NEW",
+      "currentValue": 0,
+      "targetValue": 3,
+      "name": "Mở rộng mạng lưới",
+      "type": "WEEKLY",
+      "lastStreakDate": 0,
+      "rewardAmount": [
+        {
+          "targetValue": 3,
+          "amount": 1000
+        }
+      ],
+      "actionType": "ADD_FRIEND"
+    },
+    {
+      "missionId": 16,
+      "status": "NEW",
+      "currentValue": 0,
+      "targetValue": 3,
+      "name": "Tham gia thảo luận",
+      "type": "WEEKLY",
+      "lastStreakDate": 0,
+      "rewardAmount": [
+        {
+          "targetValue": 3,
+          "amount": 800
+        }
+      ],
+      "actionType": "COMMENT"
+    },
+    {
+      "missionId": 17,
+      "status": "NEW",
+      "currentValue": 0,
+      "targetValue": 3,
+      "name": "Chia sẻ nhiệt tình",
+      "type": "WEEKLY",
+      "lastStreakDate": 0,
+      "rewardAmount": [
+        {
+          "targetValue": 3,
+          "amount": 600
+        }
+      ],
+      "actionType": "SHARE"
+    },
+    {
+      "missionId": 18,
+      "status": "NEW",
+      "currentValue": 0,
+      "targetValue": 7,
+      "name": "Chuỗi đăng nhập 7 ngày",
+      "type": "STREAK_LOGIN",
+      "lastStreakDate": 0,
+      "rewardAmount": [
+        {
+          "targetValue": 1,
+          "amount": 10
+        },
+        {
+          "targetValue": 2,
+          "amount": 12
+        },
+        {
+          "targetValue": 3,
+          "amount": 14
+        },
+        {
+          "targetValue": 4,
+          "amount": 16
+        },
+        {
+          "targetValue": 5,
+          "amount": 18
+        },
+        {
+          "targetValue": 6,
+          "amount": 20
+        },
+        {
+          "targetValue": 7,
+          "amount": 25
+        }
+      ],
+      "actionType": "LOGIN"
+    }
+  ]
+}

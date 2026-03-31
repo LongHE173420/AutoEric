@@ -1,6 +1,14 @@
 import mysql from 'mysql2/promise';
 import { ENV } from '../config/env';
 
+function getLocalDateString(): string {
+    const d = new Date();
+    // Offset standard UTC minutes and add +7 hours for Vietnam
+    const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+    const vnTime = new Date(utc + (3600000 * 7));
+    return `${vnTime.getFullYear()}-${String(vnTime.getMonth() + 1).padStart(2, '0')}-${String(vnTime.getDate()).padStart(2, '0')}`;
+}
+
 async function getConnection() {
     return await mysql.createConnection({
         host: ENV.DB_HOST,
@@ -65,13 +73,14 @@ export async function releaseVideoReservation(videoId?: number | null) {
 export async function getAccountsFromDb(): Promise<any[]> {
     const connection = await getConnection();
     try {
+        const today = getLocalDateString();
         const [rows] = await connection.execute(`
             SELECT phone, password, deviceId, userAgent, accessToken, refreshToken 
             FROM users 
             WHERE daily_run_count < 2 
-               OR last_run_date < CURDATE() 
+               OR last_run_date < ? 
                OR last_run_date IS NULL
-        `);
+        `, [today]);
         return rows as any[];
     } finally {
         await connection.end();
@@ -138,13 +147,14 @@ export async function recordRunInDb(phone: string) {
     const connection = await getConnection();
     try {
 
+        const today = getLocalDateString();
         await connection.execute(`
             UPDATE users 
             SET 
-                daily_run_count = IF(last_run_date = CURDATE(), daily_run_count + 1, 1),
-                last_run_date = CURDATE()
+                daily_run_count = IF(last_run_date = ?, daily_run_count + 1, 1),
+                last_run_date = ?
             WHERE phone = ?
-        `, [phone]);
+        `, [today, today, phone]);
     } catch (e) {
         console.error("Failed to update daily_run_count for", phone, e);
     } finally {
