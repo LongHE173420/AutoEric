@@ -174,24 +174,37 @@ export class EricWorker {
             const h = buildHeaders(deviceId, this.acc.userAgent);
 
             const accountSvc = new AccountMissionService(this.logger, this.api, this.proxyHelper.proxyAgent);
-            const interactSvc = new InteractionService(this.logger, this.api, this.proxyHelper.proxyAgent);
+            const interactSvc = new InteractionService(this.logger, this.api, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username || "");
             const relationSvc = new RelationService(this.logger, this.api, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username);
             const postSvc = new PostService(this.logger, this.acc, this.proxyHelper.proxyAgent);
             const surfSvc = new SurfService(this.logger, this.acc, this.proxyHelper.proxyAgent);
 
             const boundDoMission = this.doMission.bind(this);
 
-            await accountSvc.handleProfileAndSocial(accessToken, h, ctx, boundDoMission);
-            await interactSvc.handleFeedAndInteract(accessToken, h, ctx, boundDoMission);
-            await postSvc.handleAutoCreatePost(accessToken, h, ctx, boundDoMission);
-            await surfSvc.handleAutoCreateSurf(accessToken, h, ctx, boundDoMission);
-            await accountSvc.handleActivityGeneration(accessToken, h, ctx, boundDoMission);
-            await relationSvc.handleFriendManagement(accessToken, h, ctx, boundDoMission);
+            await this.runMissionStage("PROFILE_AND_SOCIAL", ctx, () => accountSvc.handleProfileAndSocial(accessToken, h, ctx, boundDoMission));
+            await this.runMissionStage("FEED_AND_INTERACT", ctx, () => interactSvc.handleFeedAndInteract(accessToken, h, ctx, boundDoMission));
+            await this.runMissionStage("CREATE_VIDEO_POST", ctx, () => postSvc.handleAutoCreatePost(accessToken, h, ctx, boundDoMission));
+            await this.runMissionStage("CREATE_SURF", ctx, () => surfSvc.handleAutoCreateSurf(accessToken, h, ctx, boundDoMission));
+            await this.runMissionStage("ACTIVITY_GENERATION", ctx, () => accountSvc.handleActivityGeneration(accessToken, h, ctx, boundDoMission));
+            await this.runMissionStage("FRIEND_MANAGEMENT", ctx, () => relationSvc.handleFriendManagement(accessToken, h, ctx, boundDoMission));
+            this.logger.info("MISSION_REWARD_RECHECK_AFTER_ACTIONS", ctx);
+            await this.runMissionStage("MISSION_REWARD_RECHECK", ctx, () => accountSvc.refreshMissionsAndRewards(accessToken, h, ctx, boundDoMission));
 
             this.logger.info("BOT_MISSIONS_COMPLETE", ctx);
         } catch (e: any) {
             this.logger.error("MISSIONS_SYSTEM_ERROR", { ...ctx, err: e.message });
             this.logger?.error("RUN_MISSIONS_FATAL_ERROR", { ...ctx, err: e.message });
+            throw e;
+        }
+    }
+
+    private async runMissionStage(stage: string, ctx: any, work: () => Promise<void>) {
+        this.logger.info("MISSION_STAGE_START", { ...ctx, stage });
+        try {
+            await work();
+            this.logger.info("MISSION_STAGE_DONE", { ...ctx, stage });
+        } catch (e: any) {
+            this.logger.error("MISSION_STAGE_ERROR", { ...ctx, stage, err: e.message || String(e) });
             throw e;
         }
     }

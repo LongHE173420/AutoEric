@@ -1,6 +1,7 @@
 import { FeedApiService } from "../../api/feed/feedApiService";
 import { SurfApiService } from "../../api/surf/surfApiService";
 import { ReactionApiService } from "../../api/reaction/reactionApiService";
+import { AsyncStore } from "../../storage/asyncStore";
 import { Log } from "../../utils/log";
 
 type AppLogger = ReturnType<typeof Log.getLogger>;
@@ -9,8 +10,34 @@ export class InteractionService {
     constructor(
         private readonly logger: AppLogger,
         private readonly api: any,
-        private readonly proxyAgent: any
+        private readonly proxyAgent: any,
+        private readonly currentPhone: string
     ) { }
+
+    private getInteractionStoreKey() {
+        return `interactedPosts:${String(this.currentPhone || "").trim().toLowerCase()}`;
+    }
+
+    private getSeenPostIds(): Set<string> {
+        try {
+            const key = this.getInteractionStoreKey();
+            const stored = AsyncStore.getItem<string[]>(key);
+            return new Set(Array.isArray(stored) ? stored.map(v => String(v)) : []);
+        } catch (e: any) {
+            this.logger.warn("LOAD_SEEN_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
+            return new Set();
+        }
+    }
+
+    private saveSeenPostIds(values: Iterable<string>) {
+        try {
+            const key = this.getInteractionStoreKey();
+            const unique = Array.from(new Set(Array.from(values).map(v => String(v)).filter(Boolean)));
+            AsyncStore.setItem(key, unique.slice(-300));
+        } catch (e: any) {
+            this.logger.warn("SAVE_SEEN_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
+        }
+    }
 
     private extractReactionCodes(payload: any): string[] {
         try {
@@ -101,8 +128,27 @@ export class InteractionService {
 
             if (allItems.length > 0) {
                 const uniqueItems = Array.from(new Map(allItems.map(i => [i.id, i])).values());
-                const interactItems = uniqueItems.sort(() => 0.5 - Math.random()).slice(0, 5);
-                this.logger.info("MISSION_ACTION_DEPENDENT_START", { ...ctx, parsedItemCount: interactItems.length });
+                const seenPostIds = this.getSeenPostIds();
+                const unseenItems = uniqueItems.filter((item) => !seenPostIds.has(String(item?.id || "")));
+                const interactItems = unseenItems.slice(0, 5);
+
+                this.logger.info("MISSION_ACTION_DEPENDENT_START", {
+                    ...ctx,
+                    parsedItemCount: interactItems.length,
+                    uniqueItemCount: uniqueItems.length,
+                    unseenItemCount: unseenItems.length,
+                    seenItemCount: seenPostIds.size
+                });
+
+                if (interactItems.length === 0) {
+                    this.logger.info("NO_UNSEEN_POSTS_FOR_INTERACTION", {
+                        ...ctx,
+                        uniqueItemCount: uniqueItems.length,
+                        seenItemCount: seenPostIds.size
+                    });
+                    return;
+                }
+
                 for (let i = 0; i < interactItems.length; i++) {
                     const post = interactItems[i];
                     const postId = post.id;
@@ -111,7 +157,10 @@ export class InteractionService {
                     await doMission(`PostReaction_${postId}`, () => ReactionApiService.sendReaction(accessToken, postId, rType, h, this.proxyAgent), ctx);
 
                     await doMission(`PostShare_${postId}`, () => FeedApiService.repostPost(accessToken, postId, h, this.proxyAgent), ctx);
+                    seenPostIds.add(String(postId));
                 }
+
+                this.saveSeenPostIds(seenPostIds);
             }
         } catch (e: any) {
             this.logger.error("INTERACT_WITH_POSTS_ERROR", { ...ctx, err: e.message || String(e) });

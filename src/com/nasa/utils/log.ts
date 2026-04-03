@@ -128,6 +128,9 @@ export class Log {
     };
 
     if (opts?.filePath) {
+      if (!fs.existsSync(opts.filePath)) {
+        try { fs.writeFileSync(opts.filePath, '\uFEFF'); } catch(e){}
+      }
       const fileStream = pino.destination({ dest: opts.filePath, sync: false });
       this.fileRoot = pino(baseConfig, fileStream);
       if (process.env.LOG_CONSOLE === "true" || process.env.LOG_CONSOLE === "1") {

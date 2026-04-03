@@ -54,6 +54,10 @@ export class PostService {
         }
     }
 
+    private buildVideoMediaRef(uploadVideoName: string, videoInfo: { width: number; height: number; duration: number; }) {
+        return `${uploadVideoName}/${this.mediaHelper.padMediaMetric(videoInfo.width)}/${this.mediaHelper.padMediaMetric(videoInfo.height)}/${this.mediaHelper.padMediaMetric(videoInfo.duration)}`;
+    }
+
     async handleAutoCreatePost(accessToken: string, h: any, ctx: any, doMission: Function) {
         try {
             const phone = String(this.acc.phone || "").trim();
@@ -129,40 +133,53 @@ export class PostService {
 
                     this.logger.info("VIDEO_UPLOAD_REQUEST_PREPARED", { ...ctx, postId: String(postId), fileName: uploadVideoName, fileSizeBytes, thumbnailFileName: uploadThumbName, uploadMode: "presigned+complete", width: videoInfo.width, height: videoInfo.height, duration: videoInfo.duration });
 
-                    await Promise.resolve().then(async () => {
-                        await this.mediaHelper.uploadMediaViaPresignedLink(accessToken, { entityId: String(postId), type: "POST", purpose: "POST_THUMBNAIL", fileName: uploadThumbName, fileSize: thumbnailSize, mimeType: "IMAGE_JPEG", lastFile: false }, thumbnailPath, "image/jpeg", h, ctx, "VIDEO_THUMBNAIL");
-                        await this.mediaHelper.uploadMediaViaPresignedLink(accessToken, { entityId: String(postId), type: "POST", purpose: "POST_VIDEO", fileName: uploadVideoName, fileSize: videoInfo.size, mimeType: "VIDEO_MP4", lastFile: true }, videoPath, "video/mp4", h, ctx, "VIDEO_FILE");
+                    const uploadSummary = await Promise.resolve().then(async () => {
+                        const thumbUpload = await this.mediaHelper.uploadMediaViaPresignedLink(accessToken, { entityId: String(postId), type: "POST", purpose: "POST_THUMBNAIL", fileName: uploadThumbName, fileSize: thumbnailSize, mimeType: "IMAGE_JPEG", lastFile: false }, thumbnailPath, "image/jpeg", h, ctx, "VIDEO_THUMBNAIL");
+                        const videoUpload = await this.mediaHelper.uploadMediaViaPresignedLink(accessToken, { entityId: String(postId), type: "POST", purpose: "POST_VIDEO", fileName: uploadVideoName, fileSize: videoInfo.size, mimeType: "VIDEO_MP4", lastFile: true }, videoPath, "video/mp4", h, ctx, "VIDEO_FILE");
+                        return { thumbUpload, videoUpload };
                     }).finally(() => {
                         if (fs.existsSync(thumbnailPath)) { try { fs.unlinkSync(thumbnailPath); } catch (e) { } }
                     });
+
+                    const mediaRef = this.buildVideoMediaRef(uploadVideoName, videoInfo);
+                    const thumbRef = `${uploadThumbName}/${this.mediaHelper.padMediaMetric(videoInfo.width)}/${this.mediaHelper.padMediaMetric(videoInfo.height)}`;
 
                     const layout = {
                         grid: "2-2",
                         slots: [{
                             pos: "1-1-2-2",
-                            media: `${uploadVideoName}/${this.mediaHelper.padMediaMetric(videoInfo.width)}/${this.mediaHelper.padMediaMetric(videoInfo.height)}/${this.mediaHelper.padMediaMetric(videoInfo.duration)}`,
+                            media: mediaRef,
                             type: "VIDEO",
-                            thumb: `${uploadThumbName}/${this.mediaHelper.padMediaMetric(videoInfo.width)}/${this.mediaHelper.padMediaMetric(videoInfo.height)}`
+                            thumb: thumbRef
                         }]
                     };
 
-                    const completePayload = {
+                    const createPayload = {
                         id: String(postId),
                         content: this.createPostContent("", layout),
-                        type: "POST", privacy: "PUBLIC", hashtags: "[]", mentions: "[]", tags: "[]",
+                        type: "POST",
+                        privacy: "PUBLIC",
+                        hashtags: null,
+                        mentions: null,
+                        tags: null,
                         checkinLocation: JSON.stringify({ lat: 0, lon: 0, source: "GPS", name: "" }),
-                        backgroundColor: 1, feeling: 1, listImage: "[]", listVideo: JSON.stringify([uploadVideoName])
+                        backgroundColor: 1,
+                        listImage: "[]",
+                        listVideo: JSON.stringify([uploadVideoName])
                     };
 
-                    this.logger.info("VIDEO_POST_COMPLETE_REQUEST", { ...ctx, postId: String(postId), payload: completePayload });
-                    const completePostResponse = await PostApiService.completePost(accessToken, completePayload, h, this.proxyAgent);
-                    this.logger.info("VIDEO_POST_COMPLETE_RESPONSE", { ...ctx, postId: String(postId), responseData: completePostResponse?.data, status: completePostResponse?.status });
+                    const createPostResponse = await PostApiService.createPost(accessToken, createPayload, h, this.proxyAgent);
+                    this.logger.info("VIDEO_POST_SUCCESS", {
+                        ...ctx,
+                        postId: String(postId),
+                        videoFileName: uploadVideoName
+                    });
 
                     const posted = await markVideoPosted(video.id, phone).catch(() => null);
                     if (posted?.fullyPosted && posted.localPath && fs.existsSync(posted.localPath)) {
                         try { fs.unlinkSync(posted.localPath); this.logger.info("SOURCE_VIDEO_DELETED_AFTER_MAX_POSTS", { videoId: video.id }); } catch (e) { }
                     }
-                    return { action: "success", data: completePostResponse };
+                    return { action: "success", data: createPostResponse };
                 }, ctx).catch(handleVideoFailure);
 
                 if (executionResult?.action === "continue") continue;
