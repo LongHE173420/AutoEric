@@ -1,5 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
-
 export function buildHeaders(deviceId?: string, userAgent?: string) {
     return {
         "Content-Type": "application/json",

@@ -1,6 +1,5 @@
 import { ENV } from "./com/nasa/config/env";
 import { cleanupOldLogs, getTodayLogPath, Log } from "./com/nasa/utils/log";
-import { MasterWorker } from "./com/nasa/worker/MasterWorker";
 import axios from "axios";
 import { applyStandardInterceptors } from "./com/nasa/utils/axiosSignature";
 import { ProxyManager } from "./com/nasa/proxy/ProxyManager";
@@ -50,6 +49,7 @@ async function runOnce(reason: string) {
 
     logger.debug("JOB_START", { reason });
 
+    const { MasterWorker } = await import("./com/nasa/worker/MasterWorker");
     const master = new MasterWorker(logger);
 
     const dbAccounts = await getAccountsFromDb();
@@ -90,6 +90,8 @@ async function runOnce(reason: string) {
 
 export async function startService() {
   try {
+    const { filePath } = getTodayLogPath();
+    Log.init({ filePath, level: ENV.LOG_LEVEL as any });
 
     await runOnce("startup");
 

@@ -1,9 +1,9 @@
 import { AxiosInstance } from "axios";
-import * as crypto from "crypto";
+import CryptoJS from "crypto-js";
 import { v4 as uuidv4 } from "uuid";
 
 export const getSignature = (rawData: string, token: string): string => {
-    return crypto.createHmac("sha256", token).update(rawData).digest("base64");
+    return CryptoJS.HmacSHA256(rawData, token).toString(CryptoJS.enc.Base64);
 };
 
 export function applyStandardInterceptors(axiosInstance: AxiosInstance | any, deviceId: string) {
@@ -92,7 +92,7 @@ export function applyStandardInterceptors(axiosInstance: AxiosInstance | any, de
             setHeader("X-Timestamp", timestamp);
             setHeader("X-Signature", signature);
             if (!hasHeader("Idempotency-Key")) {
-                setHeader("Idempotency-Key", uuidv4());
+                setHeader("Idempotency-Key", String(uuidv4()));
             }
 
             config.__signatureDebug = {

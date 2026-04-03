@@ -54,7 +54,7 @@ export class MasterWorker {
                             } else {
                                 summary.fail++;
                             }
-                        }).catch((e: any) => {
+                        }).catch(() => {
                             summary.fail++;
                         });
                     })

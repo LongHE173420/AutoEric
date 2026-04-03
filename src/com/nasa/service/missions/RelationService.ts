@@ -7,7 +7,6 @@ type AppLogger = ReturnType<typeof Log.getLogger>;
 export class RelationService {
     constructor(
         private readonly logger: AppLogger,
-        private readonly api: any,
         private readonly proxyAgent: any,
         private readonly currentPhone: string
     ) { }

@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { randomUUID } from "crypto";
 import { PostApiService } from "../../api/post/postApiService";
 import { getNextVideoToPost, markVideoPosted, releaseVideoReservation } from "../../data/mysqlStore";
 import { Log } from "../../utils/log";
@@ -8,6 +9,7 @@ import { MediaHelper } from "../../utils/MediaHelper";
 type AppLogger = ReturnType<typeof Log.getLogger>;
 
 export class PostService {
+    private readonly defaultBackgroundColor = 1;
     private mediaHelper: MediaHelper;
 
     constructor(
@@ -58,6 +60,35 @@ export class PostService {
         return `${uploadVideoName}/${this.mediaHelper.padMediaMetric(videoInfo.width)}/${this.mediaHelper.padMediaMetric(videoInfo.height)}/${this.mediaHelper.padMediaMetric(videoInfo.duration)}`;
     }
 
+    private buildCheckinLocation(name = "") {
+        return JSON.stringify({
+            lat: 0,
+            lon: 0,
+            source: "GPS",
+            name
+        });
+    }
+
+    private buildCreatePostPayload(
+        postId: string,
+        layout: any,
+        uploadVideoNames: string[]
+    ) {
+        return {
+            id: postId,
+            type: "POST",
+            content: this.createPostContent("", layout),
+            privacy: "PUBLIC",
+            hashtags: null,
+            mentions: null,
+            tags: null,
+            checkinLocation: this.buildCheckinLocation(""),
+            backgroundColor: this.defaultBackgroundColor,
+            listImage: JSON.stringify([]),
+            listVideo: JSON.stringify(uploadVideoNames)
+        };
+    }
+
     async handleAutoCreatePost(accessToken: string, h: any, ctx: any, doMission: Function) {
         try {
             const phone = String(this.acc.phone || "").trim();
@@ -106,9 +137,9 @@ export class PostService {
                         throw err;
                     }
 
-                    const baseName = path.parse(videoPath).name;
-                    const uploadVideoName = `${baseName}.mp4`;
-                    const uploadThumbName = `${baseName}.jpg`;
+                    const uploadBaseName = randomUUID();
+                    const uploadVideoName = `${uploadBaseName}.mp4`;
+                    const uploadThumbName = `${uploadBaseName}.jpg`;
                     const thumbnailPath = path.join(path.dirname(videoPath), uploadThumbName);
                     
                     let videoInfo: any;
@@ -133,7 +164,7 @@ export class PostService {
 
                     this.logger.info("VIDEO_UPLOAD_REQUEST_PREPARED", { ...ctx, postId: String(postId), fileName: uploadVideoName, fileSizeBytes, thumbnailFileName: uploadThumbName, uploadMode: "presigned+complete", width: videoInfo.width, height: videoInfo.height, duration: videoInfo.duration });
 
-                    const uploadSummary = await Promise.resolve().then(async () => {
+                    await Promise.resolve().then(async () => {
                         const thumbUpload = await this.mediaHelper.uploadMediaViaPresignedLink(accessToken, { entityId: String(postId), type: "POST", purpose: "POST_THUMBNAIL", fileName: uploadThumbName, fileSize: thumbnailSize, mimeType: "IMAGE_JPEG", lastFile: false }, thumbnailPath, "image/jpeg", h, ctx, "VIDEO_THUMBNAIL");
                         const videoUpload = await this.mediaHelper.uploadMediaViaPresignedLink(accessToken, { entityId: String(postId), type: "POST", purpose: "POST_VIDEO", fileName: uploadVideoName, fileSize: videoInfo.size, mimeType: "VIDEO_MP4", lastFile: true }, videoPath, "video/mp4", h, ctx, "VIDEO_FILE");
                         return { thumbUpload, videoUpload };
@@ -154,19 +185,17 @@ export class PostService {
                         }]
                     };
 
-                    const createPayload = {
-                        id: String(postId),
-                        content: this.createPostContent("", layout),
-                        type: "POST",
-                        privacy: "PUBLIC",
-                        hashtags: null,
-                        mentions: null,
-                        tags: null,
-                        checkinLocation: JSON.stringify({ lat: 0, lon: 0, source: "GPS", name: "" }),
-                        backgroundColor: 1,
-                        listImage: "[]",
-                        listVideo: JSON.stringify([uploadVideoName])
-                    };
+                    const createPayload = this.buildCreatePostPayload(
+                        String(postId),
+                        layout,
+                        [uploadVideoName]
+                    );
+
+                    this.logger.info("VIDEO_POST_CREATE_REQUEST", {
+                        ...ctx,
+                        postId: String(postId),
+                        payload: createPayload
+                    });
 
                     const createPostResponse = await PostApiService.createPost(accessToken, createPayload, h, this.proxyAgent);
                     this.logger.info("VIDEO_POST_SUCCESS", {

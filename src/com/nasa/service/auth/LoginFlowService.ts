@@ -1,7 +1,7 @@
 import { AuthServiceApi, Tokens } from "../../api/auth/authApiService";
 import { ENV } from "../../config/env";
 import { setStoredTokens, clearTokensForUser, getStoredTokens, clearAllData } from "../../storage/tokenStore";
-import { maskToken, maskOtp, Log } from "../../utils/log";
+import { maskOtp, Log } from "../../utils/log";
 import { decodeJwtPayload, isAccessExpired, isRefreshExpired } from "../../utils/tokenUtils";
 import { buildHeaders } from "../../utils/headers";
 import { UserApiService } from "../../api/user/userApiService";

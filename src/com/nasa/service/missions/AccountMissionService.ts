@@ -14,7 +14,6 @@ export class AccountMissionService {
 
     constructor(
         private readonly logger: AppLogger,
-        private readonly api: any,
         private readonly proxyAgent: any
     ) {}
 
@@ -23,7 +22,7 @@ export class AccountMissionService {
             await doMission("ProfileMe", () => UserApiService.getProfileMe(accessToken, h, this.proxyAgent), ctx);
             await this.processMissionsAndRewards(accessToken, h, ctx, doMission, {
                 logMissionFetch: true,
-                logMissionDetail: true,
+                logMissionDetail: false,
                 missionDetailPhase: "INITIAL"
             });
             await doMission("MyFriends", () => FriendApiService.getMyFriends(accessToken, h, this.proxyAgent), ctx);
@@ -325,29 +324,6 @@ export class AccountMissionService {
                         });
                     }
                     continue;
-                } else {
-                    const isClaimed = m.status === "CLAIMED";
-                    
-                    if (!isClaimed) {
-                        this.logger.info("MISSION_REWARD_CLAIM_REQUEST", {
-                            ...ctx,
-                            claimType: "MISSION",
-                            missionId,
-                            name: m.name || null,
-                            currentValue: m.currentValue ?? 0,
-                            targetValue: m.targetValue ?? 0
-                        });
-                        await doMission(`ClaimMission_${missionId}`, () => MissionApiService.claimMissionReward(accessToken, missionId, h, this.proxyAgent), ctx);
-                    } else if (logMissionDetail) {
-                        this.logger.debug(`SKIP_MISSION_${missionId}`, {
-                            ...ctx,
-                            name: m.name || null,
-                            status: m.status || null,
-                            isClaimed,
-                            cv: m.currentValue ?? 0,
-                            tv: m.targetValue ?? 0
-                        });
-                    }
                 }
             }
         } catch (e: any) {

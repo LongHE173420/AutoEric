@@ -18,6 +18,18 @@ async function getConnection() {
     });
 }
 
+export type AppDataAccountRow = {
+    id: number;
+    phone: string;
+    deviceId?: string | null;
+    userAgent?: string | null;
+    app_user_id?: string | null;
+    daily_run_count?: number | null;
+    last_run_date?: string | null;
+    accessToken?: string | null;
+    refreshToken?: string | null;
+};
+
 const reservedVideoLocks = new Map<number, mysql.Connection>();
 
 function getVideoLockName(videoId: number) {
@@ -82,6 +94,20 @@ export async function getAccountsFromDb(): Promise<any[]> {
                OR last_run_date IS NULL
         `, [today]);
         return rows as any[];
+    } finally {
+        await connection.end();
+    }
+}
+
+export async function getAppDataAccountsFromDb(): Promise<AppDataAccountRow[]> {
+    const connection = await getConnection();
+    try {
+        const [rows] = await connection.execute(`
+            SELECT id, phone, deviceId, userAgent, app_user_id, daily_run_count, last_run_date, accessToken, refreshToken
+            FROM users
+            ORDER BY id ASC
+        `);
+        return rows as AppDataAccountRow[];
     } finally {
         await connection.end();
     }

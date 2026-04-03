@@ -87,8 +87,7 @@ export class Log {
 
   private static shouldWriteToFile(msg: string) {
     return !(
-      (msg.includes("_PRESIGNED_REQUEST") || msg.includes("_PRESIGNED_RESPONSE")) ||
-      msg === "VIDEO_POST_CREATE_REQUEST"
+      (msg.includes("_PRESIGNED_REQUEST") || msg.includes("_PRESIGNED_RESPONSE"))
     );
   }
 
@@ -96,7 +95,9 @@ export class Log {
     if (!obj || typeof obj !== "object") return obj;
 
     const clone: any = { ...obj };
-    delete clone.payload;
+    if (msg !== "VIDEO_POST_CREATE_REQUEST") {
+      delete clone.payload;
+    }
     delete clone.responseData;
     delete clone.uploadFields;
     delete clone.requestDebug;

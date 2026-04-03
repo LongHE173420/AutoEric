@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { ENV } from '../../config/env';
 import { ApiClient } from '../../utils/ApiClient';
 import { buildHeaders } from '../../utils/headers';

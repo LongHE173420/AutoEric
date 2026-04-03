@@ -1,5 +1,5 @@
 import { AuthServiceApi } from "../api/auth/authApiService";
-import { maskPassword, maskToken, Log } from "../utils/log";
+import { maskPassword, Log } from "../utils/log";
 import { getStoredTokens, setStoredTokens, clearTokensForUser } from "../storage/tokenStore";
 import { getMeWithAutoAuth, loginWithOtpFlow } from "../service/auth/LoginFlowService";
 import { saveTokensToDb, saveAppUserId } from "../data/mysqlStore";
@@ -173,9 +173,9 @@ export class EricWorker {
             this.logger.info("BOT_MISSIONS_START", ctx);
             const h = buildHeaders(deviceId, this.acc.userAgent);
 
-            const accountSvc = new AccountMissionService(this.logger, this.api, this.proxyHelper.proxyAgent);
-            const interactSvc = new InteractionService(this.logger, this.api, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username || "");
-            const relationSvc = new RelationService(this.logger, this.api, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username);
+            const accountSvc = new AccountMissionService(this.logger, this.proxyHelper.proxyAgent);
+            const interactSvc = new InteractionService(this.logger, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username || "");
+            const relationSvc = new RelationService(this.logger, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username);
             const postSvc = new PostService(this.logger, this.acc, this.proxyHelper.proxyAgent);
             const surfSvc = new SurfService(this.logger, this.acc, this.proxyHelper.proxyAgent);
 
@@ -187,8 +187,6 @@ export class EricWorker {
             await this.runMissionStage("CREATE_SURF", ctx, () => surfSvc.handleAutoCreateSurf(accessToken, h, ctx, boundDoMission));
             await this.runMissionStage("ACTIVITY_GENERATION", ctx, () => accountSvc.handleActivityGeneration(accessToken, h, ctx, boundDoMission));
             await this.runMissionStage("FRIEND_MANAGEMENT", ctx, () => relationSvc.handleFriendManagement(accessToken, h, ctx, boundDoMission));
-            this.logger.info("MISSION_REWARD_RECHECK_AFTER_ACTIONS", ctx);
-            await this.runMissionStage("MISSION_REWARD_RECHECK", ctx, () => accountSvc.refreshMissionsAndRewards(accessToken, h, ctx, boundDoMission));
 
             this.logger.info("BOT_MISSIONS_COMPLETE", ctx);
         } catch (e: any) {
