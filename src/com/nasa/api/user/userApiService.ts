@@ -25,6 +25,17 @@ export class UserApiService {
         const client = ApiClient.createSignedClient(headers, agent);
         return client.get(`/api/user/id/${id}`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
+            transformResponse: [(data) => {
+                if (typeof data === 'string') {
+                    const transformed = data.replace(/"(userId|accountId|id|senderId|receiverId|postId|commentId|parentId|surfId|entityId)"\s*:\s*(\d+)/g, '"$1": "$2"');
+                    try {
+                        return JSON.parse(transformed);
+                    } catch (e) {
+                        return data;
+                    }
+                }
+                return data;
+            }]
         });
     }
 
@@ -32,6 +43,17 @@ export class UserApiService {
         const client = ApiClient.createSignedClient(headers, agent);
         return client.get(`/api/user/username/${username}`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
+            transformResponse: [(data) => {
+                if (typeof data === 'string') {
+                    const transformed = data.replace(/"(userId|accountId|id|senderId|receiverId|postId|commentId|parentId|surfId|entityId)"\s*:\s*(\d+)/g, '"$1": "$2"');
+                    try {
+                        return JSON.parse(transformed);
+                    } catch (e) {
+                        return data;
+                    }
+                }
+                return data;
+            }]
         });
     }
 
@@ -47,6 +69,17 @@ export class UserApiService {
         return client.get(`/api/user/list-images`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             params: { userId, limit, offset },
+            transformResponse: [(data) => {
+                if (typeof data === 'string') {
+                    const transformed = data.replace(/"(userId|accountId|id|senderId|receiverId|postId|commentId|parentId|surfId|entityId)"\s*:\s*(\d+)/g, '"$1": "$2"');
+                    try {
+                        return JSON.parse(transformed);
+                    } catch (e) {
+                        return data;
+                    }
+                }
+                return data;
+            }]
         });
     }
 

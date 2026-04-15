@@ -6,20 +6,53 @@ export class FriendApiService {
     static async getFollowers(accessToken: string, userId: string, headers = buildHeaders(), limit = 10, offset = 0, agent?: any) {
         return ApiClient.createSignedClient(headers, agent).get(`${ENV.KONG_URL}/api/follow/followers/${userId}`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            params: { limit, offset }
+            params: { limit, offset },
+            transformResponse: [(data) => {
+                if (typeof data === 'string') {
+                    const transformed = data.replace(/"(userId|accountId|id|senderId|receiverId|postId|commentId|parentId|surfId|entityId)"\s*:\s*(\d+)/g, '"$1": "$2"');
+                    try {
+                        return JSON.parse(transformed);
+                    } catch (e) {
+                        return data;
+                    }
+                }
+                return data;
+            }]
         });
     }
 
     static async getFriendList(accessToken: string, userId: string, headers = buildHeaders(), limit = 10, offset = 0, agent?: any) {
         return ApiClient.createSignedClient(headers, agent).get(`${ENV.KONG_URL}/api/friend/list`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            params: { userId, limit, offset }
+            params: { userId, limit, offset },
+            transformResponse: [(data) => {
+                if (typeof data === 'string') {
+                    const transformed = data.replace(/"(userId|accountId|id|senderId|receiverId|postId|commentId|parentId|surfId|entityId)"\s*:\s*(\d+)/g, '"$1": "$2"');
+                    try {
+                        return JSON.parse(transformed);
+                    } catch (e) {
+                        return data;
+                    }
+                }
+                return data;
+            }]
         });
     }
 
     static async getMyFriends(accessToken: string, headers = buildHeaders(), agent?: any) {
         return ApiClient.createSignedClient(headers, agent).get(`${ENV.KONG_URL}/api/friend/myFriends`, {
-            headers: { ...headers, Authorization: `Bearer ${accessToken}` }
+            headers: { ...headers, Authorization: `Bearer ${accessToken}` },
+            transformResponse: [(data) => {
+                if (typeof data === 'string') {
+                    const transformed = data.replace(/"(userId|accountId|id|senderId|receiverId|postId|commentId|parentId|surfId|entityId)"\s*:\s*(\d+)/g, '"$1": "$2"');
+                    try {
+                        return JSON.parse(transformed);
+                    } catch (e) {
+                        return data;
+                    }
+                }
+                return data;
+            }]
         });
     }
 
@@ -38,7 +71,18 @@ export class FriendApiService {
     static async getSentRequests(accessToken: string, headers = buildHeaders(), limit = 10, offset = 0, agent?: any) {
         return ApiClient.createSignedClient(headers, agent).get(`${ENV.KONG_URL}/api/friend/requests/sent`, {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
-            params: { limit, offset }
+            params: { limit, offset },
+            transformResponse: [(data) => {
+                if (typeof data === 'string') {
+                    const transformed = data.replace(/"(userId|accountId|id|senderId|receiverId|postId|commentId|parentId|surfId|entityId)"\s*:\s*(\d+)/g, '"$1": "$2"');
+                    try {
+                        return JSON.parse(transformed);
+                    } catch (e) {
+                        return data;
+                    }
+                }
+                return data;
+            }]
         });
     }
 
