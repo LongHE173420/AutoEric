@@ -6,8 +6,13 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "echo 'No build needed for src usage'",
-    "start": "ts-node src/index.ts"
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "start:ts": "ts-node src/index.ts",
+    "pm2:start": "pm2 start ecosystem.config.cjs --only auto-eric",
+    "pm2:restart": "pm2 restart auto-eric",
+    "pm2:stop": "pm2 stop auto-eric",
+    "pm2:logs": "pm2 logs auto-eric"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

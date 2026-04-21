@@ -87,7 +87,7 @@ export class Log {
 
   private static shouldWriteToFile(msg: string) {
     return !(
-      (msg.includes("_PRESIGNED_REQUEST") || msg.includes("_PRESIGNED_RESPONSE"))
+      (msg.endsWith("_PRESIGNED_REQUEST") || msg.endsWith("_PRESIGNED_RESPONSE"))
     );
   }
 
@@ -95,14 +95,29 @@ export class Log {
     if (!obj || typeof obj !== "object") return obj;
 
     const clone: any = { ...obj };
-    if (msg !== "VIDEO_POST_CREATE_REQUEST") {
+    const keepPayload =
+      msg === "VIDEO_POST_CREATE_REQUEST"
+      || msg === "VIDEO_POST_COMPLETE_REQUEST"
+      || msg.endsWith("_PRESIGNED_REQUEST_FAILED");
+    const keepHttpDebug =
+      msg === "VIDEO_THUMBNAIL_UPLOAD_FAILED"
+      || msg.endsWith("_DIRECT_UPLOAD_FAILED")
+      || msg.endsWith("_PRESIGNED_REQUEST_FAILED")
+      || msg.endsWith("_S3_UPLOAD_FAILED")
+      || msg.startsWith("MISSION_IGNORED");
+
+    if (!keepPayload) {
       delete clone.payload;
     }
     delete clone.responseData;
-    delete clone.uploadFields;
-    delete clone.requestDebug;
-    delete clone.requestHeaders;
-    delete clone.responseHeaders;
+    if (!msg.endsWith("_S3_UPLOAD_FAILED")) {
+      delete clone.uploadFields;
+    }
+    if (!keepHttpDebug) {
+      delete clone.requestDebug;
+      delete clone.requestHeaders;
+      delete clone.responseHeaders;
+    }
 
     if (clone.detail && typeof clone.detail === "object") {
       clone.detail = "[object]";

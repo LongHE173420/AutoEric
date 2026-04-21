@@ -181,12 +181,21 @@ export class EricWorker {
 
             const boundDoMission = this.doMission.bind(this);
 
-            await this.runMissionStage("PROFILE_AND_SOCIAL", ctx, () => accountSvc.handleProfileAndSocial(accessToken, h, ctx, boundDoMission));
-            await this.runMissionStage("FEED_AND_INTERACT", ctx, () => interactSvc.handleFeedAndInteract(accessToken, h, ctx, boundDoMission));
+            const TEST_ONLY_POST = false; // Đổi thành false khi muốn chạy toàn bộ tính năng
+
+            if (!TEST_ONLY_POST) {
+                await this.runMissionStage("PROFILE_AND_SOCIAL", ctx, () => accountSvc.handleProfileAndSocial(accessToken, h, ctx, boundDoMission));
+                await this.runMissionStage("FEED_AND_INTERACT", ctx, () => interactSvc.handleFeedAndInteract(accessToken, h, ctx, boundDoMission));
+            }
+
             await this.runMissionStage("CREATE_VIDEO_POST", ctx, () => postSvc.handleAutoCreatePost(accessToken, h, ctx, boundDoMission));
-            await this.runMissionStage("CREATE_SURF", ctx, () => surfSvc.handleAutoCreateSurf(accessToken, h, ctx, boundDoMission));
-            await this.runMissionStage("ACTIVITY_GENERATION", ctx, () => accountSvc.handleActivityGeneration(accessToken, h, ctx, boundDoMission));
-            await this.runMissionStage("FRIEND_MANAGEMENT", ctx, () => relationSvc.handleFriendManagement(accessToken, h, ctx, boundDoMission));
+
+            if (!TEST_ONLY_POST) {
+                await this.runMissionStage("CREATE_SURF", ctx, () => surfSvc.handleAutoCreateSurf(accessToken, h, ctx, boundDoMission));
+                await this.runMissionStage("ACTIVITY_GENERATION", ctx, () => accountSvc.handleActivityGeneration(accessToken, h, ctx, boundDoMission));
+                await this.runMissionStage("FRIEND_MANAGEMENT", ctx, () => relationSvc.handleFriendManagement(accessToken, h, ctx, boundDoMission));
+                await this.runMissionStage("REWARD_CLAIMING", ctx, () => accountSvc.handleRewardClaiming(accessToken, h, ctx, boundDoMission));
+            }
 
             this.logger.info("BOT_MISSIONS_COMPLETE", ctx);
         } catch (e: any) {
@@ -238,6 +247,18 @@ export class EricWorker {
                     });
                     if (this.acc.proxy) e.__proxyAuthIssue = true;
                     throw e;
+                }
+
+                const url = e.config?.url;
+
+                if (url && url.includes('claim-streak-mission-reward')) {
+                    require('fs').appendFileSync('streak-trace.json', JSON.stringify({
+                        status,
+                        data: e.response?.data,
+                        headers: e.config?.headers,
+                        body: e.config?.data,
+                        sig: e.config?.headers?.['X-Signature']
+                    }, null, 2) + '\n\n');
                 }
 
                 if (status === 400 || status === 403 || status === 404 || status === 409) {

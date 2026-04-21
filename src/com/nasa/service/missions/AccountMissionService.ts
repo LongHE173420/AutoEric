@@ -15,16 +15,11 @@ export class AccountMissionService {
     constructor(
         private readonly logger: AppLogger,
         private readonly proxyAgent: any
-    ) {}
+    ) { }
 
     async handleProfileAndSocial(accessToken: string, h: any, ctx: any, doMission: Function) {
         try {
             await doMission("ProfileMe", () => UserApiService.getProfileMe(accessToken, h, this.proxyAgent), ctx);
-            await this.processMissionsAndRewards(accessToken, h, ctx, doMission, {
-                logMissionFetch: true,
-                logMissionDetail: false,
-                missionDetailPhase: "INITIAL"
-            });
             await doMission("MyFriends", () => FriendApiService.getMyFriends(accessToken, h, this.proxyAgent), ctx);
             await doMission("Notifications", () => NotificationApiService.listNotifications(accessToken, h, 10, 0, this.proxyAgent), ctx);
         } catch (e: any) {
@@ -33,26 +28,36 @@ export class AccountMissionService {
         }
     }
 
-    async refreshMissionsAndRewards(accessToken: string, h: any, ctx: any, doMission: Function) {
-        const pollDelaysMs = [0, 5000, 10000];
-
-        for (let attemptIndex = 0; attemptIndex < pollDelaysMs.length; attemptIndex++) {
-            const delayMs = pollDelaysMs[attemptIndex];
-
-            if (delayMs > 0) {
-                await new Promise((resolve) => setTimeout(resolve, delayMs));
-            }
-
-            const result = await this.processMissionsAndRewards(accessToken, h, ctx, doMission, {
-                logMissionFetch: attemptIndex === 0,
-                logMissionDetail: attemptIndex === 0,
-                missionDetailPhase: attemptIndex === 0 ? "RECHECK" : undefined
+    async handleRewardClaiming(accessToken: string, h: any, ctx: any, doMission: Function) {
+        try {
+            await this.processMissionsAndRewards(accessToken, h, ctx, doMission, {
+                logMissionFetch: true,
+                logMissionDetail: false,
+                missionDetailPhase: "INITIAL"
             });
-            const summary = this.summarizeMissionProgress(result.missions);
 
-            if (summary.anyNonStreakProgress || summary.claimableNonStreakCount > 0) {
-                return;
+            const pollDelaysMs = [0, 5000, 10000];
+            for (let attemptIndex = 0; attemptIndex < pollDelaysMs.length; attemptIndex++) {
+                const delayMs = pollDelaysMs[attemptIndex];
+
+                if (delayMs > 0) {
+                    await new Promise((resolve) => setTimeout(resolve, delayMs));
+                }
+
+                const result = await this.processMissionsAndRewards(accessToken, h, ctx, doMission, {
+                    logMissionFetch: attemptIndex === 0,
+                    logMissionDetail: attemptIndex === 0,
+                    missionDetailPhase: attemptIndex === 0 ? "RECHECK" : undefined
+                });
+                const summary = this.summarizeMissionProgress(result.missions);
+
+                if (summary.anyNonStreakProgress || summary.claimableNonStreakCount > 0) {
+                    return;
+                }
             }
+        } catch (e: any) {
+            this.logger.error("HANDLE_REWARD_CLAIMING_ERROR", { ...ctx, err: e.message || String(e) });
+            throw e;
         }
     }
 
@@ -288,11 +293,12 @@ export class AccountMissionService {
                 if (!missionId) continue;
 
                 const isStreak = this.isStreakMission(m);
-                
+
                 if (isStreak) {
                     const cv = m.currentValue ?? 0;
+                    const nextMilestone = cv + 1;
                     const streakClaimState = this.getStreakClaimState(m);
-                    
+
                     if (streakClaimState.canClaimToday) {
                         this.logger.info("STREAK_MISSION_REWARD_CLAIM_REQUEST", {
                             ...ctx,
@@ -300,12 +306,13 @@ export class AccountMissionService {
                             missionId,
                             name: m.name || null,
                             cv,
+                            nextMilestone,
                             tv: m.targetValue ?? 0,
                             todayKey: streakClaimState.todayKey,
                             lastClaimDateKey: streakClaimState.lastClaimDateKey,
                             timeZone: this.streakTimeZone
                         });
-                        await doMission(`ClaimStreak_${missionId}`, () => MissionApiService.claimStreakMissionReward(accessToken, missionId, cv, h, this.proxyAgent), ctx);
+                        await doMission(`ClaimStreak_${missionId}`, () => MissionApiService.claimStreakMissionReward(accessToken, missionId, nextMilestone, h, this.proxyAgent), ctx);
                     } else if (logMissionDetail) {
                         this.logger.debug(`SKIP_STREAK_MISSION_${missionId}`, {
                             ...ctx,

@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { randomUUID } from "crypto";
 import { PostApiService } from "../../api/post/postApiService";
-import { getNextVideoToPost, markVideoPosted, releaseVideoReservation } from "../../data/mysqlStore";
+import { markVideoPosted, getNextVideoToPost, releaseVideoReservation } from "../../data/mysqlStore";
 import { Log } from "../../utils/log";
 import { MediaHelper } from "../../utils/MediaHelper";
 
@@ -89,6 +89,26 @@ export class PostService {
         };
     }
 
+    private buildCompletePostPayload(
+        postId: string,
+        layout: any,
+        uploadVideoNames: string[]
+    ) {
+        return {
+            id: postId,
+            type: "POST",
+            content: this.createPostContent("", layout),
+            privacy: "PUBLIC",
+            hashtags: null,
+            mentions: null,
+            tags: null,
+            checkinLocation: this.buildCheckinLocation(""),
+            backgroundColor: this.defaultBackgroundColor,
+            listImage: JSON.stringify([]),
+            listVideo: JSON.stringify(uploadVideoNames)
+        };
+    }
+
     async handleAutoCreatePost(accessToken: string, h: any, ctx: any, doMission: Function) {
         try {
             const phone = String(this.acc.phone || "").trim();
@@ -104,7 +124,7 @@ export class PostService {
                 this.logger.info("VIDEO_POST_START", { ...ctx, videoId: video.id, source: video.source_url, attempt });
 
                 const handleVideoFailure = async (err: any) => {
-                    await releaseVideoReservation(video?.id).catch(() => {});
+                    await releaseVideoReservation(video?.id).catch(() => { });
                     const isBrokenLocalVideo =
                         err?.message?.includes("Video file not found") ||
                         err?.message?.includes("Video too large") ||
@@ -123,7 +143,7 @@ export class PostService {
 
                     if (!fs.existsSync(videoPath)) {
                         const err = new Error(`Video file not found: ${videoPath}`);
-                        await this.mediaHelper.deleteBrokenVideo(video, ctx, "FILE_NOT_FOUND", err, "BROKEN_VIDEO").catch(() => {});
+                        await this.mediaHelper.deleteBrokenVideo(video, ctx, "FILE_NOT_FOUND", err, "BROKEN_VIDEO").catch(() => { });
                         throw err;
                     }
 
@@ -133,7 +153,7 @@ export class PostService {
                     if (fileSizeBytes > MAX_SIZE) {
                         this.logger.warn("VIDEO_TOO_LARGE_SKIPPING", { ...ctx, sizeMB: (fileSizeBytes / (1024 * 1024)).toFixed(2) });
                         const err = new Error(`Video too large: ${(fileSizeBytes / 1024 / 1024).toFixed(2)}MB`);
-                        await this.mediaHelper.deleteBrokenVideo(video, ctx, "FILE_TOO_LARGE", err, "BROKEN_VIDEO").catch(() => {});
+                        await this.mediaHelper.deleteBrokenVideo(video, ctx, "FILE_TOO_LARGE", err, "BROKEN_VIDEO").catch(() => { });
                         throw err;
                     }
 
@@ -141,7 +161,7 @@ export class PostService {
                     const uploadVideoName = `${uploadBaseName}.mp4`;
                     const uploadThumbName = `${uploadBaseName}.jpg`;
                     const thumbnailPath = path.join(path.dirname(videoPath), uploadThumbName);
-                    
+
                     let videoInfo: any;
                     let thumbnailSize: number = 0;
 
@@ -151,7 +171,7 @@ export class PostService {
                         thumbnailSize = fs.statSync(thumbnailPath).size;
                     }).catch(async (err: any) => {
                         if (fs.existsSync(thumbnailPath)) { try { fs.unlinkSync(thumbnailPath); } catch (e) { } }
-                        await this.mediaHelper.deleteBrokenVideo(video, ctx, "LOCAL_VIDEO_PROCESSING_FAILED", err, "BROKEN_VIDEO").catch(() => {});
+                        await this.mediaHelper.deleteBrokenVideo(video, ctx, "LOCAL_VIDEO_PROCESSING_FAILED", err, "BROKEN_VIDEO").catch(() => { });
                         throw err;
                     });
 
@@ -162,53 +182,138 @@ export class PostService {
 
                     if (!postId) throw new Error("Failed to generate post ID");
 
-                    this.logger.info("VIDEO_UPLOAD_REQUEST_PREPARED", { ...ctx, postId: String(postId), fileName: uploadVideoName, fileSizeBytes, thumbnailFileName: uploadThumbName, uploadMode: "presigned+complete", width: videoInfo.width, height: videoInfo.height, duration: videoInfo.duration });
+                    this.logger.info("VIDEO_UPLOAD_REQUEST_PREPARED", { ...ctx, postId: String(postId), fileName: uploadVideoName, fileSizeBytes, thumbnailFileName: uploadThumbName, uploadMode: "thumb-presigned-or-direct+presigned+complete", width: videoInfo.width, height: videoInfo.height, duration: videoInfo.duration });
 
-                    await Promise.resolve().then(async () => {
-                        const thumbUpload = await this.mediaHelper.uploadMediaViaPresignedLink(accessToken, { entityId: String(postId), type: "POST", purpose: "POST_THUMBNAIL", fileName: uploadThumbName, fileSize: thumbnailSize, mimeType: "IMAGE_JPEG", lastFile: false }, thumbnailPath, "image/jpeg", h, ctx, "VIDEO_THUMBNAIL");
-                        const videoUpload = await this.mediaHelper.uploadMediaViaPresignedLink(accessToken, { entityId: String(postId), type: "POST", purpose: "POST_VIDEO", fileName: uploadVideoName, fileSize: videoInfo.size, mimeType: "VIDEO_MP4", lastFile: true }, videoPath, "video/mp4", h, ctx, "VIDEO_FILE");
-                        return { thumbUpload, videoUpload };
+                    const uploadResult = await Promise.resolve().then(async () => {
+                        // Thumbnail: dùng presigned URL flow (giống mobile app) — POST_THUMBNAIL → S3
+                        let thumbUpload: any = null;
+                        let thumbnailUploadSkipped = false;
+                        let presignedThumbErr: any = null;
+
+                        try {
+                            thumbUpload = await this.mediaHelper.uploadMediaViaPresignedLink(
+                                accessToken,
+                                {
+                                    entityId: String(postId),
+                                    type: "POST",
+                                    purpose: "POST_THUMBNAIL",
+                                    fileName: uploadThumbName,
+                                    fileSize: thumbnailSize,
+                                    mimeType: "IMAGE_JPEG",
+                                    lastFile: false
+                                },
+                                thumbnailPath,
+                                "image/jpeg",
+                                h,
+                                ctx,
+                                "VIDEO_THUMBNAIL"
+                            );
+                        } catch (err: any) {
+                            presignedThumbErr = err;
+                            this.logger.warn("VIDEO_THUMBNAIL_UPLOAD_MODE_FALLBACK", {
+                                ...ctx,
+                                postId: String(postId),
+                                failedMode: "presigned",
+                                nextMode: "direct",
+                                err: err?.message || String(err || "")
+                            });
+
+                            try {
+                                thumbUpload = await this.mediaHelper.uploadFeedThumbnailDirect(
+                                    accessToken,
+                                    String(postId),
+                                    thumbnailPath,
+                                    uploadThumbName,
+                                    h,
+                                    ctx,
+                                    "VIDEO_THUMBNAIL",
+                                    false
+                                );
+                            } catch (directThumbErr: any) {
+                                thumbnailUploadSkipped = true;
+                                this.logger.warn("VIDEO_THUMBNAIL_UPLOAD_SKIPPED_AFTER_FAILURE", {
+                                    ...ctx,
+                                    postId: String(postId),
+                                    failedModes: ["presigned", "direct"],
+                                    presignedErr: presignedThumbErr?.message || String(presignedThumbErr || ""),
+                                    directErr: directThumbErr?.message || String(directThumbErr || "")
+                                });
+                            }
+                        }
+
+                        const videoUpload = await this.mediaHelper.uploadMediaViaPresignedLink(
+                            accessToken,
+                            {
+                                entityId: String(postId),
+                                type: "POST",
+                                purpose: "POST_VIDEO",
+                                fileName: uploadVideoName,
+                                fileSize: videoInfo.size,
+                                mimeType: "VIDEO_MP4",
+                                lastFile: true
+                            },
+                            videoPath,
+                            "video/mp4",
+                            h,
+                            ctx,
+                            "VIDEO_FILE"
+                        );
+                        return { thumbUpload, videoUpload, thumbnailUploadSkipped };
                     }).finally(() => {
                         if (fs.existsSync(thumbnailPath)) { try { fs.unlinkSync(thumbnailPath); } catch (e) { } }
                     });
 
-                    const mediaRef = this.buildVideoMediaRef(uploadVideoName, videoInfo);
-                    const thumbRef = `${uploadThumbName}/${this.mediaHelper.padMediaMetric(videoInfo.width)}/${this.mediaHelper.padMediaMetric(videoInfo.height)}`;
+                    const uploadedVideoFileName = path.basename(uploadResult.videoUpload?.fileName || uploadVideoName);
+                    const mediaRef = this.buildVideoMediaRef(uploadedVideoFileName, videoInfo);
+                    const uploadedThumbFileName = uploadResult.thumbUpload?.fileName
+                        ? path.basename(uploadResult.thumbUpload.fileName)
+                        : "";
+
+                    const slot: any = {
+                        pos: "1-1-2-2",
+                        media: mediaRef,
+                        type: "VIDEO"
+                    };
+                    if (uploadedThumbFileName) {
+                        slot.thumb = `${uploadedThumbFileName}/${this.mediaHelper.padMediaMetric(videoInfo.width)}/${this.mediaHelper.padMediaMetric(videoInfo.height)}`;
+                    }
 
                     const layout = {
                         grid: "2-2",
-                        slots: [{
-                            pos: "1-1-2-2",
-                            media: mediaRef,
-                            type: "VIDEO",
-                            thumb: thumbRef
-                        }]
+                        slots: [slot]
                     };
 
-                    const createPayload = this.buildCreatePostPayload(
+                    const completePayload = this.buildCompletePostPayload(
                         String(postId),
                         layout,
-                        [uploadVideoName]
+                        [uploadedVideoFileName]
                     );
 
-                    this.logger.info("VIDEO_POST_CREATE_REQUEST", {
+                    this.logger.info("VIDEO_POST_COMPLETE_REQUEST", {
                         ...ctx,
                         postId: String(postId),
-                        payload: createPayload
+                        thumbnailUploadSkipped: uploadResult.thumbnailUploadSkipped,
+                        payload: completePayload
                     });
 
-                    const createPostResponse = await PostApiService.createPost(accessToken, createPayload, h, this.proxyAgent);
+                    const completePostResponse = await PostApiService.completePost(accessToken, completePayload, h, this.proxyAgent);
+                    this.logger.info("VIDEO_POST_COMPLETE_RESPONSE", {
+                        ...ctx,
+                        postId: String(postId),
+                        responseData: completePostResponse?.data,
+                        status: completePostResponse?.status
+                    });
                     this.logger.info("VIDEO_POST_SUCCESS", {
                         ...ctx,
                         postId: String(postId),
-                        videoFileName: uploadVideoName
+                        videoFileName: uploadedVideoFileName
                     });
 
                     const posted = await markVideoPosted(video.id, phone).catch(() => null);
                     if (posted?.fullyPosted && posted.localPath && fs.existsSync(posted.localPath)) {
                         try { fs.unlinkSync(posted.localPath); this.logger.info("SOURCE_VIDEO_DELETED_AFTER_MAX_POSTS", { videoId: video.id }); } catch (e) { }
                     }
-                    return { action: "success", data: createPostResponse };
+                    return { action: "success", data: completePostResponse };
                 }, ctx).catch(handleVideoFailure);
 
                 if (executionResult?.action === "continue") continue;

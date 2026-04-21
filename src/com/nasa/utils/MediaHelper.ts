@@ -1,5 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
+import FormData from "form-data";
+import { ENV } from "../config/env";
 import { MediaApiService } from "../api/media/mediaApiService";
 import { deleteVideoFromQueue } from "../data/mysqlStore";
 const ffmpeg = require("fluent-ffmpeg");
@@ -12,6 +14,31 @@ export class MediaHelper {
         private readonly logger: any,
         private readonly proxyAgent: any
     ) { }
+
+    private stringifyForLog(data: any, maxLength = 2000): string | undefined {
+        try {
+            if (data === undefined || data === null) return undefined;
+            return (typeof data === "string" ? data : JSON.stringify(data)).slice(0, maxLength);
+        } catch {
+            return undefined;
+        }
+    }
+
+    private extractHttpFailureDebug(err: any) {
+        const requestDebug = err?.requestDebug;
+
+        return {
+            failedUrl: err?.config?.url || requestDebug?.url,
+            failedMethod: String(err?.config?.method || requestDebug?.method || "").toUpperCase() || undefined,
+            responseStatus: err?.response?.status,
+            responseStatusText: err?.response?.statusText,
+            backendRaw: this.stringifyForLog(err?.response?.data) || requestDebug?.backendRaw,
+            requestHeaders: err?.requestHeaders || requestDebug?.requestHeaders,
+            responseHeaders: err?.responseHeaders || requestDebug?.responseHeaders,
+            uploadAttemptUrls: err?.uploadAttemptUrls || requestDebug?.uploadAttemptUrls,
+            requestDebug
+        };
+    }
 
     async probeVideoInfo(videoPath: string): Promise<{ width: number; height: number; duration: number; size: number; path: string; }> {
         const size = fs.statSync(videoPath).size;
@@ -76,13 +103,22 @@ export class MediaHelper {
     }
 
     extractPresignedUrl(response: any): string {
-        return response?.data?.data?.url
+        let url = response?.data?.data?.url
             || response?.data?.data?.presignedUrl
             || response?.data?.data?.uploadUrl
             || response?.data?.url
             || response?.data?.presignedUrl
             || response?.data?.uploadUrl
             || "";
+
+        const publicBaseUrl = String(ENV.UPLOAD_PUBLIC_BASE_URL || "").trim().replace(/\/+$/, "");
+        if (!url) return "";
+
+        if (url.startsWith("/")) {
+            return publicBaseUrl ? `${publicBaseUrl}${url}` : url;
+        }
+
+        return url;
     }
 
     extractPresignedFields(response: any): Record<string, any> | undefined {
@@ -134,10 +170,23 @@ export class MediaHelper {
         mimeType: string,
         headers: any,
         ctx: any,
-        logLabel: string
+        logLabel: string,
+        requestOptions?: { preferredBaseUrl?: string; allowFallbackBaseUrls?: boolean; }
     ): Promise<{ objectRef: string; fileName: string; uploadUrl: string; uploadFields?: Record<string, any>; responseData: any; }> {
         this.logger.info(`${logLabel}_PRESIGNED_REQUEST`, { ...ctx, payload });
-        const presignedLinkResponse = await MediaApiService.requestUploadUrl(accessToken, payload, headers, this.proxyAgent);
+        let presignedLinkResponse: any;
+
+        try {
+            presignedLinkResponse = await MediaApiService.requestUploadUrl(accessToken, payload, headers, this.proxyAgent, requestOptions);
+        } catch (err: any) {
+            this.logger.error(`${logLabel}_PRESIGNED_REQUEST_FAILED`, {
+                ...ctx,
+                payload,
+                ...this.extractHttpFailureDebug(err)
+            });
+            throw err;
+        }
+
         const uploadUrl = this.extractPresignedUrl(presignedLinkResponse);
         const uploadFields = this.extractPresignedFields(presignedLinkResponse);
         const objectRef = this.extractUploadedObjectRef(presignedLinkResponse, path.basename(filePath));
@@ -157,19 +206,33 @@ export class MediaHelper {
             throw new Error(`Failed to get presigned URL for ${logLabel}`);
         }
 
-        const uploadRes = await MediaApiService.uploadMediaToS3(
-            uploadUrl,
-            fs.readFileSync(filePath),
-            mimeType,
-            path.basename(filePath),
-            uploadFields
-        );
+        let uploadRes: any;
+        try {
+            uploadRes = await MediaApiService.uploadMediaToS3(
+                uploadUrl,
+                fs.readFileSync(filePath),
+                mimeType,
+                path.basename(filePath),
+                uploadFields
+            );
+        } catch (err: any) {
+            this.logger.error(`${logLabel}_S3_UPLOAD_FAILED`, {
+                ...ctx,
+                filePath: path.basename(filePath),
+                uploadUrl,
+                objectRef,
+                fileName,
+                uploadFields,
+                ...this.extractHttpFailureDebug(err)
+            });
+            throw err;
+        }
 
         this.logger.info(`${logLabel}_S3_UPLOAD_SUCCESS`, {
             ...ctx,
             filePath: path.basename(filePath),
             objectRef,
-            uploadAttempt: uploadRes?.uploadAttempt || "unknown"
+            uploadAttempt: (uploadRes as any)?.uploadAttempt || "form-data"
         });
 
         return {
@@ -178,6 +241,78 @@ export class MediaHelper {
             uploadUrl,
             uploadFields,
             responseData: presignedLinkResponse?.data
+        };
+    }
+
+    async uploadFeedThumbnailDirect(
+        accessToken: string,
+        feedId: string,
+        filePath: string,
+        fileName: string,
+        headers: any,
+        ctx: any,
+        logLabel: string,
+        lastFile: boolean = true
+    ): Promise<{ fileName: string; responseData: any; }> {
+        const fileSizeBytes = fs.statSync(filePath).size;
+        const formData = new FormData();
+        formData.append("file", fs.readFileSync(filePath), {
+            filename: fileName,
+            contentType: "image/jpeg"
+        });
+        formData.append("feedId", String(feedId));
+        formData.append("lastFile", lastFile ? "true" : "false");
+
+        const uploadHeaders = {
+            "User-Agent": "ERIC/1.0.0 (iOS; 18.7.7; iPhone XS Max)", // Match real app UA from user logs
+            ...headers
+        };
+
+        // Check if a preferred base URL was passed in headers (internal signal)
+        const forcedBaseUrl = (headers as any)._preferredBaseUrl;
+        const skipSignature = (headers as any)._skipSignature === true;
+
+        this.logger.info(`${logLabel}_DIRECT_UPLOAD_REQUEST`, {
+            ...ctx,
+            feedId: String(feedId),
+            fileName,
+            lastFile,
+            fileSizeBytes,
+            formFieldNames: ["file", "feedId", "lastFile"],
+            skipSignature
+        });
+
+        let uploadResponse: any;
+        try {
+            uploadResponse = await MediaApiService.uploadMedia(accessToken, formData, uploadHeaders, this.proxyAgent, {
+                preferredBaseUrl: forcedBaseUrl || (ENV as any).MEDIA_UPLOAD_API_URL || ENV.MEDIA_API_URL || ENV.KONG_URL,
+                allowFallbackBaseUrls: false,
+                skipSignature
+            });
+        } catch (err: any) {
+            this.logger.error(`${logLabel}_DIRECT_UPLOAD_FAILED`, {
+                ...ctx,
+                feedId: String(feedId),
+                fileName,
+                lastFile,
+                fileSizeBytes,
+                ...this.extractHttpFailureDebug(err)
+            });
+            throw err;
+        }
+
+        const uploadedFileName = this.extractUploadedFileName(uploadResponse, fileName);
+
+        this.logger.info(`${logLabel}_DIRECT_UPLOAD_SUCCESS`, {
+            ...ctx,
+            feedId: String(feedId),
+            fileName: uploadedFileName,
+            responseData: uploadResponse?.data
+        });
+
+        return {
+            fileName: uploadedFileName,
+            responseData: uploadResponse?.data
         };
     }
 

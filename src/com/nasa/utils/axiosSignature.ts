@@ -43,25 +43,26 @@ export function applyStandardInterceptors(axiosInstance: AxiosInstance | any, de
 
             let body = "";
             let contentType = "";
+            let contentLengthHeader = "";
             for (const key of Object.keys(config.headers)) {
                 if (key.toLowerCase() === 'content-type') contentType = String(config.headers[key]);
+                if (key.toLowerCase() === 'content-length') contentLengthHeader = String(config.headers[key]);
             }
 
-            if (contentType.includes("multipart/form-data")) {
+            const isMultipart = contentType.includes("multipart/form-data")
+                || (config.data?.constructor && config.data.constructor.name === "FormData");
+
+            if (isMultipart) {
+                // Multipart bodies cannot be serialized — backend expects empty string in signature rawData.
+                // NOTE: Run 3 Spring Security failure was due to expired JWT tokens, NOT this body="" format.
                 body = "";
             } else if (contentType.includes("application/json")) {
                 if (config.data !== undefined && config.data !== null) {
                     body = typeof config.data === "string" ? config.data : JSON.stringify(config.data);
                 }
             } else if (config.data && typeof config.data === "object") {
-
-                if (config.data.constructor && config.data.constructor.name === "FormData") {
-                    body = '';
-                } else {
-                    body = JSON.stringify(config.data);
-                }
+                body = JSON.stringify(config.data);
             } else if (config.data !== undefined && config.data !== null) {
-
                 body = String(config.data);
             }
 
@@ -105,7 +106,8 @@ export function applyStandardInterceptors(axiosInstance: AxiosInstance | any, de
                 forwardedProto: typeof config.headers.get === "function" ? config.headers.get("X-Forwarded-Proto") : (config.headers["X-Forwarded-Proto"] || config.headers["x-forwarded-proto"]),
                 language: typeof config.headers.get === "function" ? config.headers.get("Accept-Language") : config.headers["Accept-Language"],
                 contentType,
-                contentLength: typeof config.headers.get === "function" ? config.headers.get("Content-Length") : (config.headers["Content-Length"] || config.headers["content-length"]),
+                contentLength: contentLengthHeader || (typeof config.headers.get === "function" ? config.headers.get("Content-Length") : (config.headers["Content-Length"] || config.headers["content-length"])),
+                isMultipart,
                 hasAuthorization: !!token,
                 bodyPreview: body ? String(body).slice(0, 500) : ""
             };

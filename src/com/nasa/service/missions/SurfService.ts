@@ -45,14 +45,13 @@ export class SurfService {
         videoInfo: { width: number; height: number; duration: number; }
     ) {
         try {
-            return {
+            const payload: any = {
                 id: surfId,
                 content: "",
                 media: `${path.basename(uploadedVideoFileName)}/${this.mediaHelper.padMediaMetric(videoInfo.width)}/${this.mediaHelper.padMediaMetric(videoInfo.height)}/${this.mediaHelper.padMediaMetric(videoInfo.duration)}`,
                 mediaType: "VIDEO",
                 privacy: "PUBLIC",
                 allowComments: true,
-                thumbnailFileName: path.basename(uploadedThumbFileName),
                 checkinLocation: JSON.stringify({
                     lat: 0,
                     lon: 0,
@@ -64,6 +63,12 @@ export class SurfService {
                 tags: "[]",
                 m3u8Content: "[]"
             };
+
+            if (uploadedThumbFileName) {
+                payload.thumbnailFileName = path.basename(uploadedThumbFileName);
+            }
+
+            return payload;
         } catch (e: any) {
             this.logger.error("BUILD_SURF_PAYLOAD_ERROR", { err: e.message || String(e) });
             throw e;
@@ -140,16 +145,78 @@ export class SurfService {
 
                         if (!surfId) throw new Error("Failed to generate surf ID");
 
-                        await Promise.resolve().then(async () => {
-                            await this.mediaHelper.uploadMediaViaPresignedLink(accessToken, { entityId: String(surfId), type: "SURF", purpose: "SURF_THUMBNAIL", fileName: uploadThumbName, fileSize: thumbnailSize, mimeType: "IMAGE_JPEG", lastFile: false }, thumbnailPath, "image/jpeg", h, ctx, "SURF_THUMBNAIL");
-                            await this.mediaHelper.uploadMediaViaPresignedLink(accessToken, { entityId: String(surfId), type: "SURF", purpose: "SURF_VIDEO", fileName: uploadVideoName, fileSize: videoInfo.size, mimeType: "VIDEO_MP4", lastFile: true }, videoPath, "video/mp4", h, ctx, "SURF_FILE");
+                        const uploadResult = await Promise.resolve().then(async () => {
+                            let thumbUpload: any = null;
+                            let thumbnailUploadSkipped = false;
+
+                            try {
+                                thumbUpload = await this.mediaHelper.uploadMediaViaPresignedLink(
+                                    accessToken,
+                                    {
+                                        entityId: String(surfId),
+                                        type: "SURF",
+                                        purpose: "SURF_THUMBNAIL",
+                                        fileName: uploadThumbName,
+                                        fileSize: thumbnailSize,
+                                        mimeType: "IMAGE_JPEG",
+                                        lastFile: false
+                                    },
+                                    thumbnailPath,
+                                    "image/jpeg",
+                                    h,
+                                    ctx,
+                                    "SURF_THUMBNAIL"
+                                );
+                            } catch (err: any) {
+                                thumbnailUploadSkipped = true;
+                                this.logger.warn("SURF_THUMBNAIL_UPLOAD_SKIPPED_AFTER_FAILURE", {
+                                    ...ctx,
+                                    surfId: String(surfId),
+                                    failedMode: "presigned",
+                                    err: err?.message || String(err || "")
+                                });
+                            }
+
+                            const videoUpload = await this.mediaHelper.uploadMediaViaPresignedLink(
+                                accessToken,
+                                {
+                                    entityId: String(surfId),
+                                    type: "SURF",
+                                    purpose: "SURF_VIDEO",
+                                    fileName: uploadVideoName,
+                                    fileSize: videoInfo.size,
+                                    mimeType: "VIDEO_MP4",
+                                    lastFile: true
+                                },
+                                videoPath,
+                                "video/mp4",
+                                h,
+                                ctx,
+                                "SURF_FILE"
+                            );
+
+                            return { thumbUpload, videoUpload, thumbnailUploadSkipped };
                         }).finally(() => {
                             if (fs.existsSync(thumbnailPath)) { try { fs.unlinkSync(thumbnailPath); } catch (e) { } }
                         });
 
-                        const completePayload = this.buildSurfCompletePayload(String(surfId), uploadVideoName, uploadThumbName, videoInfo);
+                        const uploadedVideoFileName = path.basename(uploadResult.videoUpload?.fileName || uploadVideoName);
+                        const uploadedThumbFileName = uploadResult.thumbUpload?.fileName
+                            ? path.basename(uploadResult.thumbUpload.fileName)
+                            : "";
+                        const completePayload = this.buildSurfCompletePayload(
+                            String(surfId),
+                            uploadedVideoFileName,
+                            uploadedThumbFileName,
+                            videoInfo
+                        );
 
-                        this.logger.info("SURF_COMPLETE_REQUEST", { ...ctx, surfId: String(surfId), payload: completePayload });
+                        this.logger.info("SURF_COMPLETE_REQUEST", {
+                            ...ctx,
+                            surfId: String(surfId),
+                            thumbnailUploadSkipped: uploadResult.thumbnailUploadSkipped,
+                            payload: completePayload
+                        });
                         const completeSurfResponse = await SurfApiService.completeSurf(accessToken, completePayload, h, this.proxyAgent);
                         this.logger.info("SURF_COMPLETE_RESPONSE", { ...ctx, surfId: String(surfId), responseData: completeSurfResponse?.data, status: completeSurfResponse?.status });
 

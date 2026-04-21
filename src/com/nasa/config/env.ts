@@ -22,9 +22,21 @@ function bool(name: string, def: Bool): Bool {
   return String(v).toLowerCase() === "true" || String(v) === "1";
 }
 
+const defaultKongUrl = str("KONG_URL", "http://localhost:8000");
+const defaultPostApiUrl = str("POST_API_URL", defaultKongUrl);
+const defaultMediaApiUrl = str("MEDIA_API_URL", defaultKongUrl);
+const defaultMediaUploadApiUrl = str("MEDIA_UPLOAD_API_URL", "");
+const defaultMediaUploadApiUrls = str("MEDIA_UPLOAD_API_URLS", "");
+const defaultUploadPublicBaseUrl = str("UPLOAD_PUBLIC_BASE_URL", "https://upload.eric.pro.vn");
+
 export const ENV = {
 
-  KONG_URL: str("KONG_URL", "http://localhost:8000"),
+  KONG_URL: defaultKongUrl,
+  POST_API_URL: defaultPostApiUrl,
+  MEDIA_API_URL: defaultMediaApiUrl,
+  MEDIA_UPLOAD_API_URL: defaultMediaUploadApiUrl,
+  MEDIA_UPLOAD_API_URLS: defaultMediaUploadApiUrls,
+  UPLOAD_PUBLIC_BASE_URL: defaultUploadPublicBaseUrl,
 
   INTERVAL_MS: num("INTERVAL_MS", 60_000),
   RUN_ONCE: bool("RUN_ONCE", false),
@@ -61,8 +73,8 @@ export const ENV = {
   LOG_PASSWORD_PLAINTEXT: bool("LOG_PASSWORD_PLAINTEXT", false),
 
   DB_HOST: str("DB_HOST", "127.0.0.1"),
-  DB_USER: str("DB_USER", "root"),
-  DB_PASS: str("DB_PASS", "Long2002@"),
+  DB_USER: str("DB_USER", "admin"),
+  DB_PASS: str("DB_PASS", "123456"),
   DB_NAME: str("DB_NAME", "auth_service"),
 
 };

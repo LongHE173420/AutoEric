@@ -1,0 +1,148 @@
+﻿{"level":20,"time":"02:29:31.409","logger":"LoginService","config":{"KONG_URL":"https://social-pilot.eric.vn:9001","POST_API_URL":"https://social.eric.pro.vn","MEDIA_API_URL":"https://social.eric.pro.vn","MEDIA_UPLOAD_API_URL":"https://social.eric.pro.vn","MEDIA_UPLOAD_API_URLS":"","UPLOAD_PUBLIC_BASE_URL":"https://social.eric.pro.vn","INTERVAL_MS":60000,"RUN_ONCE":false,"PROXY_REQUIRED":false,"AUTO_FETCH_OTP":true,"AUTO_RESEND":true,"OTP_TIMEOUT_MS":30000,"OTP_POLL_MS":300,"OTP_VERIFY_RETRY":5,"VERIFY_WINDOW_MS":10000,"RESEND_WINDOW_MS":10000,"MAX_RESEND":2,"OTP_DEBUG_PATH_REDIS":"/auth/debug/redis-otp","LOG_LEVEL":"debug","LOG_VERBOSE":false,"UPSTASH_REDIS_REST_URL":"","UPSTASH_REDIS_REST_TOKEN":""},"msg":"Service_CONFIG"}
+{"level":20,"time":"02:29:31.410","logger":"LoginService","reason":"startup","msg":"JOB_START"}
+{"level":20,"time":"02:29:31.482","logger":"LoginService","msg":"Loaded 2 accounts from database."}
+{"level":30,"time":"02:29:31.482","logger":"LoginService","msg":"Starting login flow for accounts..."}
+{"level":20,"time":"02:29:31.482","logger":"LoginService","accounts":2,"msg":"ACCOUNTS_LOADED"}
+{"level":30,"time":"02:29:31.483","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"02:29:31.503","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","password":"***len=9","msg":"ACCOUNT_START"}
+{"level":30,"time":"02:29:31.520","logger":"LoginService","phone":"kyohi2286@proton.me","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","userAgent":"ERIC/1.0.0 (iOS; 18.6.2; iPhone 16 Plus)","access":{"present":true,"validJwt":true,"sub":"kyohi.1774939310625251437","id":8646911284551382000,"clientType":"mobile","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","iat":1776738012,"exp":1776738912},"msg":"GET_ME_TOKEN_SUMMARY"}
+{"level":30,"time":"02:29:31.522","logger":"LoginService","phone":"kyohi3108@proton.me","deviceId":"1A3E5F9C-2B8D-470A-A1F3-8C2E4D9B6A1F","userAgent":"ERIC/1.2.0 (Android; 13; Oppo Find X6)","access":{"present":true,"validJwt":true,"sub":"kyomask.1774940413791076698","id":4611686018427388000,"clientType":"mobile","deviceId":"1A3E5F9C-2B8D-470A-A1F3-8C2E4D9B6A1F","iat":1776738012,"exp":1776738912},"msg":"GET_ME_TOKEN_SUMMARY"}
+{"level":30,"time":"02:29:31.672","logger":"LoginService","phone":"kyohi2286@proton.me","error":"Request failed with status code 401","status":401,"data":"Invalid JWT signature or expired","msg":"GET_ME_ERROR_DETAIL"}
+{"level":30,"time":"02:29:31.705","logger":"LoginService","phone":"kyohi3108@proton.me","error":"Request failed with status code 401","status":401,"data":"Invalid JWT signature or expired","msg":"GET_ME_ERROR_DETAIL"}
+{"level":30,"time":"02:29:31.891","logger":"LoginService","phone":"kyohi2286@proton.me","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","userAgent":"ERIC/1.0.0 (iOS; 18.6.2; iPhone 16 Plus)","access":{"present":true,"validJwt":true,"sub":"kyohi.1774939310625251437","id":8646911284551382000,"clientType":"mobile","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","iat":1776738572,"exp":1776739472},"refresh":{"present":true,"validJwt":true,"sub":"kyohi.1774939310625251437","id":8646911284551382000,"clientType":"mobile","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","iat":1776738572,"exp":1777343372},"msg":"LOGIN_PASS_TOKEN_SUMMARY"}
+{"level":20,"time":"02:29:31.891","logger":"LoginService","msg":"LOGIN_PASS_SUCCESS"}
+{"level":30,"time":"02:29:31.939","logger":"LoginService","phone":"kyohi3108@proton.me","deviceId":"1A3E5F9C-2B8D-470A-A1F3-8C2E4D9B6A1F","userAgent":"ERIC/1.2.0 (Android; 13; Oppo Find X6)","access":{"present":true,"validJwt":true,"sub":"kyomask.1774940413791076698","id":4611686018427388000,"clientType":"mobile","deviceId":"1A3E5F9C-2B8D-470A-A1F3-8C2E4D9B6A1F","iat":1776738572,"exp":1776739472},"refresh":{"present":true,"validJwt":true,"sub":"kyomask.1774940413791076698","id":4611686018427388000,"clientType":"mobile","deviceId":"1A3E5F9C-2B8D-470A-A1F3-8C2E4D9B6A1F","iat":1776738572,"exp":1777343372},"msg":"LOGIN_PASS_TOKEN_SUMMARY"}
+{"level":20,"time":"02:29:31.939","logger":"LoginService","msg":"LOGIN_PASS_SUCCESS"}
+{"level":30,"time":"02:29:33.281","logger":"LoginService","phone":"kyohi2286@proton.me","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","userAgent":"ERIC/1.0.0 (iOS; 18.6.2; iPhone 16 Plus)","access":{"present":true,"validJwt":true,"sub":"kyohi.1774939310625251437","id":8646911284551382000,"clientType":"mobile","deviceId":"F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F","iat":1776738572,"exp":1776739472},"msg":"GET_ME_TOKEN_SUMMARY"}
+{"level":30,"time":"02:29:33.286","logger":"LoginService","phone":"kyohi3108@proton.me","deviceId":"1A3E5F9C-2B8D-470A-A1F3-8C2E4D9B6A1F","userAgent":"ERIC/1.2.0 (Android; 13; Oppo Find X6)","access":{"present":true,"validJwt":true,"sub":"kyomask.1774940413791076698","id":4611686018427388000,"clientType":"mobile","deviceId":"1A3E5F9C-2B8D-470A-A1F3-8C2E4D9B6A1F","iat":1776738572,"exp":1776739472},"msg":"GET_ME_TOKEN_SUMMARY"}
+{"level":30,"time":"02:29:33.365","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"02:29:33.365","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"PROFILE_AND_SOCIAL","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:33.367","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"BOT_MISSIONS_START"}
+{"level":30,"time":"02:29:33.367","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"PROFILE_AND_SOCIAL","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:33.412","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: ProfileMe"}
+{"level":30,"time":"02:29:33.415","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: ProfileMe"}
+{"level":30,"time":"02:29:33.573","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: MyFriends"}
+{"level":30,"time":"02:29:33.635","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: Notifications"}
+{"level":30,"time":"02:29:33.635","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"PROFILE_AND_SOCIAL","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:33.635","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"FEED_AND_INTERACT","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:33.639","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: MyFriends"}
+{"level":30,"time":"02:29:33.683","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","reactionCodes":["SAD","WOW","ANGRY","BORED","FUNNY","SMILE","EMPATHETIC","LIKE"],"msg":"REACTION_CODES_READY"}
+{"level":30,"time":"02:29:33.705","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: Notifications"}
+{"level":30,"time":"02:29:33.705","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"PROFILE_AND_SOCIAL","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:33.705","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"FEED_AND_INTERACT","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:33.759","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","reactionCodes":["SAD","WOW","ANGRY","BORED","FUNNY","SMILE","EMPATHETIC","LIKE"],"msg":"REACTION_CODES_READY"}
+{"level":30,"time":"02:29:33.784","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: FeedHome_Page_1"}
+{"level":30,"time":"02:29:33.843","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: FeedHome_Page_1"}
+{"level":30,"time":"02:29:35.517","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: FeedHome_Page_2"}
+{"level":30,"time":"02:29:35.598","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: FeedHome_Page_2"}
+{"level":30,"time":"02:29:37.675","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: FeedHome_Page_3"}
+{"level":30,"time":"02:29:37.763","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: SurfHome"}
+{"level":30,"time":"02:29:37.763","logger":"LoginService","itemsLength":25,"pagesScrolled":3,"msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"02:29:37.763","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","parsedItemCount":5,"uniqueItemCount":13,"unseenItemCount":6,"seenItemCount":39,"msg":"MISSION_ACTION_DEPENDENT_START"}
+{"level":30,"time":"02:29:37.815","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: PostReaction_304504206012854272"}
+{"level":30,"time":"02:29:37.824","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: FeedHome_Page_3"}
+{"level":30,"time":"02:29:37.899","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: SurfHome"}
+{"level":30,"time":"02:29:37.900","logger":"LoginService","itemsLength":27,"pagesScrolled":3,"msg":"DEBUG_FEEDHOME"}
+{"level":30,"time":"02:29:37.900","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","parsedItemCount":5,"uniqueItemCount":15,"unseenItemCount":6,"seenItemCount":38,"msg":"MISSION_ACTION_DEPENDENT_START"}
+{"level":30,"time":"02:29:37.913","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: PostShare_304504206012854272"}
+{"level":30,"time":"02:29:37.958","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: PostReaction_304504206012854272"}
+{"level":30,"time":"02:29:37.974","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: PostReaction_300208950350065664"}
+{"level":30,"time":"02:29:38.031","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: PostShare_304504206012854272"}
+{"level":30,"time":"02:29:38.035","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: PostShare_300208950350065664"}
+{"level":30,"time":"02:29:38.074","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: PostReaction_300204793534754816"}
+{"level":30,"time":"02:29:38.095","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: PostReaction_300208950350065664"}
+{"level":30,"time":"02:29:38.132","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: PostShare_300204793534754816"}
+{"level":30,"time":"02:29:38.160","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: PostShare_300208950350065664"}
+{"level":30,"time":"02:29:38.171","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: PostReaction_299492744827645952"}
+{"level":30,"time":"02:29:38.215","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: PostReaction_300204793534754816"}
+{"level":30,"time":"02:29:38.221","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: PostShare_299492744827645952"}
+{"level":30,"time":"02:29:38.262","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: PostReaction_299492235433619456"}
+{"level":30,"time":"02:29:38.293","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: PostShare_300204793534754816"}
+{"level":30,"time":"02:29:38.312","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: PostShare_299492235433619456"}
+{"level":30,"time":"02:29:38.314","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"FEED_AND_INTERACT","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:38.314","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"CREATE_VIDEO_POST","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:38.346","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: PostReaction_299492744827645952"}
+{"level":30,"time":"02:29:38.375","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","videoId":1178,"source":"https://www.tiktok.com/@vinhtech/video/7120940813579734298","attempt":1,"msg":"VIDEO_POST_START"}
+{"level":30,"time":"02:29:38.458","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: PostShare_299492744827645952"}
+{"level":30,"time":"02:29:38.518","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: PostReaction_299492235433619456"}
+{"level":30,"time":"02:29:38.592","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: PostShare_299492235433619456"}
+{"level":30,"time":"02:29:38.593","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"FEED_AND_INTERACT","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:38.593","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"CREATE_VIDEO_POST","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:38.651","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","videoId":1176,"source":"https://www.tiktok.com/@ainius.net/video/7628478989253758225","attempt":1,"msg":"VIDEO_POST_START"}
+{"level":30,"time":"02:29:39.044","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","postId":"304805856250310656","msg":"VIDEO_POST_ID_GENERATED"}
+{"level":30,"time":"02:29:39.044","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","postId":"304805856250310656","fileName":"af25b61b-0701-40c7-9606-3b9b06a30e72.mp4","fileSizeBytes":2677068,"thumbnailFileName":"af25b61b-0701-40c7-9606-3b9b06a30e72.jpg","uploadMode":"thumb-presigned-or-direct+presigned+complete","width":720,"height":1280,"duration":36.766667,"msg":"VIDEO_UPLOAD_REQUEST_PREPARED"}
+{"level":30,"time":"02:29:39.658","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","filePath":"af25b61b-0701-40c7-9606-3b9b06a30e72.jpg","objectRef":"eric/20260421/304805856250310656/thumb/af25b61b-0701-40c7-9606-3b9b06a30e72.jpg","uploadAttempt":"form-data","msg":"VIDEO_THUMBNAIL_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:29:39.700","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","postId":"304805859001774080","msg":"VIDEO_POST_ID_GENERATED"}
+{"level":30,"time":"02:29:39.700","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","postId":"304805859001774080","fileName":"fd65775f-72ed-48bb-bab7-7e72a10ccf17.mp4","fileSizeBytes":1574931,"thumbnailFileName":"fd65775f-72ed-48bb-bab7-7e72a10ccf17.jpg","uploadMode":"thumb-presigned-or-direct+presigned+complete","width":1080,"height":1920,"duration":87.4,"msg":"VIDEO_UPLOAD_REQUEST_PREPARED"}
+{"level":30,"time":"02:29:40.203","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","filePath":"fd65775f-72ed-48bb-bab7-7e72a10ccf17.jpg","objectRef":"eric/20260421/304805859001774080/thumb/fd65775f-72ed-48bb-bab7-7e72a10ccf17.jpg","uploadAttempt":"form-data","msg":"VIDEO_THUMBNAIL_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:29:40.343","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","filePath":"tt_raw_7120940813579734298.mp4","objectRef":"eric/20260421/304805856250310656/origin/af25b61b-0701-40c7-9606-3b9b06a30e72.mp4","uploadAttempt":"form-data","msg":"VIDEO_FILE_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:29:40.345","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","postId":"304805856250310656","thumbnailUploadSkipped":false,"payload":{"id":"304805856250310656","type":"POST","content":"!{\"layout\": {\"grid\":\"2-2\",\"slots\":[{\"pos\":\"1-1-2-2\",\"media\":\"af25b61b-0701-40c7-9606-3b9b06a30e72.mp4/0720/1280/0037\",\"type\":\"VIDEO\",\"thumb\":\"af25b61b-0701-40c7-9606-3b9b06a30e72.jpg/0720/1280\"}]}}","privacy":"PUBLIC","hashtags":null,"mentions":null,"tags":null,"checkinLocation":"{\"lat\":0,\"lon\":0,\"source\":\"GPS\",\"name\":\"\"}","backgroundColor":1,"listImage":"[]","listVideo":"[\"af25b61b-0701-40c7-9606-3b9b06a30e72.mp4\"]"},"msg":"VIDEO_POST_COMPLETE_REQUEST"}
+{"level":30,"time":"02:29:40.600","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","postId":"304805856250310656","status":201,"msg":"VIDEO_POST_COMPLETE_RESPONSE"}
+{"level":30,"time":"02:29:40.600","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","postId":"304805856250310656","videoFileName":"af25b61b-0701-40c7-9606-3b9b06a30e72.mp4","msg":"VIDEO_POST_SUCCESS"}
+{"level":30,"time":"02:29:40.675","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: CreateVideoPost"}
+{"level":30,"time":"02:29:40.675","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"CREATE_VIDEO_POST","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:40.675","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"CREATE_SURF","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:40.740","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","videoId":1179,"source":"https://www.tiktok.com/@venessashop/video/7573122225578986759","attempt":1,"msg":"SURF_VIDEO_START"}
+{"level":30,"time":"02:29:40.830","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","filePath":"tt_raw_7628478989253758225.mp4","objectRef":"eric/20260421/304805859001774080/origin/fd65775f-72ed-48bb-bab7-7e72a10ccf17.mp4","uploadAttempt":"form-data","msg":"VIDEO_FILE_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:29:40.831","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","postId":"304805859001774080","thumbnailUploadSkipped":false,"payload":{"id":"304805859001774080","type":"POST","content":"!{\"layout\": {\"grid\":\"2-2\",\"slots\":[{\"pos\":\"1-1-2-2\",\"media\":\"fd65775f-72ed-48bb-bab7-7e72a10ccf17.mp4/1080/1920/0087\",\"type\":\"VIDEO\",\"thumb\":\"fd65775f-72ed-48bb-bab7-7e72a10ccf17.jpg/1080/1920\"}]}}","privacy":"PUBLIC","hashtags":null,"mentions":null,"tags":null,"checkinLocation":"{\"lat\":0,\"lon\":0,\"source\":\"GPS\",\"name\":\"\"}","backgroundColor":1,"listImage":"[]","listVideo":"[\"fd65775f-72ed-48bb-bab7-7e72a10ccf17.mp4\"]"},"msg":"VIDEO_POST_COMPLETE_REQUEST"}
+{"level":30,"time":"02:29:41.028","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","surfId":"304805864815079424","msg":"SURF_ID_GENERATED"}
+{"level":30,"time":"02:29:41.047","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","postId":"304805859001774080","status":201,"msg":"VIDEO_POST_COMPLETE_RESPONSE"}
+{"level":30,"time":"02:29:41.047","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","postId":"304805859001774080","videoFileName":"fd65775f-72ed-48bb-bab7-7e72a10ccf17.mp4","msg":"VIDEO_POST_SUCCESS"}
+{"level":30,"time":"02:29:41.114","logger":"LoginService","videoId":1176,"msg":"SOURCE_VIDEO_DELETED_AFTER_MAX_POSTS"}
+{"level":30,"time":"02:29:41.114","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: CreateVideoPost"}
+{"level":30,"time":"02:29:41.114","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"CREATE_VIDEO_POST","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:41.114","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"CREATE_SURF","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:41.241","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","filePath":"293db948-c4b5-4f87-a478-f4bc6297f5ab.jpg","objectRef":"eric/20260421/304805864815079424/origin/293db948-c4b5-4f87-a478-f4bc6297f5ab.jpg","uploadAttempt":"form-data","msg":"SURF_THUMBNAIL_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:29:41.857","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","filePath":"tt_raw_7573122225578986759.mp4","objectRef":"eric/20260421/304805864815079424/origin/293db948-c4b5-4f87-a478-f4bc6297f5ab.mp4","uploadAttempt":"form-data","msg":"SURF_FILE_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:29:41.858","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","surfId":"304805864815079424","thumbnailUploadSkipped":false,"msg":"SURF_COMPLETE_REQUEST"}
+{"level":30,"time":"02:29:41.941","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","surfId":"304805864815079424","status":201,"msg":"SURF_COMPLETE_RESPONSE"}
+{"level":30,"time":"02:29:42.007","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: CreateSurf"}
+{"level":30,"time":"02:29:42.008","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"CREATE_SURF","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:42.008","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"ACTIVITY_GENERATION","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:42.043","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: BackgroundColor"}
+{"level":30,"time":"02:29:42.061","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","videoId":1177,"source":"https://www.tiktok.com/@venessashop/video/7574210909867003144","attempt":1,"msg":"SURF_VIDEO_START"}
+{"level":30,"time":"02:29:42.086","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: ReactionList"}
+{"level":30,"time":"02:29:42.087","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"ACTIVITY_GENERATION","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:42.087","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"FRIEND_MANAGEMENT","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:42.182","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: GetReceivedFriendRequests"}
+{"level":30,"time":"02:29:42.203","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"NO_INTERNAL_FRIEND_TARGETS"}
+{"level":30,"time":"02:29:42.203","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"FRIEND_MANAGEMENT","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:42.203","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"REWARD_CLAIMING","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:42.259","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","balance":{"balance":5,"dailyRemainingPoint":2,"dailyEarnedPoint":1},"dailyRemainingPoint":2,"dailyEarnedPoint":1,"dailyPointLimit":3,"msg":"OK: PointBalance"}
+{"level":30,"time":"02:29:42.346","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: Missions"}
+{"level":30,"time":"02:29:42.346","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","phase":"INITIAL","missionCount":11,"msg":"MISSION_LIST_FETCHED"}
+{"level":30,"time":"02:29:42.372","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","surfId":"304805870334783488","msg":"SURF_ID_GENERATED"}
+{"level":30,"time":"02:29:42.496","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"OK: Missions"}
+{"level":30,"time":"02:29:42.496","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","phase":"RECHECK","missionCount":11,"msg":"MISSION_LIST_FETCHED"}
+{"level":20,"time":"02:29:42.496","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","phase":"RECHECK","mission":{"missionId":18,"name":"Chuỗi đăng nhập 7 ngày","type":"STREAK_LOGIN","actionType":"LOGIN","status":"NEW","currentValue":2,"targetValue":7,"lastStreakDate":1776704400000},"msg":"MISSION_18_RAW"}
+{"level":20,"time":"02:29:42.497","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","name":"Chuỗi đăng nhập 7 ngày","type":"STREAK_LOGIN","actionType":"LOGIN","status":"NEW","isClaimed":false,"alreadyClaimedToday":true,"cv":2,"tv":7,"lastStreakDate":1776704400000,"lastClaimDateKey":"2026-04-21","todayKey":"2026-04-21","timeZone":"Asia/Ho_Chi_Minh","msg":"SKIP_STREAK_MISSION_18"}
+{"level":30,"time":"02:29:42.610","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","filePath":"158667a0-594b-4b21-93b6-d23b1dec0ced.jpg","objectRef":"eric/20260421/304805870334783488/origin/158667a0-594b-4b21-93b6-d23b1dec0ced.jpg","uploadAttempt":"form-data","msg":"SURF_THUMBNAIL_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:29:43.035","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","filePath":"tt_raw_7574210909867003144.mp4","objectRef":"eric/20260421/304805870334783488/origin/158667a0-594b-4b21-93b6-d23b1dec0ced.mp4","uploadAttempt":"form-data","msg":"SURF_FILE_S3_UPLOAD_SUCCESS"}
+{"level":30,"time":"02:29:43.036","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","surfId":"304805870334783488","thumbnailUploadSkipped":false,"msg":"SURF_COMPLETE_REQUEST"}
+{"level":30,"time":"02:29:43.130","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","surfId":"304805870334783488","status":201,"msg":"SURF_COMPLETE_RESPONSE"}
+{"level":30,"time":"02:29:43.705","logger":"LoginService","videoId":1177,"msg":"SOURCE_SURF_VIDEO_DELETED_AFTER_MAX_POSTS"}
+{"level":30,"time":"02:29:43.705","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: CreateSurf"}
+{"level":30,"time":"02:29:43.705","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"CREATE_SURF","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:43.705","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"ACTIVITY_GENERATION","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:43.744","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: BackgroundColor"}
+{"level":30,"time":"02:29:43.783","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: ReactionList"}
+{"level":30,"time":"02:29:43.783","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"ACTIVITY_GENERATION","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:43.783","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"FRIEND_MANAGEMENT","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:43.875","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: GetReceivedFriendRequests"}
+{"level":30,"time":"02:29:43.904","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"NO_INTERNAL_FRIEND_TARGETS"}
+{"level":30,"time":"02:29:43.904","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"FRIEND_MANAGEMENT","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:43.904","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"REWARD_CLAIMING","msg":"MISSION_STAGE_START"}
+{"level":30,"time":"02:29:43.951","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","balance":{"balance":5,"dailyRemainingPoint":2,"dailyEarnedPoint":1},"dailyRemainingPoint":2,"dailyEarnedPoint":1,"dailyPointLimit":3,"msg":"OK: PointBalance"}
+{"level":30,"time":"02:29:44.035","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: Missions"}
+{"level":30,"time":"02:29:44.035","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","phase":"INITIAL","missionCount":11,"msg":"MISSION_LIST_FETCHED"}
+{"level":30,"time":"02:29:44.157","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"OK: Missions"}
+{"level":30,"time":"02:29:44.157","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","phase":"RECHECK","missionCount":11,"msg":"MISSION_LIST_FETCHED"}
+{"level":20,"time":"02:29:44.157","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","phase":"RECHECK","mission":{"missionId":18,"name":"Chuỗi đăng nhập 7 ngày","type":"STREAK_LOGIN","actionType":"LOGIN","status":"NEW","currentValue":2,"targetValue":7,"lastStreakDate":1776704400000},"msg":"MISSION_18_RAW"}
+{"level":20,"time":"02:29:44.157","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","name":"Chuỗi đăng nhập 7 ngày","type":"STREAK_LOGIN","actionType":"LOGIN","status":"NEW","isClaimed":false,"alreadyClaimedToday":true,"cv":2,"tv":7,"lastStreakDate":1776704400000,"lastClaimDateKey":"2026-04-21","todayKey":"2026-04-21","timeZone":"Asia/Ho_Chi_Minh","msg":"SKIP_STREAK_MISSION_18"}
+{"level":30,"time":"02:29:57.857","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","stage":"REWARD_CLAIMING","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:57.857","logger":"LoginService","row":2,"phone":"kyohi3108@proton.me","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":30,"time":"02:29:59.447","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","stage":"REWARD_CLAIMING","msg":"MISSION_STAGE_DONE"}
+{"level":30,"time":"02:29:59.447","logger":"LoginService","row":1,"phone":"kyohi2286@proton.me","msg":"BOT_MISSIONS_COMPLETE"}
+{"level":20,"time":"02:29:59.476","logger":"LoginService","summary":{"success":2,"alreadyOk":0,"relogin":2,"fail":0,"accounts":2},"msg":"JOB_SUMMARY"}
+{"level":20,"time":"02:29:59.476","logger":"LoginService","summary":{"success":2,"alreadyOk":0,"relogin":2,"fail":0,"accounts":2},"msg":"JOB_DONE"}
+{"level":30,"time":"02:29:59.476","logger":"LoginService","msg":"LOGIN summary: success=2 alreadyOk=0 relogin=2 fail=0"}
