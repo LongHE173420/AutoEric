@@ -43,7 +43,19 @@
     "300208950350065664",
     "300204793534754816",
     "299492744827645952",
-    "299492235433619456"
+    "299492235433619456",
+    "304805859001774080",
+    "304805856250310656",
+    "299478363150626816",
+    "304810356985966592",
+    "304810358680465408",
+    "304814199136202752",
+    "304814196288270336",
+    "304815436481048576",
+    "304815435226951680",
+    "304824866807361536",
+    "304836334948855808",
+    "304836334806249472"
   ],
   "interactedPosts:kyohi2286@proton.me": [
     "300437194391302144",
@@ -88,7 +100,19 @@
     "300208950350065664",
     "300204793534754816",
     "299492744827645952",
-    "299492235433619456"
+    "299492235433619456",
+    "304805859001774080",
+    "304805856250310656",
+    "299478363150626816",
+    "304810356985966592",
+    "304810358680465408",
+    "304814199136202752",
+    "304814196288270336",
+    "304815436481048576",
+    "304815435226951680",
+    "304824866807361536",
+    "304836334948855808",
+    "304836334806249472"
   ],
   "interactedPosts:maicon9630@proton.me": [
     "300437194391302144",
@@ -160,15 +184,47 @@
     "deviceId": "C1A7D9E3-4F2B-4D18-9B6E-8A3C5F1D7E24",
     "userAgent": "ERIC/1.0.0 (iOS; 18.5.0; iPhone 15 Pro)"
   },
-  "refresh:kyohi2286@proton.me": "eyJraWQiOiI2MzI1YjExYS1iODM4LTRiZTctYmE2Ni05YWEyMTY2ZWNkMWMiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJreW9oaS4xNzc0OTM5MzEwNjI1MjUxNDM3IiwiY2xpZW50VHlwZSI6Im1vYmlsZSIsInJvbGVzIjpbIlVTRVIiXSwiaXAiOiIxMC4yMDAuMi4yIiwiaXNzIjoiYXV0aC1zZXJ2aWNlIiwiaWQiOjg2NDY5MTEyODQ1NTEzODIzMzYsImV4cCI6MTc3NzM0MzM3MiwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3NzY3Mzg1NzIsImRldmljZUlkIjoiRjJBN0Q5QzEtNkUzQi00RDg0LThBMUYtOUI1QzJFN0QwQTRGIn0.UaRqmtFQEA5ZRnBksB3ktUJouJ_oN0WuyA4X3wwYjDbmwbDUbStmf6096CuwOGCnOfUKQiVL6VImZO97FxhCzKHu04HprTYIiPZrVYoc5ifysfJdwvtdCu8GcC-vbn_TURY81eMAS7QqVXjfx2AShJYoesS2032P-7yXabrrdnvVcvv481VSE0Edv6Wnt0FFP2qnJlN201Ag1xVWTkCNYQa2Ttrppa41r2esd7CLFsXz_gGsmWJ4WZHP-u8ObsItLOUAQsnMbuDDL1gKN9tHavAcsuMrODYqO1ompaFwwb_xebl1Wc6qVZFXE014uhLdft6TRG0M9KarB6u3NTdljw",
+  "actionRewardCounters:kyohi3108@proton.me": {
+    "dayKey": "2026-04-21",
+    "weekKey": "2026-04-20",
+    "reaction": 2,
+    "friend": 0,
+    "post": 0,
+    "reactionProgress": 5,
+    "friendProgress": 0,
+    "postProgress": 3,
+    "weeklyReaction": 0,
+    "weeklyFriend": 0,
+    "weeklyPost": 0,
+    "weeklyReactionProgress": 5,
+    "weeklyFriendProgress": 0,
+    "weeklyPostProgress": 3
+  },
+  "actionRewardCounters:kyohi2286@proton.me": {
+    "dayKey": "2026-04-21",
+    "weekKey": "2026-04-20",
+    "reaction": 2,
+    "friend": 0,
+    "post": 0,
+    "reactionProgress": 5,
+    "friendProgress": 0,
+    "postProgress": 3,
+    "weeklyReaction": 0,
+    "weeklyFriend": 0,
+    "weeklyPost": 0,
+    "weeklyReactionProgress": 5,
+    "weeklyFriendProgress": 0,
+    "weeklyPostProgress": 3
+  },
+  "refresh:kyohi2286@proton.me": "eyJraWQiOiI2MzI1YjExYS1iODM4LTRiZTctYmE2Ni05YWEyMTY2ZWNkMWMiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJreW9oaS4xNzc0OTM5MzEwNjI1MjUxNDM3IiwiY2xpZW50VHlwZSI6Im1vYmlsZSIsInJvbGVzIjpbIlVTRVIiXSwiaXAiOiIxMC4yMDAuMi4yIiwiaXNzIjoiYXV0aC1zZXJ2aWNlIiwiaWQiOjg2NDY5MTEyODQ1NTEzODIzMzYsImV4cCI6MTc3NzM1NzcxOCwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3NzY3NTI5MTgsImRldmljZUlkIjoiRjJBN0Q5QzEtNkUzQi00RDg0LThBMUYtOUI1QzJFN0QwQTRGIn0.UEN9aj5st59IGo6Nq4f7D3n7XShvV6YZ2hwbjHPkq0HdLDfxp9-KW4y3bwzSVfBSrZS_JfGKpb7EEHa_tyOt4EJwplNAJuz6xjVROHGP1j74e5i5LkWHOJcZxuHgs6Lz9TyQ0WpunQMBauI-irxTCulaU8Q08KkI5mse6barAN9SVDI071-pc2Nw2qqNsvLvUe_VPWKGyD5nq4VTqYrkUHG0Jq3cgmlTPPgio85MYAQ-zh0IjIYfggbhhjX1JAbEV1N6p00ylxDbsnKIwVQW7uDeDbou_fg6mT0Fib6_4v1NKURohKIc6npuc9tUEbX7b0l-ScTyKDbTJVXwG0HwFw",
   "meta:kyohi2286@proton.me": {
-    "savedAt": 1776738571878,
+    "savedAt": 1776752918381,
     "deviceId": "F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F",
     "userAgent": "ERIC/1.0.0 (iOS; 18.6.2; iPhone 16 Plus)"
   },
-  "refresh:kyohi3108@proton.me": "eyJraWQiOiI2MzI1YjExYS1iODM4LTRiZTctYmE2Ni05YWEyMTY2ZWNkMWMiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJreW9tYXNrLjE3NzQ5NDA0MTM3OTEwNzY2OTgiLCJjbGllbnRUeXBlIjoibW9iaWxlIiwicm9sZXMiOlsiVVNFUiJdLCJpcCI6IjEwLjIwMC4yLjIiLCJpc3MiOiJhdXRoLXNlcnZpY2UiLCJpZCI6NDYxMTY4NjAxODQyNzM4NzkyNywiZXhwIjoxNzc3MzQzMzcyLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3NjczODU3MiwiZGV2aWNlSWQiOiIxQTNFNUY5Qy0yQjhELTQ3MEEtQTFGMy04QzJFNEQ5QjZBMUYifQ.HNujw7E9tNUn_EhquQjcEcdGdWtXNkDfSZ2JXJapUWTrOG3RiUDPSKnxnfTo5MrnYhJVpTKxQR8A67c8XQkiSUa-LrK17JWIJxdQAOVxThKdZYI1-uObFyFjthjxhLkfXWlNSWYeIFU4I05Jr-Y538o2ppRPXTtd415MQgOPMcp4ZIX9rKD95MuKBvkqI7uDQRsJ8WVKdgxugnP6FH4701uZ52ZJJEd2MnY2sUIAdYAGhr8qaEdFfrjmIcTu7E9DypkOW9G-IH1mxjeFKDANT8CMDH58fUqslf_5VIKSLIxfPhInhSyudJg4P-dKAslMHKF8wphF3bZl26fg0cj5Sw",
+  "refresh:kyohi3108@proton.me": "eyJraWQiOiI2MzI1YjExYS1iODM4LTRiZTctYmE2Ni05YWEyMTY2ZWNkMWMiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJreW9tYXNrLjE3NzQ5NDA0MTM3OTEwNzY2OTgiLCJjbGllbnRUeXBlIjoibW9iaWxlIiwicm9sZXMiOlsiVVNFUiJdLCJpcCI6IjEwLjIwMC4yLjIiLCJpc3MiOiJhdXRoLXNlcnZpY2UiLCJpZCI6NDYxMTY4NjAxODQyNzM4NzkyNywiZXhwIjoxNzc3MzU3NzE4LCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3Njc1MjkxOCwiZGV2aWNlSWQiOiIxQTNFNUY5Qy0yQjhELTQ3MEEtQTFGMy04QzJFNEQ5QjZBMUYifQ.OGUYSgRE93mjH_Cm4zOTVhuSNenE-Hozl3Tgz9DgQbgksNXxqlW69V_OAPAvZVqnVBJSYaG033fQi3bzHNMzbGQfIGzrqGus9H8iaqLkjFk36eBI1OAdZKFLuDkOMy35EowANIege8JzXebyu55DhXQF1khZobIth_1hoKqT1viRLEKgmPmuSkncrz8cqS49PPR7Anojw-ZGGrRF7RvLYZk9TwhjvFMny-4z4fw0Y_V3l9Gt2wCJAf5uV8KszyH826fcDhvD39R_pZx510P6rSSMYqJuUjAIbFRqeEk8I66CdxmGpJP1GxiE6r_XWvnjhOS8FUFPNzuTFMIaBy0W8w",
   "meta:kyohi3108@proton.me": {
-    "savedAt": 1776738571929,
+    "savedAt": 1776752918423,
     "deviceId": "1A3E5F9C-2B8D-470A-A1F3-8C2E4D9B6A1F",
     "userAgent": "ERIC/1.2.0 (Android; 13; Oppo Find X6)"
   }

@@ -1,5 +1,6 @@
 import { FriendApiService } from "../../api/friend/friendApiService";
 import { getUsersForFriendRequest, recordFriendRequest, updateFriendRequestStatus } from "../../data/mysqlStore";
+import { AccountMissionService } from "./AccountMissionService";
 import { Log } from "../../utils/log";
 
 type AppLogger = ReturnType<typeof Log.getLogger>;
@@ -13,6 +14,7 @@ export class RelationService {
 
     async handleFriendManagement(accessToken: string, h: any, ctx: any, doMission: Function) {
         try {
+            const missionSvc = new AccountMissionService(this.logger, this.proxyAgent);
             let receivedReqs: any = null;
             await doMission("GetReceivedFriendRequests", async () => {
                 const res = await FriendApiService.getReceivedRequests(accessToken, h, 10, 0, this.proxyAgent);
@@ -72,6 +74,7 @@ export class RelationService {
 
                     if (success) {
                         await recordFriendRequest(this.currentPhone, receiverPhone, receiverId).catch(() => {});
+                        await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "FRIEND");
                     }
                 }
             }

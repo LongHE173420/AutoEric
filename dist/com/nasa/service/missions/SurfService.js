@@ -105,7 +105,7 @@ class SurfService {
                         break;
                     this.logger.info("SURF_VIDEO_START", { ...ctx, videoId: video.id, source: video.source_url, attempt });
                     const handleVideoFailure = async (err) => {
-                        await (0, mysqlStore_1.releaseVideoReservation)(video?.id).catch(() => { });
+                        await (0, mysqlStore_1.releaseVideoReservation)(video?.id, video?.claimToken).catch(() => { });
                         const isBrokenLocalVideo = err?.message?.includes("Video file not found") ||
                             err?.message?.includes("Video too large") ||
                             err?.message?.includes("ffmpeg exited with code 1") ||
@@ -209,11 +209,11 @@ class SurfService {
                         });
                         const completeSurfResponse = await surfApiService_1.SurfApiService.completeSurf(accessToken, completePayload, h, this.proxyAgent);
                         this.logger.info("SURF_COMPLETE_RESPONSE", { ...ctx, surfId: String(surfId), responseData: completeSurfResponse?.data, status: completeSurfResponse?.status });
-                        const posted = await (0, mysqlStore_1.markVideoPosted)(video.id, phone).catch(() => null);
+                        const posted = await (0, mysqlStore_1.markVideoPosted)(video.id, phone, video.claimToken).catch(() => null);
                         if (posted?.fullyPosted && posted.localPath && fs.existsSync(posted.localPath)) {
                             try {
                                 fs.unlinkSync(posted.localPath);
-                                this.logger.info("SOURCE_SURF_VIDEO_DELETED_AFTER_MAX_POSTS", { videoId: video.id });
+                                this.logger.info("SOURCE_SURF_VIDEO_DELETED_AFTER_POST", { videoId: video.id });
                             }
                             catch (e) { }
                         }

@@ -39,6 +39,7 @@ const path = __importStar(require("path"));
 const crypto_1 = require("crypto");
 const postApiService_1 = require("../../api/post/postApiService");
 const mysqlStore_1 = require("../../data/mysqlStore");
+const AccountMissionService_1 = require("./AccountMissionService");
 const MediaHelper_1 = require("../../utils/MediaHelper");
 class PostService {
     constructor(logger, acc, proxyAgent) {
@@ -124,6 +125,7 @@ class PostService {
     }
     async handleAutoCreatePost(accessToken, h, ctx, doMission) {
         try {
+            const missionSvc = new AccountMissionService_1.AccountMissionService(this.logger, this.proxyAgent);
             const phone = String(this.acc.phone || "").trim();
             const maxVideoAttempts = 3;
             for (let attempt = 1; attempt <= maxVideoAttempts; attempt++) {
@@ -133,7 +135,7 @@ class PostService {
                 }
                 this.logger.info("VIDEO_POST_START", { ...ctx, videoId: video.id, source: video.source_url, attempt });
                 const handleVideoFailure = async (err) => {
-                    await (0, mysqlStore_1.releaseVideoReservation)(video?.id).catch(() => { });
+                    await (0, mysqlStore_1.releaseVideoReservation)(video?.id, video?.claimToken).catch(() => { });
                     const isBrokenLocalVideo = err?.message?.includes("Video file not found") ||
                         err?.message?.includes("Video too large") ||
                         err?.message?.includes("ffmpeg exited with code 1") ||
@@ -278,11 +280,12 @@ class PostService {
                         postId: String(postId),
                         videoFileName: uploadedVideoFileName
                     });
-                    const posted = await (0, mysqlStore_1.markVideoPosted)(video.id, phone).catch(() => null);
+                    await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "POST");
+                    const posted = await (0, mysqlStore_1.markVideoPosted)(video.id, phone, video.claimToken).catch(() => null);
                     if (posted?.fullyPosted && posted.localPath && fs.existsSync(posted.localPath)) {
                         try {
                             fs.unlinkSync(posted.localPath);
-                            this.logger.info("SOURCE_VIDEO_DELETED_AFTER_MAX_POSTS", { videoId: video.id });
+                            this.logger.info("SOURCE_VIDEO_DELETED_AFTER_POST", { videoId: video.id });
                         }
                         catch (e) { }
                     }

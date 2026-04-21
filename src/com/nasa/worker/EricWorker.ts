@@ -9,6 +9,7 @@ import { ENV } from "../config/env";
 import { buildHeaders } from "../utils/headers";
 import { isNetworkError } from "../utils/errorUtils";
 import { ProxyHelper } from "../proxy/ProxyHelper";
+import { sleep } from "../utils/async";
 
 import { AccountMissionService } from "../service/missions/AccountMissionService";
 import { InteractionService } from "../service/missions/InteractionService";
@@ -274,7 +275,8 @@ export class EricWorker {
                     });
                 }
 
-                if (isNetworkError(e) && this.acc.proxy) {
+                if ((status === 429 || isNetworkError(e)) && this.acc.proxy) {
+                    await sleep(ENV.API_RETRY_BACKOFF_MS);
                     if (await this.proxyHelper.switchProxy(ctx)) {
                         const retryRes = await action();
                         this.logger.info(`OK: ${name} (retry)`, ctx);

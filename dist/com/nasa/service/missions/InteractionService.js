@@ -4,6 +4,7 @@ exports.InteractionService = void 0;
 const feedApiService_1 = require("../../api/feed/feedApiService");
 const surfApiService_1 = require("../../api/surf/surfApiService");
 const reactionApiService_1 = require("../../api/reaction/reactionApiService");
+const AccountMissionService_1 = require("./AccountMissionService");
 const asyncStore_1 = require("../../storage/asyncStore");
 class InteractionService {
     constructor(logger, proxyAgent, currentPhone) {
@@ -64,6 +65,7 @@ class InteractionService {
     }
     async handleFeedAndInteract(accessToken, h, ctx, doMission) {
         try {
+            const missionSvc = new AccountMissionService_1.AccountMissionService(this.logger, this.proxyAgent);
             let allItems = [];
             let lastPostId = "";
             let lastCreatedAt = Date.now();
@@ -148,6 +150,7 @@ class InteractionService {
                     const postId = post.id;
                     const rType = reactionCodes[Math.floor(Math.random() * reactionCodes.length)] || "LIKE";
                     await doMission(`PostReaction_${postId}`, () => reactionApiService_1.ReactionApiService.sendReaction(accessToken, postId, rType, h, this.proxyAgent), ctx);
+                    await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "REACTION");
                     await doMission(`PostShare_${postId}`, () => feedApiService_1.FeedApiService.repostPost(accessToken, postId, h, this.proxyAgent), ctx);
                     seenPostIds.add(String(postId));
                 }

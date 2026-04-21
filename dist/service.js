@@ -69,6 +69,13 @@ async function runOnce(reason) {
                     INTERVAL_MS: env_1.ENV.INTERVAL_MS,
                     RUN_ONCE: env_1.ENV.RUN_ONCE,
                     PROXY_REQUIRED: env_1.ENV.PROXY_REQUIRED,
+                    LOGIN_CONCURRENCY: env_1.ENV.LOGIN_CONCURRENCY,
+                    ACCOUNT_FETCH_BATCH_SIZE: env_1.ENV.ACCOUNT_FETCH_BATCH_SIZE,
+                    ACCOUNT_BATCH_SIZE: env_1.ENV.ACCOUNT_BATCH_SIZE,
+                    ACCOUNT_BATCH_DELAY_MS: env_1.ENV.ACCOUNT_BATCH_DELAY_MS,
+                    ACCOUNT_START_STAGGER_MS: env_1.ENV.ACCOUNT_START_STAGGER_MS,
+                    VIDEO_CLAIM_TTL_MS: env_1.ENV.VIDEO_CLAIM_TTL_MS,
+                    API_RETRY_BACKOFF_MS: env_1.ENV.API_RETRY_BACKOFF_MS,
                     AUTO_FETCH_OTP: env_1.ENV.AUTO_FETCH_OTP,
                     AUTO_RESEND: env_1.ENV.AUTO_RESEND,
                     OTP_TIMEOUT_MS: env_1.ENV.OTP_TIMEOUT_MS,
@@ -88,20 +95,46 @@ async function runOnce(reason) {
         logger.debug("JOB_START", { reason });
         const { MasterWorker } = await Promise.resolve().then(() => __importStar(require("./com/nasa/worker/MasterWorker")));
         const master = new MasterWorker(logger);
-        const dbAccounts = await (0, mysqlStore_1.getAccountsFromDb)();
-        const accountsInfo = [];
-        for (const acc of dbAccounts) {
-            accountsInfo.push({
-                phone: acc.phone,
-                password: acc.password,
-                deviceId: acc.deviceId,
-                userAgent: acc.userAgent,
-                accessToken: acc.accessToken,
-                refreshToken: acc.refreshToken,
+        let lastSeenId = 0;
+        let loadedAccounts = 0;
+        const summary = {
+            success: 0,
+            alreadyOk: 0,
+            relogin: 0,
+            fail: 0,
+            accounts: 0,
+        };
+        while (true) {
+            const dbAccounts = await (0, mysqlStore_1.getAccountsBatchFromDb)(lastSeenId, env_1.ENV.ACCOUNT_FETCH_BATCH_SIZE);
+            if (!dbAccounts.length) {
+                break;
+            }
+            const accountsInfo = [];
+            for (const acc of dbAccounts) {
+                lastSeenId = Math.max(lastSeenId, Number(acc.id || 0));
+                accountsInfo.push({
+                    phone: acc.phone,
+                    password: acc.password,
+                    deviceId: acc.deviceId,
+                    userAgent: acc.userAgent,
+                    accessToken: acc.accessToken,
+                    refreshToken: acc.refreshToken,
+                });
+            }
+            loadedAccounts += accountsInfo.length;
+            logger.debug("ACCOUNTS_PAGE_LOADED", {
+                pageSize: accountsInfo.length,
+                loadedAccounts,
+                lastSeenId
             });
+            const pageSummary = await master.run(accountsInfo, proxyManager);
+            summary.success += pageSummary.success;
+            summary.alreadyOk += pageSummary.alreadyOk;
+            summary.relogin += pageSummary.relogin;
+            summary.fail += pageSummary.fail;
+            summary.accounts += pageSummary.accounts;
         }
-        logger.debug(`Loaded ${accountsInfo.length} accounts from database.`);
-        const summary = await master.run(accountsInfo, proxyManager);
+        logger.debug(`Loaded ${loadedAccounts} accounts from database.`);
         logger.debug("JOB_DONE", { summary });
         const msg = `LOGIN summary: success=${summary.success} alreadyOk=${summary.alreadyOk} relogin=${summary.relogin} fail=${summary.fail}`;
         logger.info(msg);

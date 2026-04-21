@@ -1,6 +1,7 @@
 import { FeedApiService } from "../../api/feed/feedApiService";
 import { SurfApiService } from "../../api/surf/surfApiService";
 import { ReactionApiService } from "../../api/reaction/reactionApiService";
+import { AccountMissionService } from "./AccountMissionService";
 import { AsyncStore } from "../../storage/asyncStore";
 import { Log } from "../../utils/log";
 
@@ -67,6 +68,7 @@ export class InteractionService {
 
     async handleFeedAndInteract(accessToken: string, h: any, ctx: any, doMission: Function) {
         try {
+            const missionSvc = new AccountMissionService(this.logger, this.proxyAgent);
             let allItems: any[] = [];
             let lastPostId = "";
             let lastCreatedAt = Date.now();
@@ -154,6 +156,7 @@ export class InteractionService {
 
                     const rType = reactionCodes[Math.floor(Math.random() * reactionCodes.length)] || "LIKE";
                     await doMission(`PostReaction_${postId}`, () => ReactionApiService.sendReaction(accessToken, postId, rType, h, this.proxyAgent), ctx);
+                    await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "REACTION");
 
                     await doMission(`PostShare_${postId}`, () => FeedApiService.repostPost(accessToken, postId, h, this.proxyAgent), ctx);
                     seenPostIds.add(String(postId));

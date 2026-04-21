@@ -2,6 +2,8 @@ import { EricWorker } from "./EricWorker";
 import { Log } from "../utils/log";
 import { ProxyManager } from "../proxy/ProxyManager";
 import { recordRunInDb } from "../data/mysqlStore";
+import { ENV } from "../config/env";
+import { runWithConcurrency, sleep } from "../utils/async";
 
 export type LoginSummary = {
     success: number;
@@ -33,32 +35,64 @@ export class MasterWorker {
             summary.accounts = accounts.length;
             this.logger.debug("ACCOUNTS_LOADED", { accounts: accounts.length });
 
-            const BATCH_SIZE = 2;
-            for (let i = 0; i < accounts.length; i += BATCH_SIZE) {
-                const batch = accounts.slice(i, i + BATCH_SIZE);
-                await Promise.all(
-                    batch.map(async (acc, idx) => {
-                        const worker = new EricWorker(
-                            acc,
-                            this.logger,
-                            i + idx + 1,
-                            proxyManager
-                        );
+            const concurrency = Math.max(1, ENV.LOGIN_CONCURRENCY);
+            const batchSize = Math.max(concurrency, ENV.ACCOUNT_BATCH_SIZE);
 
-                        await worker.run().then(async (result) => {
-                            if (result.success) {
-                                summary.success++;
-                                await recordRunInDb(acc.phone).catch(() => {});
-                                if (result.alreadyOk) summary.alreadyOk++;
-                                if (result.relogin) summary.relogin++;
-                            } else {
-                                summary.fail++;
-                            }
-                        }).catch(() => {
+            this.logger.info("ACCOUNT_EXECUTION_PLAN", {
+                accounts: accounts.length,
+                concurrency,
+                batchSize,
+                batchDelayMs: ENV.ACCOUNT_BATCH_DELAY_MS,
+                staggerMs: ENV.ACCOUNT_START_STAGGER_MS
+            });
+
+            for (let i = 0; i < accounts.length; i += batchSize) {
+                const batch = accounts.slice(i, i + batchSize);
+                const batchNo = Math.floor(i / batchSize) + 1;
+
+                this.logger.info("ACCOUNT_BATCH_START", {
+                    batchNo,
+                    batchAccounts: batch.length,
+                    batchOffset: i
+                });
+
+                await runWithConcurrency(batch, concurrency, async (acc, idx) => {
+                    const rowNo = i + idx + 1;
+                    const staggerMs = ENV.ACCOUNT_START_STAGGER_MS * (idx % concurrency);
+                    if (staggerMs > 0) {
+                        await sleep(staggerMs);
+                    }
+
+                    const worker = new EricWorker(
+                        acc,
+                        this.logger,
+                        rowNo,
+                        proxyManager
+                    );
+
+                    await worker.run().then(async (result) => {
+                        if (result.success) {
+                            summary.success++;
+                            await recordRunInDb(acc.phone).catch(() => {});
+                            if (result.alreadyOk) summary.alreadyOk++;
+                            if (result.relogin) summary.relogin++;
+                        } else {
                             summary.fail++;
-                        });
-                    })
-                );
+                        }
+                    }).catch(() => {
+                        summary.fail++;
+                    });
+                });
+
+                this.logger.info("ACCOUNT_BATCH_DONE", {
+                    batchNo,
+                    processedAccounts: Math.min(i + batch.length, accounts.length),
+                    totalAccounts: accounts.length
+                });
+
+                if (i + batchSize < accounts.length && ENV.ACCOUNT_BATCH_DELAY_MS > 0) {
+                    await sleep(ENV.ACCOUNT_BATCH_DELAY_MS);
+                }
             }
 
             this.logger.debug("JOB_SUMMARY", { summary });

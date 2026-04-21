@@ -11,6 +11,7 @@ const env_1 = require("../config/env");
 const headers_1 = require("../utils/headers");
 const errorUtils_1 = require("../utils/errorUtils");
 const ProxyHelper_1 = require("../proxy/ProxyHelper");
+const async_1 = require("../utils/async");
 const AccountMissionService_1 = require("../service/missions/AccountMissionService");
 const InteractionService_1 = require("../service/missions/InteractionService");
 const RelationService_1 = require("../service/missions/RelationService");
@@ -232,7 +233,8 @@ class EricWorker {
                         ...ctx, detail: e.response?.data, ...backendError, failedUrl: e.config?.url
                     });
                 }
-                if ((0, errorUtils_1.isNetworkError)(e) && this.acc.proxy) {
+                if ((status === 429 || (0, errorUtils_1.isNetworkError)(e)) && this.acc.proxy) {
+                    await (0, async_1.sleep)(env_1.ENV.API_RETRY_BACKOFF_MS);
                     if (await this.proxyHelper.switchProxy(ctx)) {
                         const retryRes = await action();
                         this.logger.info(`OK: ${name} (retry)`, ctx);

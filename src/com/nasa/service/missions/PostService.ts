@@ -3,6 +3,7 @@ import * as path from "path";
 import { randomUUID } from "crypto";
 import { PostApiService } from "../../api/post/postApiService";
 import { markVideoPosted, getNextVideoToPost, releaseVideoReservation } from "../../data/mysqlStore";
+import { AccountMissionService } from "./AccountMissionService";
 import { Log } from "../../utils/log";
 import { MediaHelper } from "../../utils/MediaHelper";
 
@@ -111,6 +112,7 @@ export class PostService {
 
     async handleAutoCreatePost(accessToken: string, h: any, ctx: any, doMission: Function) {
         try {
+            const missionSvc = new AccountMissionService(this.logger, this.proxyAgent);
             const phone = String(this.acc.phone || "").trim();
             const maxVideoAttempts = 3;
 
@@ -124,7 +126,7 @@ export class PostService {
                 this.logger.info("VIDEO_POST_START", { ...ctx, videoId: video.id, source: video.source_url, attempt });
 
                 const handleVideoFailure = async (err: any) => {
-                    await releaseVideoReservation(video?.id).catch(() => { });
+                    await releaseVideoReservation(video?.id, video?.claimToken).catch(() => { });
                     const isBrokenLocalVideo =
                         err?.message?.includes("Video file not found") ||
                         err?.message?.includes("Video too large") ||
@@ -308,10 +310,11 @@ export class PostService {
                         postId: String(postId),
                         videoFileName: uploadedVideoFileName
                     });
+                    await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "POST");
 
-                    const posted = await markVideoPosted(video.id, phone).catch(() => null);
+                    const posted = await markVideoPosted(video.id, phone, video.claimToken).catch(() => null);
                     if (posted?.fullyPosted && posted.localPath && fs.existsSync(posted.localPath)) {
-                        try { fs.unlinkSync(posted.localPath); this.logger.info("SOURCE_VIDEO_DELETED_AFTER_MAX_POSTS", { videoId: video.id }); } catch (e) { }
+                        try { fs.unlinkSync(posted.localPath); this.logger.info("SOURCE_VIDEO_DELETED_AFTER_POST", { videoId: video.id }); } catch (e) { }
                     }
                     return { action: "success", data: completePostResponse };
                 }, ctx).catch(handleVideoFailure);

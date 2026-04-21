@@ -7,12 +7,418 @@ const notificationApiService_1 = require("../../api/notification/notificationApi
 const friendApiService_1 = require("../../api/friend/friendApiService");
 const feedApiService_1 = require("../../api/feed/feedApiService");
 const reactionApiService_1 = require("../../api/reaction/reactionApiService");
+const asyncStore_1 = require("../../storage/asyncStore");
 class AccountMissionService {
     constructor(logger, proxyAgent) {
         this.logger = logger;
         this.proxyAgent = proxyAgent;
         this.pointBalanceSignatureByAccount = new Map();
         this.streakTimeZone = "Asia/Ho_Chi_Minh";
+    }
+    normalizeSearchText(value) {
+        return String(value || "")
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d")
+            .replace(/Đ/g, "D")
+            .toLowerCase()
+            .trim();
+    }
+    getActionRewardStoreKey(phone) {
+        return `actionRewardCounters:${String(phone || "").trim().toLowerCase()}`;
+    }
+    getDailyActionRewardField(category) {
+        switch (category) {
+            case "REACTION":
+                return "reaction";
+            case "FRIEND":
+                return "friend";
+            case "POST":
+                return "post";
+        }
+    }
+    getWeeklyActionRewardField(category) {
+        switch (category) {
+            case "REACTION":
+                return "weeklyReaction";
+            case "FRIEND":
+                return "weeklyFriend";
+            case "POST":
+                return "weeklyPost";
+        }
+    }
+    getActionRewardField(category, scope) {
+        return scope === "WEEKLY"
+            ? this.getWeeklyActionRewardField(category)
+            : this.getDailyActionRewardField(category);
+    }
+    getDailyActionRewardProgressField(category) {
+        switch (category) {
+            case "REACTION":
+                return "reactionProgress";
+            case "FRIEND":
+                return "friendProgress";
+            case "POST":
+                return "postProgress";
+        }
+    }
+    getWeeklyActionRewardProgressField(category) {
+        switch (category) {
+            case "REACTION":
+                return "weeklyReactionProgress";
+            case "FRIEND":
+                return "weeklyFriendProgress";
+            case "POST":
+                return "weeklyPostProgress";
+        }
+    }
+    getActionRewardProgressField(category, scope) {
+        return scope === "WEEKLY"
+            ? this.getWeeklyActionRewardProgressField(category)
+            : this.getDailyActionRewardProgressField(category);
+    }
+    getActionRewardLimit(category, scope) {
+        switch (category) {
+            case "REACTION":
+            case "FRIEND":
+            case "POST":
+                return 1;
+        }
+    }
+    getActionRewardTarget(category, scope) {
+        if (scope === "WEEKLY") {
+            switch (category) {
+                case "REACTION":
+                    return 20;
+                case "FRIEND":
+                    return 30;
+                case "POST":
+                    return 20;
+            }
+        }
+        switch (category) {
+            case "REACTION":
+                return 3;
+            case "FRIEND":
+                return 2;
+            case "POST":
+                return 1;
+        }
+    }
+    getDefaultActionRewardCounters(dayKey, weekKey) {
+        return {
+            dayKey,
+            weekKey,
+            reaction: 0,
+            friend: 0,
+            post: 0,
+            reactionProgress: 0,
+            friendProgress: 0,
+            postProgress: 0,
+            weeklyReaction: 0,
+            weeklyFriend: 0,
+            weeklyPost: 0,
+            weeklyReactionProgress: 0,
+            weeklyFriendProgress: 0,
+            weeklyPostProgress: 0
+        };
+    }
+    getActionRewardCounters(phone, now = new Date()) {
+        const dayKey = this.getDateKeyInTimeZone(now) || this.normalizeSearchText(now.toISOString().slice(0, 10));
+        const weekKey = this.getWeekKeyInTimeZone(now) || dayKey;
+        const key = this.getActionRewardStoreKey(phone);
+        const stored = asyncStore_1.AsyncStore.getItem(key);
+        if (!stored) {
+            return this.getDefaultActionRewardCounters(dayKey, weekKey);
+        }
+        const sameDay = stored.dayKey === dayKey;
+        const sameWeek = stored.weekKey === weekKey;
+        return {
+            dayKey,
+            weekKey,
+            reaction: sameDay ? Number(stored.reaction || 0) : 0,
+            friend: sameDay ? Number(stored.friend || 0) : 0,
+            post: sameDay ? Number(stored.post || 0) : 0,
+            reactionProgress: sameDay ? Number(stored.reactionProgress || 0) : 0,
+            friendProgress: sameDay ? Number(stored.friendProgress || 0) : 0,
+            postProgress: sameDay ? Number(stored.postProgress || 0) : 0,
+            weeklyReaction: sameWeek ? Number(stored.weeklyReaction || 0) : 0,
+            weeklyFriend: sameWeek ? Number(stored.weeklyFriend || 0) : 0,
+            weeklyPost: sameWeek ? Number(stored.weeklyPost || 0) : 0,
+            weeklyReactionProgress: sameWeek ? Number(stored.weeklyReactionProgress || 0) : 0,
+            weeklyFriendProgress: sameWeek ? Number(stored.weeklyFriendProgress || 0) : 0,
+            weeklyPostProgress: sameWeek ? Number(stored.weeklyPostProgress || 0) : 0
+        };
+    }
+    saveActionRewardCounters(phone, counters) {
+        asyncStore_1.AsyncStore.setItem(this.getActionRewardStoreKey(phone), counters);
+    }
+    canClaimActionReward(phone, category, scope, now = new Date()) {
+        const counters = this.getActionRewardCounters(phone, now);
+        const limit = this.getActionRewardLimit(category, scope);
+        const field = this.getActionRewardField(category, scope);
+        const used = Number(counters[field] || 0);
+        return {
+            counters,
+            limit,
+            used,
+            remaining: Math.max(0, limit - used),
+            allowed: used < limit
+        };
+    }
+    markActionRewardProgress(phone, category, now = new Date()) {
+        const counters = this.getActionRewardCounters(phone, now);
+        const dailyProgressField = this.getActionRewardProgressField(category, "DAILY");
+        const weeklyProgressField = this.getActionRewardProgressField(category, "WEEKLY");
+        const dailyTarget = this.getActionRewardTarget(category, "DAILY");
+        const weeklyTarget = this.getActionRewardTarget(category, "WEEKLY");
+        counters[dailyProgressField] = Number(counters[dailyProgressField] || 0) + 1;
+        counters[weeklyProgressField] = Number(counters[weeklyProgressField] || 0) + 1;
+        this.saveActionRewardCounters(phone, counters);
+        return {
+            counters,
+            dailyTarget,
+            weeklyTarget,
+            dailyProgress: Number(counters[dailyProgressField] || 0),
+            weeklyProgress: Number(counters[weeklyProgressField] || 0),
+            dailyReady: Number(counters[dailyProgressField] || 0) >= dailyTarget,
+            weeklyReady: Number(counters[weeklyProgressField] || 0) >= weeklyTarget
+        };
+    }
+    markActionRewardClaimed(phone, category, scope, target, now = new Date()) {
+        const counters = this.getActionRewardCounters(phone, now);
+        const field = this.getActionRewardField(category, scope);
+        const progressField = this.getActionRewardProgressField(category, scope);
+        counters[field] = Number(counters[field] || 0) + 1;
+        counters[progressField] = Math.max(0, Number(counters[progressField] || 0) - target);
+        this.saveActionRewardCounters(phone, counters);
+        return counters;
+    }
+    isClaimableRegularMission(mission) {
+        if (!mission || this.isStreakMission(mission))
+            return false;
+        const currentValue = Number(mission?.currentValue || 0);
+        const targetValue = Number(mission?.targetValue || 0);
+        const status = String(mission?.status || "").toUpperCase();
+        return (status === "COMPLETED" ||
+            status === "DONE" ||
+            status === "SUCCESS" ||
+            (targetValue > 0 && currentValue >= targetValue)) && status !== "CLAIMED";
+    }
+    getMissionActionCategory(mission) {
+        const type = String(mission?.type || "").toUpperCase();
+        const actionType = String(mission?.actionType || "").toUpperCase();
+        const normalizedName = this.normalizeSearchText(mission?.name);
+        const signals = [type, actionType].filter(Boolean).join(" ");
+        const matchesReaction = signals.includes("REACTION") ||
+            signals.includes("LIKE") ||
+            signals.includes("EMOTION") ||
+            normalizedName.includes("cam xuc") ||
+            normalizedName.includes("tha cam xuc") ||
+            normalizedName.includes("reaction") ||
+            normalizedName.includes("like");
+        if (matchesReaction)
+            return "REACTION";
+        const matchesFriend = signals.includes("FRIEND") ||
+            signals.includes("ADD_FRIEND") ||
+            signals.includes("SEND_FRIEND") ||
+            signals.includes("FRIEND_REQUEST") ||
+            normalizedName.includes("ket ban") ||
+            normalizedName.includes("friend");
+        if (matchesFriend)
+            return "FRIEND";
+        const matchesPost = (signals.includes("POST") || signals.includes("CREATE_POST") || signals.includes("PUBLISH_POST")) &&
+            !signals.includes("REPOST") &&
+            !signals.includes("SURF") &&
+            !normalizedName.includes("surf") &&
+            (normalizedName.includes("dang bai") || normalizedName.includes("post") || normalizedName.includes("bai viet") || normalizedName === "");
+        if (matchesPost)
+            return "POST";
+        return null;
+    }
+    isActionRewardMission(mission, category, scope) {
+        if (!mission || this.isStreakMission(mission))
+            return false;
+        const type = String(mission?.type || "").toUpperCase();
+        if (type !== scope) {
+            return false;
+        }
+        const status = String(mission?.status || "").toUpperCase();
+        if (status === "CLAIMED" || status === "EXPIRED" || status === "DISABLED") {
+            return false;
+        }
+        return this.getMissionActionCategory(mission) === category;
+    }
+    findActionRewardMission(missions, category, scope) {
+        return [...(Array.isArray(missions) ? missions : [])]
+            .filter((mission) => this.isActionRewardMission(mission, category, scope))
+            .sort((a, b) => {
+            return Number(a?.missionId || a?.id || 0) - Number(b?.missionId || b?.id || 0);
+        })
+            .at(0);
+    }
+    summarizeMissionsForLog(missions) {
+        return (Array.isArray(missions) ? missions : []).map((mission) => ({
+            missionId: mission?.missionId || mission?.id || null,
+            name: mission?.name || null,
+            type: mission?.type || null,
+            actionType: mission?.actionType || null,
+            status: mission?.status || null,
+            currentValue: mission?.currentValue ?? null,
+            targetValue: mission?.targetValue ?? null,
+            category: this.getMissionActionCategory(mission),
+            claimable: this.isClaimableRegularMission(mission)
+        }));
+    }
+    async claimRegularMission(mission, accessToken, h, ctx, doMission, category, scope) {
+        const missionId = Number(mission?.missionId || mission?.id || 0);
+        if (!missionId)
+            return false;
+        this.logger.info("MISSION_REWARD_CLAIM_REQUEST", {
+            ...ctx,
+            claimType: "REGULAR",
+            category,
+            scope,
+            missionId,
+            name: mission?.name || null,
+            type: mission?.type || null,
+            actionType: mission?.actionType || null,
+            cv: mission?.currentValue ?? 0,
+            tv: mission?.targetValue ?? 0,
+            status: mission?.status || null
+        });
+        const result = await doMission(`ClaimMission_${scope}_${category}_${missionId}`, () => missionApiService_1.MissionApiService.claimMissionReward(accessToken, missionId, h, this.proxyAgent), ctx);
+        return result !== null;
+    }
+    async handleActionRewardClaim(accessToken, h, ctx, doMission, category) {
+        try {
+            const phone = String(ctx?.phone || "").trim().toLowerCase();
+            if (!phone)
+                return false;
+            const progressState = this.markActionRewardProgress(phone, category);
+            if (!progressState.dailyReady && !progressState.weeklyReady) {
+                this.logger.info("AUTO_MISSION_REWARD_PROGRESS", {
+                    ...ctx,
+                    category,
+                    dailyProgress: progressState.dailyProgress,
+                    dailyTarget: progressState.dailyTarget,
+                    weeklyProgress: progressState.weeklyProgress,
+                    weeklyTarget: progressState.weeklyTarget,
+                    counters: progressState.counters
+                });
+                return false;
+            }
+            const pendingRewards = [
+                {
+                    scope: "DAILY",
+                    ready: progressState.dailyReady,
+                    target: progressState.dailyTarget,
+                    claimed: false
+                },
+                {
+                    scope: "WEEKLY",
+                    ready: progressState.weeklyReady,
+                    target: progressState.weeklyTarget,
+                    claimed: false
+                }
+            ].filter((reward) => reward.ready);
+            const pollDelaysMs = [0, 1200, 2500];
+            let lastMissionSnapshot = [];
+            const lastCandidates = {};
+            let claimedAny = false;
+            for (let attemptIndex = 0; attemptIndex < pollDelaysMs.length; attemptIndex++) {
+                const delayMs = pollDelaysMs[attemptIndex];
+                if (delayMs > 0) {
+                    await new Promise((resolve) => setTimeout(resolve, delayMs));
+                }
+                const res = await missionApiService_1.MissionApiService.getCurrentUserMissions(accessToken, h, this.proxyAgent);
+                const missions = Array.isArray(res.data?.data || res.data) ? (res.data?.data || res.data) : [];
+                lastMissionSnapshot = this.summarizeMissionsForLog(missions);
+                for (const pending of pendingRewards) {
+                    if (pending.claimed)
+                        continue;
+                    const candidate = this.findActionRewardMission(missions, category, pending.scope);
+                    if (!candidate)
+                        continue;
+                    lastCandidates[pending.scope] = {
+                        missionId: candidate?.missionId || candidate?.id || null,
+                        name: candidate?.name || null,
+                        type: candidate?.type || null,
+                        actionType: candidate?.actionType || null,
+                        status: candidate?.status || null,
+                        currentValue: candidate?.currentValue ?? null,
+                        targetValue: candidate?.targetValue ?? null
+                    };
+                    const quota = this.canClaimActionReward(phone, category, pending.scope);
+                    if (!quota.allowed) {
+                        this.logger.info("AUTO_MISSION_REWARD_LIMIT_REACHED", {
+                            ...ctx,
+                            category,
+                            scope: pending.scope,
+                            used: quota.used,
+                            limit: quota.limit,
+                            dayKey: quota.counters.dayKey,
+                            weekKey: quota.counters.weekKey
+                        });
+                        pending.claimed = true;
+                        continue;
+                    }
+                    const balanceRes = await missionApiService_1.MissionApiService.getPointBalance(accessToken, h, this.proxyAgent);
+                    const balanceData = balanceRes.data?.data || balanceRes.data || {};
+                    const dailyRemainingPoint = Number(balanceData?.dailyRemainingPoint ?? balanceData?.remainingPoint ?? 0);
+                    if (dailyRemainingPoint <= 0) {
+                        this.logger.info("AUTO_MISSION_REWARD_SKIPPED_NO_DAILY_POINT", {
+                            ...ctx,
+                            category,
+                            scope: pending.scope,
+                            dailyRemainingPoint,
+                            balance: balanceData
+                        });
+                        pending.claimed = true;
+                        continue;
+                    }
+                    const claimed = await this.claimRegularMission(candidate, accessToken, h, ctx, doMission, category, pending.scope);
+                    if (!claimed) {
+                        continue;
+                    }
+                    const target = Number(candidate?.targetValue || pending.target || 0) || pending.target;
+                    const counters = this.markActionRewardClaimed(phone, category, pending.scope, target);
+                    this.logger.info("AUTO_MISSION_REWARD_CLAIMED", {
+                        ...ctx,
+                        category,
+                        scope: pending.scope,
+                        missionId: candidate?.missionId || candidate?.id || null,
+                        target,
+                        counters
+                    });
+                    pending.claimed = true;
+                    claimedAny = true;
+                }
+                if (pendingRewards.every((pending) => pending.claimed)) {
+                    return claimedAny;
+                }
+            }
+            this.logger.info("AUTO_MISSION_REWARD_NOT_FOUND", {
+                ...ctx,
+                category,
+                candidates: lastCandidates,
+                pendingScopes: pendingRewards.filter((pending) => !pending.claimed).map((pending) => pending.scope)
+            });
+            this.logger.debug("AUTO_MISSION_REWARD_MISSION_LIST", {
+                ...ctx,
+                category,
+                missions: lastMissionSnapshot
+            });
+            return claimedAny;
+        }
+        catch (e) {
+            this.logger.error("HANDLE_ACTION_REWARD_CLAIM_ERROR", {
+                ...ctx,
+                category,
+                err: e.message || String(e)
+            });
+            return false;
+        }
     }
     async handleProfileAndSocial(accessToken, h, ctx, doMission) {
         try {
@@ -127,6 +533,22 @@ class AccountMissionService {
         }
         return `${year}-${month}-${day}`;
     }
+    getWeekKeyInTimeZone(input, timeZone = this.streakTimeZone) {
+        const dateKey = this.getDateKeyInTimeZone(input, timeZone);
+        if (!dateKey)
+            return null;
+        const [year, month, day] = dateKey.split("-").map((part) => Number(part));
+        if (!year || !month || !day)
+            return null;
+        const localDateUtc = Date.UTC(year, month - 1, day);
+        const dayOfWeek = new Date(localDateUtc).getUTCDay();
+        const daysSinceMonday = (dayOfWeek + 6) % 7;
+        const monday = new Date(localDateUtc - daysSinceMonday * 24 * 60 * 60 * 1000);
+        const mondayYear = monday.getUTCFullYear();
+        const mondayMonth = String(monday.getUTCMonth() + 1).padStart(2, "0");
+        const mondayDay = String(monday.getUTCDate()).padStart(2, "0");
+        return `${mondayYear}-${mondayMonth}-${mondayDay}`;
+    }
     getStreakClaimState(mission, now = new Date()) {
         const lastDateTs = Number(mission?.lastStreakDate || 0);
         const todayKey = this.getDateKeyInTimeZone(now);
@@ -191,6 +613,11 @@ class AccountMissionService {
             }
             const missions = res.data?.data || res.data || [];
             if (logMissionDetail) {
+                this.logger.debug("MISSION_LIST_DETAIL", {
+                    ...ctx,
+                    phase: missionDetailPhase,
+                    missions: this.summarizeMissionsForLog(missions)
+                });
                 const streakMission = Array.isArray(missions)
                     ? missions.find((mission) => Number(mission?.missionId || mission?.id || 0) === 18 || String(mission?.actionType || "").toUpperCase() === "LOGIN")
                     : null;
@@ -278,6 +705,16 @@ class AccountMissionService {
                         });
                     }
                     continue;
+                }
+                if (logMissionDetail) {
+                    this.logger.debug(`SKIP_NON_STREAK_MISSION_IN_REWARD_STAGE_${missionId}`, {
+                        ...ctx,
+                        missionId,
+                        category: this.getMissionActionCategory(m),
+                        type: m.type || null,
+                        actionType: m.actionType || null,
+                        status: m.status || null
+                    });
                 }
             }
         }

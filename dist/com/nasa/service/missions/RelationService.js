@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RelationService = void 0;
 const friendApiService_1 = require("../../api/friend/friendApiService");
 const mysqlStore_1 = require("../../data/mysqlStore");
+const AccountMissionService_1 = require("./AccountMissionService");
 class RelationService {
     constructor(logger, proxyAgent, currentPhone) {
         this.logger = logger;
@@ -11,6 +12,7 @@ class RelationService {
     }
     async handleFriendManagement(accessToken, h, ctx, doMission) {
         try {
+            const missionSvc = new AccountMissionService_1.AccountMissionService(this.logger, this.proxyAgent);
             let receivedReqs = null;
             await doMission("GetReceivedFriendRequests", async () => {
                 const res = await friendApiService_1.FriendApiService.getReceivedRequests(accessToken, h, 10, 0, this.proxyAgent);
@@ -67,6 +69,7 @@ class RelationService {
                     }, ctx);
                     if (success) {
                         await (0, mysqlStore_1.recordFriendRequest)(this.currentPhone, receiverPhone, receiverId).catch(() => { });
+                        await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "FRIEND");
                     }
                 }
             }

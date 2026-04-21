@@ -23,15 +23,17 @@ function bool(name: string, def: Bool): Bool {
 }
 
 const defaultKongUrl = str("KONG_URL", "http://localhost:8000");
-const defaultPostApiUrl = str("POST_API_URL", defaultKongUrl);
-const defaultMediaApiUrl = str("MEDIA_API_URL", defaultKongUrl);
-const defaultMediaUploadApiUrl = str("MEDIA_UPLOAD_API_URL", "");
+const defaultSocialApiUrl = str("SOCIAL_API_URL", defaultKongUrl);
+const defaultPostApiUrl = str("POST_API_URL", defaultSocialApiUrl);
+const defaultMediaApiUrl = str("MEDIA_API_URL", defaultSocialApiUrl);
+const defaultMediaUploadApiUrl = str("MEDIA_UPLOAD_API_URL", defaultSocialApiUrl);
 const defaultMediaUploadApiUrls = str("MEDIA_UPLOAD_API_URLS", "");
-const defaultUploadPublicBaseUrl = str("UPLOAD_PUBLIC_BASE_URL", "https://upload.eric.pro.vn");
+const defaultUploadPublicBaseUrl = str("UPLOAD_PUBLIC_BASE_URL", defaultSocialApiUrl || "https://upload.eric.pro.vn");
 
 export const ENV = {
 
   KONG_URL: defaultKongUrl,
+  SOCIAL_API_URL: defaultSocialApiUrl,
   POST_API_URL: defaultPostApiUrl,
   MEDIA_API_URL: defaultMediaApiUrl,
   MEDIA_UPLOAD_API_URL: defaultMediaUploadApiUrl,
@@ -41,6 +43,14 @@ export const ENV = {
   INTERVAL_MS: num("INTERVAL_MS", 60_000),
   RUN_ONCE: bool("RUN_ONCE", false),
   PROXY_REQUIRED: bool("PROXY_REQUIRED", false),
+  LOGIN_CONCURRENCY: num("LOGIN_CONCURRENCY", 5),
+  TARGETED_CONCURRENCY: num("TARGETED_CONCURRENCY", 5),
+  ACCOUNT_FETCH_BATCH_SIZE: num("ACCOUNT_FETCH_BATCH_SIZE", 200),
+  ACCOUNT_BATCH_SIZE: num("ACCOUNT_BATCH_SIZE", 50),
+  ACCOUNT_BATCH_DELAY_MS: num("ACCOUNT_BATCH_DELAY_MS", 1_500),
+  ACCOUNT_START_STAGGER_MS: num("ACCOUNT_START_STAGGER_MS", 150),
+  VIDEO_CLAIM_TTL_MS: num("VIDEO_CLAIM_TTL_MS", 5 * 60_000),
+  API_RETRY_BACKOFF_MS: num("API_RETRY_BACKOFF_MS", 1_500),
 
   DEVICE_ID: str("DEVICE_ID", ""),
 
