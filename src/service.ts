@@ -1,5 +1,6 @@
 import { ENV } from "./com/nasa/config/env";
 import { cleanupOldLogs, getTodayLogPath, Log } from "./com/nasa/utils/log";
+import { OpenAiCommentService } from "./com/nasa/api/openai/openAiCommentService";
 import axios from "axios";
 import { applyStandardInterceptors } from "./com/nasa/utils/axiosSignature";
 import { ProxyManager } from "./com/nasa/proxy/ProxyManager";
@@ -54,7 +55,8 @@ async function runOnce(reason: string) {
           LOG_LEVEL: ENV.LOG_LEVEL,
           LOG_VERBOSE: ENV.LOG_VERBOSE,
           UPSTASH_REDIS_REST_URL: ENV.UPSTASH_REDIS_REST_URL ? "[configured]" : "",
-          UPSTASH_REDIS_REST_TOKEN: ENV.UPSTASH_REDIS_REST_TOKEN ? "[configured]" : ""
+          UPSTASH_REDIS_REST_TOKEN: ENV.UPSTASH_REDIS_REST_TOKEN ? "[configured]" : "",
+          OPENAI: OpenAiCommentService.getDebugInfo()
         }
       });
     }

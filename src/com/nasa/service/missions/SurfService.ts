@@ -132,6 +132,11 @@ export class SurfService {
                             videoInfo = info;
                             await this.mediaHelper.createVideoThumbnail(videoPath, thumbnailPath).catch((e: any) => { throw e; });
                             thumbnailSize = fs.statSync(thumbnailPath).size;
+                            this.logger.info("SURF_THUMBNAIL_CREATED_DEBUG", {
+                                ...ctx,
+                                videoId: video.id,
+                                thumbnail: this.mediaHelper.getLocalFileDebug(thumbnailPath)
+                            });
                         }).catch(async (err: any) => {
                             if (fs.existsSync(thumbnailPath)) { try { fs.unlinkSync(thumbnailPath); } catch (e) { } }
                             await this.mediaHelper.deleteBrokenVideo(video, ctx, "LOCAL_VIDEO_PROCESSING_FAILED", err, "BROKEN_SURF_VIDEO").catch(() => {});
@@ -172,8 +177,14 @@ export class SurfService {
                                 this.logger.warn("SURF_THUMBNAIL_UPLOAD_SKIPPED_AFTER_FAILURE", {
                                     ...ctx,
                                     surfId: String(surfId),
+                                    videoId: video.id,
                                     failedMode: "presigned",
-                                    err: err?.message || String(err || "")
+                                    err: err?.message || String(err || ""),
+                                    thumbnailDebug: this.mediaHelper.preserveDebugFile(thumbnailPath, "SURF_THUMBNAIL_UPLOAD_FAILED", {
+                                        ...ctx,
+                                        videoId: video.id,
+                                        surfId: String(surfId)
+                                    })
                                 });
                             }
 

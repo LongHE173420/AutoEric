@@ -39,6 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.startService = startService;
 const env_1 = require("./com/nasa/config/env");
 const log_1 = require("./com/nasa/utils/log");
+const openAiCommentService_1 = require("./com/nasa/api/openai/openAiCommentService");
 const axios_1 = __importDefault(require("axios"));
 const axiosSignature_1 = require("./com/nasa/utils/axiosSignature");
 const ProxyManager_1 = require("./com/nasa/proxy/ProxyManager");
@@ -88,7 +89,8 @@ async function runOnce(reason) {
                     LOG_LEVEL: env_1.ENV.LOG_LEVEL,
                     LOG_VERBOSE: env_1.ENV.LOG_VERBOSE,
                     UPSTASH_REDIS_REST_URL: env_1.ENV.UPSTASH_REDIS_REST_URL ? "[configured]" : "",
-                    UPSTASH_REDIS_REST_TOKEN: env_1.ENV.UPSTASH_REDIS_REST_TOKEN ? "[configured]" : ""
+                    UPSTASH_REDIS_REST_TOKEN: env_1.ENV.UPSTASH_REDIS_REST_TOKEN ? "[configured]" : "",
+                    OPENAI: openAiCommentService_1.OpenAiCommentService.getDebugInfo()
                 }
             });
         }

@@ -91,10 +91,11 @@ class EricWorker {
                 if (me.ok) {
                     const userId = me.data?.id || me.data?.userId || me.data?.accountId;
                     if (userId) {
+                        this.acc.app_user_id = String(userId);
                         await (0, mysqlStore_1.saveAppUserId)(phone, String(userId));
                     }
                     const tokenToUse = (0, tokenStore_1.getStoredTokens)(phone)?.accessToken || stored.accessToken;
-                    await this.runMissions(tokenToUse, activeDeviceId, ctx);
+                    await this.runMissions(tokenToUse, activeDeviceId, ctx, userId ? String(userId) : null);
                     return { success: true, relogin: false, alreadyOk: true };
                 }
                 (0, tokenStore_1.clearTokensForUser)(phone);
@@ -128,9 +129,10 @@ class EricWorker {
                 }
                 const userId = me.data?.id || me.data?.userId || me.data?.accountId;
                 if (userId) {
+                    this.acc.app_user_id = String(userId);
                     await (0, mysqlStore_1.saveAppUserId)(phone, String(userId));
                 }
-                await this.runMissions(final.accessToken, activeDeviceId, ctx);
+                await this.runMissions(final.accessToken, activeDeviceId, ctx, userId ? String(userId) : null);
                 return { success: true, relogin: !!stored, alreadyOk: false };
             }
             return { success: false, relogin: false, alreadyOk: false, reason: "LOGIN_VALIDATION_FAILED" };
@@ -140,12 +142,12 @@ class EricWorker {
             return { success: false, relogin: false, alreadyOk: false, reason: e.message || "ATTEMPT_RUN_PROCESS_ERROR" };
         }
     }
-    async runMissions(accessToken, deviceId, ctx) {
+    async runMissions(accessToken, deviceId, ctx, currentUserId) {
         try {
             this.logger.info("BOT_MISSIONS_START", ctx);
             const h = (0, headers_1.buildHeaders)(deviceId, this.acc.userAgent);
             const accountSvc = new AccountMissionService_1.AccountMissionService(this.logger, this.proxyHelper.proxyAgent);
-            const interactSvc = new InteractionService_1.InteractionService(this.logger, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username || "");
+            const interactSvc = new InteractionService_1.InteractionService(this.logger, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username || "", currentUserId || this.acc.app_user_id || null);
             const relationSvc = new RelationService_1.RelationService(this.logger, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username);
             const postSvc = new PostService_1.PostService(this.logger, this.acc, this.proxyHelper.proxyAgent);
             const surfSvc = new SurfService_1.SurfService(this.logger, this.acc, this.proxyHelper.proxyAgent);
@@ -153,6 +155,7 @@ class EricWorker {
             const TEST_ONLY_POST = false; // Đổi thành false khi muốn chạy toàn bộ tính năng
             if (!TEST_ONLY_POST) {
                 await this.runMissionStage("PROFILE_AND_SOCIAL", ctx, () => accountSvc.handleProfileAndSocial(accessToken, h, ctx, boundDoMission));
+                await this.runMissionStage("STREAK_CLAIMING", ctx, () => accountSvc.handleRewardClaiming(accessToken, h, ctx, boundDoMission));
                 await this.runMissionStage("FEED_AND_INTERACT", ctx, () => interactSvc.handleFeedAndInteract(accessToken, h, ctx, boundDoMission));
             }
             await this.runMissionStage("CREATE_VIDEO_POST", ctx, () => postSvc.handleAutoCreatePost(accessToken, h, ctx, boundDoMission));

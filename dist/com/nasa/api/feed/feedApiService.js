@@ -25,11 +25,6 @@ class FeedApiService {
             headers: { ...headers, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
         });
     }
-    static async repostPost(accessToken, id, headers = (0, headers_1.buildHeaders)(), agent) {
-        return ApiClient_1.ApiClient.createSignedClient(headers, agent).post(`${env_1.ENV.KONG_URL}/api/posts/repost`, ApiClient_1.ApiClient.buildPayload({ id: String(id) }), {
-            headers: { ...headers, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
-        });
-    }
     static async reportPost(accessToken, id, headers = (0, headers_1.buildHeaders)(), agent) {
         return ApiClient_1.ApiClient.createSignedClient(headers, agent).post(`${env_1.ENV.KONG_URL}/api/posts/report`, ApiClient_1.ApiClient.buildPayload({ id: String(id) }), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }

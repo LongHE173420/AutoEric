@@ -2,27 +2,29 @@ import { ENV } from '../../config/env';
 import { ApiClient } from '../../utils/ApiClient';
 import { buildHeaders } from '../../utils/headers';
 
+const SURF_API_BASE_URL = ENV.SURF_API_URL || ENV.SOCIAL_API_URL || ENV.KONG_URL;
+
 export class SurfApiService {
     static async generateId(accessToken: string, headers = buildHeaders(), agent?: any) {
-        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/surf/generate-id`, "", {
+        return ApiClient.createSignedClient(headers, agent).post(`${SURF_API_BASE_URL}/api/surf/generate-id`, "", {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` }
         });
     }
 
     static async createSurf(accessToken: string, surfData: any, headers = buildHeaders(), agent?: any) {
-        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/surf/create`, ApiClient.buildPayload(surfData), {
+        return ApiClient.createSignedClient(headers, agent).post(`${SURF_API_BASE_URL}/api/surf/create`, ApiClient.buildPayload(surfData), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
         });
     }
 
     static async completeSurf(accessToken: string, surfData: any, headers = buildHeaders(), agent?: any) {
-        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/surf/complete`, ApiClient.buildPayload(surfData), {
+        return ApiClient.createSignedClient(headers, agent).post(`${SURF_API_BASE_URL}/api/surf/complete`, ApiClient.buildPayload(surfData), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
         });
     }
 
     static async getSurfHome(accessToken: string, headers = buildHeaders(), surfId = "", createdAt = Math.floor(Date.now() / 1000), limit = 4, agent?: any) {
-        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/surf/home`, ApiClient.buildPayload({ surfId, createdAt, limit }), {
+        return ApiClient.createSignedClient(headers, agent).post(`${SURF_API_BASE_URL}/api/surf/home`, ApiClient.buildPayload({ surfId, createdAt, limit }), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}` },
             transformResponse: [(data) => {
                 if (typeof data === 'string') {

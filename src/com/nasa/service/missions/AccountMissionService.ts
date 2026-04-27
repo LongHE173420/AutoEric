@@ -8,27 +8,31 @@ import { AsyncStore } from "../../storage/asyncStore";
 import { Log } from "../../utils/log";
 
 type AppLogger = ReturnType<typeof Log.getLogger>;
-type ActionRewardCategory = "REACTION" | "FRIEND" | "POST";
+type ActionRewardCategory = "REACTION" | "FRIEND" | "POST" | "COMMENT";
 type ActionRewardScope = "DAILY" | "WEEKLY";
-type ActionRewardCounterField = "reaction" | "friend" | "post";
-type ActionRewardProgressField = "reactionProgress" | "friendProgress" | "postProgress";
-type WeeklyActionRewardCounterField = "weeklyReaction" | "weeklyFriend" | "weeklyPost";
-type WeeklyActionRewardProgressField = "weeklyReactionProgress" | "weeklyFriendProgress" | "weeklyPostProgress";
+type ActionRewardCounterField = "reaction" | "friend" | "post" | "comment";
+type ActionRewardProgressField = "reactionProgress" | "friendProgress" | "postProgress" | "commentProgress";
+type WeeklyActionRewardCounterField = "weeklyReaction" | "weeklyFriend" | "weeklyPost" | "weeklyComment";
+type WeeklyActionRewardProgressField = "weeklyReactionProgress" | "weeklyFriendProgress" | "weeklyPostProgress" | "weeklyCommentProgress";
 type ActionRewardCounters = {
     dayKey: string;
     weekKey: string;
     reaction: number;
     friend: number;
     post: number;
+    comment: number;
     reactionProgress: number;
     friendProgress: number;
     postProgress: number;
+    commentProgress: number;
     weeklyReaction: number;
     weeklyFriend: number;
     weeklyPost: number;
+    weeklyComment: number;
     weeklyReactionProgress: number;
     weeklyFriendProgress: number;
     weeklyPostProgress: number;
+    weeklyCommentProgress: number;
 };
 
 export class AccountMissionService {
@@ -62,6 +66,8 @@ export class AccountMissionService {
                 return "friend";
             case "POST":
                 return "post";
+            case "COMMENT":
+                return "comment";
         }
     }
 
@@ -73,6 +79,8 @@ export class AccountMissionService {
                 return "weeklyFriend";
             case "POST":
                 return "weeklyPost";
+            case "COMMENT":
+                return "weeklyComment";
         }
     }
 
@@ -90,6 +98,8 @@ export class AccountMissionService {
                 return "friendProgress";
             case "POST":
                 return "postProgress";
+            case "COMMENT":
+                return "commentProgress";
         }
     }
 
@@ -101,6 +111,8 @@ export class AccountMissionService {
                 return "weeklyFriendProgress";
             case "POST":
                 return "weeklyPostProgress";
+            case "COMMENT":
+                return "weeklyCommentProgress";
         }
     }
 
@@ -115,6 +127,7 @@ export class AccountMissionService {
             case "REACTION":
             case "FRIEND":
             case "POST":
+            case "COMMENT":
                 return 1;
         }
     }
@@ -128,6 +141,8 @@ export class AccountMissionService {
                     return 30;
                 case "POST":
                     return 20;
+                case "COMMENT":
+                    return 30;
             }
         }
 
@@ -138,6 +153,8 @@ export class AccountMissionService {
                 return 2;
             case "POST":
                 return 1;
+            case "COMMENT":
+                return 3;
         }
     }
 
@@ -148,15 +165,19 @@ export class AccountMissionService {
             reaction: 0,
             friend: 0,
             post: 0,
+            comment: 0,
             reactionProgress: 0,
             friendProgress: 0,
             postProgress: 0,
+            commentProgress: 0,
             weeklyReaction: 0,
             weeklyFriend: 0,
             weeklyPost: 0,
+            weeklyComment: 0,
             weeklyReactionProgress: 0,
             weeklyFriendProgress: 0,
-            weeklyPostProgress: 0
+            weeklyPostProgress: 0,
+            weeklyCommentProgress: 0
         };
     }
 
@@ -179,15 +200,19 @@ export class AccountMissionService {
             reaction: sameDay ? Number(stored.reaction || 0) : 0,
             friend: sameDay ? Number(stored.friend || 0) : 0,
             post: sameDay ? Number(stored.post || 0) : 0,
+            comment: sameDay ? Number(stored.comment || 0) : 0,
             reactionProgress: sameDay ? Number(stored.reactionProgress || 0) : 0,
             friendProgress: sameDay ? Number(stored.friendProgress || 0) : 0,
             postProgress: sameDay ? Number(stored.postProgress || 0) : 0,
+            commentProgress: sameDay ? Number(stored.commentProgress || 0) : 0,
             weeklyReaction: sameWeek ? Number(stored.weeklyReaction || 0) : 0,
             weeklyFriend: sameWeek ? Number(stored.weeklyFriend || 0) : 0,
             weeklyPost: sameWeek ? Number(stored.weeklyPost || 0) : 0,
+            weeklyComment: sameWeek ? Number(stored.weeklyComment || 0) : 0,
             weeklyReactionProgress: sameWeek ? Number(stored.weeklyReactionProgress || 0) : 0,
             weeklyFriendProgress: sameWeek ? Number(stored.weeklyFriendProgress || 0) : 0,
-            weeklyPostProgress: sameWeek ? Number(stored.weeklyPostProgress || 0) : 0
+            weeklyPostProgress: sameWeek ? Number(stored.weeklyPostProgress || 0) : 0,
+            weeklyCommentProgress: sameWeek ? Number(stored.weeklyCommentProgress || 0) : 0
         };
     }
 
@@ -243,6 +268,17 @@ export class AccountMissionService {
         return counters;
     }
 
+    private syncActionRewardProgressFromMission(phone: string, category: ActionRewardCategory, scope: ActionRewardScope, mission: any, now = new Date()) {
+        const backendCurrentValue = Number(mission?.currentValue);
+        if (!Number.isFinite(backendCurrentValue) || backendCurrentValue < 0) return null;
+
+        const counters = this.getActionRewardCounters(phone, now);
+        const progressField = this.getActionRewardProgressField(category, scope);
+        counters[progressField] = Math.floor(backendCurrentValue);
+        this.saveActionRewardCounters(phone, counters);
+        return counters;
+    }
+
     private isClaimableRegularMission(mission: any) {
         if (!mission || this.isStreakMission(mission)) return false;
 
@@ -284,6 +320,13 @@ export class AccountMissionService {
             normalizedName.includes("friend");
 
         if (matchesFriend) return "FRIEND";
+
+        const matchesComment =
+            signals.includes("COMMENT") ||
+            normalizedName.includes("binh luan") ||
+            normalizedName.includes("comment");
+
+        if (matchesComment) return "COMMENT";
 
         const matchesPost =
             (signals.includes("POST") || signals.includes("CREATE_POST") || signals.includes("PUBLISH_POST")) &&
@@ -441,6 +484,21 @@ export class AccountMissionService {
                         currentValue: candidate?.currentValue ?? null,
                         targetValue: candidate?.targetValue ?? null
                     };
+
+                    if (!this.isClaimableRegularMission(candidate)) {
+                        const counters = this.syncActionRewardProgressFromMission(phone, category, pending.scope, candidate);
+                        this.logger.info("AUTO_MISSION_REWARD_CANDIDATE_NOT_READY", {
+                            ...ctx,
+                            category,
+                            scope: pending.scope,
+                            missionId: candidate?.missionId || candidate?.id || null,
+                            status: candidate?.status || null,
+                            currentValue: candidate?.currentValue ?? null,
+                            targetValue: candidate?.targetValue ?? null,
+                            counters
+                        });
+                        continue;
+                    }
 
                     const quota = this.canClaimActionReward(phone, category, pending.scope);
                     if (!quota.allowed) {

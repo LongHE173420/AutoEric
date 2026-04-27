@@ -75,6 +75,84 @@ class MediaHelper {
             requestDebug
         };
     }
+    getLocalFileDebug(filePath) {
+        try {
+            if (!fs.existsSync(filePath)) {
+                return {
+                    exists: false,
+                    path: path.resolve(filePath)
+                };
+            }
+            const stat = fs.statSync(filePath);
+            const fd = fs.openSync(filePath, "r");
+            const headLength = Math.min(32, stat.size);
+            const tailLength = Math.min(32, stat.size);
+            const head = Buffer.alloc(headLength);
+            const tail = Buffer.alloc(tailLength);
+            try {
+                if (headLength > 0) {
+                    fs.readSync(fd, head, 0, headLength, 0);
+                }
+                if (tailLength > 0) {
+                    fs.readSync(fd, tail, 0, tailLength, Math.max(0, stat.size - tailLength));
+                }
+            }
+            finally {
+                fs.closeSync(fd);
+            }
+            return {
+                exists: true,
+                path: path.resolve(filePath),
+                fileName: path.basename(filePath),
+                sizeBytes: stat.size,
+                headHex: head.toString("hex"),
+                tailHex: tail.toString("hex"),
+                jpegStart: head.length >= 2 && head[0] === 0xff && head[1] === 0xd8,
+                jpegEnd: tail.length >= 2 && tail[tail.length - 2] === 0xff && tail[tail.length - 1] === 0xd9
+            };
+        }
+        catch (err) {
+            return {
+                exists: fs.existsSync(filePath),
+                path: path.resolve(filePath),
+                debugError: err?.message || String(err || "")
+            };
+        }
+    }
+    preserveDebugFile(filePath, label, ctx = {}) {
+        try {
+            if (!fs.existsSync(filePath)) {
+                return this.getLocalFileDebug(filePath);
+            }
+            const safeLabel = String(label || "media")
+                .replace(/[^a-zA-Z0-9_-]+/g, "_")
+                .slice(0, 80);
+            const contextParts = [
+                ctx?.row ? `row${ctx.row}` : "",
+                ctx?.videoId ? `video${ctx.videoId}` : "",
+                ctx?.postId ? `post${ctx.postId}` : "",
+                ctx?.surfId ? `surf${ctx.surfId}` : ""
+            ].filter(Boolean);
+            const debugDir = path.resolve("data", "debug", "thumbnails");
+            fs.mkdirSync(debugDir, { recursive: true });
+            const ext = path.extname(filePath) || ".bin";
+            const base = path.basename(filePath, ext);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+            const debugFileName = [timestamp, safeLabel, ...contextParts, base].filter(Boolean).join("_") + ext;
+            const debugPath = path.join(debugDir, debugFileName);
+            fs.copyFileSync(filePath, debugPath);
+            return {
+                ...this.getLocalFileDebug(filePath),
+                debugPath
+            };
+        }
+        catch (err) {
+            return {
+                ...this.getLocalFileDebug(filePath),
+                debugPreserveError: err?.message || String(err || "")
+            };
+        }
+    }
     async probeVideoInfo(videoPath) {
         const size = fs.statSync(videoPath).size;
         const metadata = await new Promise((resolve, reject) => {
@@ -125,7 +203,44 @@ class MediaHelper {
                     .run();
             });
         }
+        await this.sanitizeJpegThumbnail(outputPath);
         return outputPath;
+    }
+    async sanitizeJpegThumbnail(outputPath) {
+        if (!fs.existsSync(outputPath))
+            return;
+        const tempPath = `${outputPath}.clean-${process.pid}-${Date.now()}.jpg`;
+        try {
+            await new Promise((resolve, reject) => {
+                ffmpeg(outputPath)
+                    .outputOptions([
+                    "-map_metadata", "-1",
+                    "-fflags", "+bitexact",
+                    "-flags:v", "+bitexact",
+                    "-frames:v", "1",
+                    "-q:v", "3"
+                ])
+                    .output(tempPath)
+                    .on("end", () => resolve())
+                    .on("error", (err) => reject(err))
+                    .run();
+            });
+            if (fs.existsSync(tempPath) && fs.statSync(tempPath).size > 0) {
+                fs.renameSync(tempPath, outputPath);
+            }
+        }
+        catch (err) {
+            if (fs.existsSync(tempPath)) {
+                try {
+                    fs.unlinkSync(tempPath);
+                }
+                catch { }
+            }
+            this.logger.warn("THUMBNAIL_SANITIZE_FAILED", {
+                filePath: outputPath,
+                err: err?.message || String(err || "")
+            });
+        }
     }
     padMediaMetric(value) {
         const safe = Number.isFinite(value) ? Math.max(0, Math.round(value)) : 0;

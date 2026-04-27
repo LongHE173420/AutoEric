@@ -1,45 +1,10 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.releaseVideoReservation = releaseVideoReservation;
-exports.getAccountsFromDb = getAccountsFromDb;
 exports.getAccountsBatchFromDb = getAccountsBatchFromDb;
-exports.getAppDataAccountsFromDb = getAppDataAccountsFromDb;
 exports.saveAppUserId = saveAppUserId;
 exports.getUsersForFriendRequest = getUsersForFriendRequest;
 exports.recordFriendRequest = recordFriendRequest;
@@ -48,7 +13,6 @@ exports.recordRunInDb = recordRunInDb;
 exports.getNextVideoToPost = getNextVideoToPost;
 exports.markVideoPosted = markVideoPosted;
 exports.deleteVideoFromQueue = deleteVideoFromQueue;
-exports.cleanupFullyPostedVideos = cleanupFullyPostedVideos;
 exports.updateFriendRequestStatus = updateFriendRequestStatus;
 const promise_1 = __importDefault(require("mysql2/promise"));
 const crypto_1 = require("crypto");
@@ -85,23 +49,6 @@ async function releaseVideoReservation(videoId, claimToken) {
         await conn.end();
     }
 }
-async function getAccountsFromDb() {
-    const connection = await getConnection();
-    try {
-        const today = getLocalDateString();
-        const [rows] = await connection.execute(`
-            SELECT phone, password, deviceId, userAgent, accessToken, refreshToken
-            FROM users
-            WHERE daily_run_count < 2
-               OR last_run_date < ?
-               OR last_run_date IS NULL
-            `, [today]);
-        return rows;
-    }
-    finally {
-        await connection.end();
-    }
-}
 async function getAccountsBatchFromDb(lastSeenId, limit) {
     const connection = await getConnection();
     try {
@@ -118,20 +65,6 @@ async function getAccountsBatchFromDb(lastSeenId, limit) {
             ORDER BY id ASC
             LIMIT ?
             `, [Math.max(0, Number(lastSeenId) || 0), today, Math.max(1, Number(limit) || 1)]);
-        return rows;
-    }
-    finally {
-        await connection.end();
-    }
-}
-async function getAppDataAccountsFromDb() {
-    const connection = await getConnection();
-    try {
-        const [rows] = await connection.execute(`
-            SELECT id, phone, deviceId, userAgent, app_user_id, daily_run_count, last_run_date, accessToken, refreshToken
-            FROM users
-            ORDER BY id ASC
-        `);
         return rows;
     }
     finally {
@@ -321,37 +254,6 @@ async function deleteVideoFromQueue(videoId, claimToken) {
                  claim_expires_at = NULL
              WHERE id = ?
                AND (? IS NULL OR claim_token = ?)`, [videoId, claimToken ?? null, claimToken ?? null]);
-    }
-    finally {
-        await conn.end();
-    }
-}
-async function cleanupFullyPostedVideos() {
-    const conn = await getConnection();
-    try {
-        const [rows] = await conn.execute(`SELECT id, local_path FROM crawled_videos
-             WHERE COALESCE(post_count, 0) >= ? AND local_path IS NOT NULL AND downloaded = 1`, [MAX_POSTS_PER_VIDEO]);
-        let cleaned = 0;
-        for (const row of rows) {
-            try {
-                const fs = await Promise.resolve().then(() => __importStar(require("fs")));
-                if (fs.existsSync(row.local_path)) {
-                    fs.unlinkSync(row.local_path);
-                    cleaned++;
-                }
-            }
-            catch (e) {
-                console.warn(`[CLEANUP] Cannot delete ${row.local_path}: ${e.message}`);
-            }
-            await conn.execute(`UPDATE crawled_videos
-                 SET local_path = NULL,
-                     downloaded = 0,
-                     claim_token = NULL,
-                     claim_by = NULL,
-                     claim_expires_at = NULL
-                 WHERE id = ?`, [row.id]);
-        }
-        return cleaned;
     }
     finally {
         await conn.end();

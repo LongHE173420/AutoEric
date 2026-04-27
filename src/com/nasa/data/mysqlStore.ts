@@ -53,26 +53,6 @@ export async function releaseVideoReservation(videoId?: number | null, claimToke
     }
 }
 
-export async function getAccountsFromDb(): Promise<any[]> {
-    const connection = await getConnection();
-    try {
-        const today = getLocalDateString();
-        const [rows] = await connection.execute(
-            `
-            SELECT phone, password, deviceId, userAgent, accessToken, refreshToken
-            FROM users
-            WHERE daily_run_count < 2
-               OR last_run_date < ?
-               OR last_run_date IS NULL
-            `,
-            [today]
-        );
-        return rows as any[];
-    } finally {
-        await connection.end();
-    }
-}
-
 export async function getAccountsBatchFromDb(lastSeenId: number, limit: number): Promise<any[]> {
     const connection = await getConnection();
     try {
@@ -93,20 +73,6 @@ export async function getAccountsBatchFromDb(lastSeenId: number, limit: number):
             [Math.max(0, Number(lastSeenId) || 0), today, Math.max(1, Number(limit) || 1)]
         );
         return rows as any[];
-    } finally {
-        await connection.end();
-    }
-}
-
-export async function getAppDataAccountsFromDb(): Promise<AppDataAccountRow[]> {
-    const connection = await getConnection();
-    try {
-        const [rows] = await connection.execute(`
-            SELECT id, phone, deviceId, userAgent, app_user_id, daily_run_count, last_run_date, accessToken, refreshToken
-            FROM users
-            ORDER BY id ASC
-        `);
-        return rows as AppDataAccountRow[];
     } finally {
         await connection.end();
     }
@@ -343,42 +309,6 @@ export async function deleteVideoFromQueue(videoId: number, claimToken?: string 
                AND (? IS NULL OR claim_token = ?)`,
             [videoId, claimToken ?? null, claimToken ?? null]
         );
-    } finally {
-        await conn.end();
-    }
-}
-
-export async function cleanupFullyPostedVideos(): Promise<number> {
-    const conn = await getConnection();
-    try {
-        const [rows]: any = await conn.execute(
-            `SELECT id, local_path FROM crawled_videos
-             WHERE COALESCE(post_count, 0) >= ? AND local_path IS NOT NULL AND downloaded = 1`,
-            [MAX_POSTS_PER_VIDEO]
-        );
-        let cleaned = 0;
-        for (const row of rows as { id: number; local_path: string }[]) {
-            try {
-                const fs = await import("fs");
-                if (fs.existsSync(row.local_path)) {
-                    fs.unlinkSync(row.local_path);
-                    cleaned++;
-                }
-            } catch (e: any) {
-                console.warn(`[CLEANUP] Cannot delete ${row.local_path}: ${e.message}`);
-            }
-            await conn.execute(
-                `UPDATE crawled_videos
-                 SET local_path = NULL,
-                     downloaded = 0,
-                     claim_token = NULL,
-                     claim_by = NULL,
-                     claim_expires_at = NULL
-                 WHERE id = ?`,
-                [row.id]
-            );
-        }
-        return cleaned;
     } finally {
         await conn.end();
     }

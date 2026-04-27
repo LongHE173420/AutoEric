@@ -26,6 +26,7 @@ function bool(name, def) {
 const defaultKongUrl = str("KONG_URL", "http://localhost:8000");
 const defaultSocialApiUrl = str("SOCIAL_API_URL", defaultKongUrl);
 const defaultPostApiUrl = str("POST_API_URL", defaultSocialApiUrl);
+const defaultSurfApiUrl = str("SURF_API_URL", defaultSocialApiUrl);
 const defaultMediaApiUrl = str("MEDIA_API_URL", defaultSocialApiUrl);
 const defaultMediaUploadApiUrl = str("MEDIA_UPLOAD_API_URL", defaultSocialApiUrl);
 const defaultMediaUploadApiUrls = str("MEDIA_UPLOAD_API_URLS", "");
@@ -34,6 +35,7 @@ exports.ENV = {
     KONG_URL: defaultKongUrl,
     SOCIAL_API_URL: defaultSocialApiUrl,
     POST_API_URL: defaultPostApiUrl,
+    SURF_API_URL: defaultSurfApiUrl,
     MEDIA_API_URL: defaultMediaApiUrl,
     MEDIA_UPLOAD_API_URL: defaultMediaUploadApiUrl,
     MEDIA_UPLOAD_API_URLS: defaultMediaUploadApiUrls,
@@ -61,6 +63,9 @@ exports.ENV = {
     OTP_DEBUG_PATH_REDIS: str("OTP_DEBUG_PATH_REDIS", "/auth/debug/redis-otp"),
     UPSTASH_REDIS_REST_URL: str("UPSTASH_REDIS_REST_URL", ""),
     UPSTASH_REDIS_REST_TOKEN: str("UPSTASH_REDIS_REST_TOKEN", ""),
+    OPENAI_API_KEY: str("OPENAI_API_KEY", ""),
+    OPENAI_COMMENT_MODEL: str("OPENAI_COMMENT_MODEL", "gpt-4o-mini"),
+    OPENAI_COMMENT_TIMEOUT_MS: num("OPENAI_COMMENT_TIMEOUT_MS", 10000),
     ACCESS_TTL_MS: num("ACCESS_TTL_MS", 60000),
     REFRESH_TTL_MS: num("REFRESH_TTL_MS", 10 * 60000),
     LOG_LEVEL: str("LOG_LEVEL", "debug"),

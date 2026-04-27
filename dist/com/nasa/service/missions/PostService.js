@@ -93,21 +93,6 @@ class PostService {
             name
         });
     }
-    buildCreatePostPayload(postId, layout, uploadVideoNames) {
-        return {
-            id: postId,
-            type: "POST",
-            content: this.createPostContent("", layout),
-            privacy: "PUBLIC",
-            hashtags: null,
-            mentions: null,
-            tags: null,
-            checkinLocation: this.buildCheckinLocation(""),
-            backgroundColor: this.defaultBackgroundColor,
-            listImage: JSON.stringify([]),
-            listVideo: JSON.stringify(uploadVideoNames)
-        };
-    }
     buildCompletePostPayload(postId, layout, uploadVideoNames) {
         return {
             id: postId,
@@ -171,6 +156,11 @@ class PostService {
                         videoInfo = info;
                         await this.mediaHelper.createVideoThumbnail(videoPath, thumbnailPath).catch((e) => { throw e; });
                         thumbnailSize = fs.statSync(thumbnailPath).size;
+                        this.logger.info("VIDEO_THUMBNAIL_CREATED_DEBUG", {
+                            ...ctx,
+                            videoId: video.id,
+                            thumbnail: this.mediaHelper.getLocalFileDebug(thumbnailPath)
+                        });
                     }).catch(async (err) => {
                         if (fs.existsSync(thumbnailPath)) {
                             try {
@@ -220,9 +210,15 @@ class PostService {
                                 this.logger.warn("VIDEO_THUMBNAIL_UPLOAD_SKIPPED_AFTER_FAILURE", {
                                     ...ctx,
                                     postId: String(postId),
+                                    videoId: video.id,
                                     failedModes: ["presigned", "direct"],
                                     presignedErr: presignedThumbErr?.message || String(presignedThumbErr || ""),
-                                    directErr: directThumbErr?.message || String(directThumbErr || "")
+                                    directErr: directThumbErr?.message || String(directThumbErr || ""),
+                                    thumbnailDebug: this.mediaHelper.preserveDebugFile(thumbnailPath, "VIDEO_THUMBNAIL_UPLOAD_FAILED", {
+                                        ...ctx,
+                                        videoId: video.id,
+                                        postId: String(postId)
+                                    })
                                 });
                             }
                         }

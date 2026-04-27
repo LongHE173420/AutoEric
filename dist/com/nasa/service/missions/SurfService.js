@@ -140,6 +140,11 @@ class SurfService {
                             videoInfo = info;
                             await this.mediaHelper.createVideoThumbnail(videoPath, thumbnailPath).catch((e) => { throw e; });
                             thumbnailSize = fs.statSync(thumbnailPath).size;
+                            this.logger.info("SURF_THUMBNAIL_CREATED_DEBUG", {
+                                ...ctx,
+                                videoId: video.id,
+                                thumbnail: this.mediaHelper.getLocalFileDebug(thumbnailPath)
+                            });
                         }).catch(async (err) => {
                             if (fs.existsSync(thumbnailPath)) {
                                 try {
@@ -174,8 +179,14 @@ class SurfService {
                                 this.logger.warn("SURF_THUMBNAIL_UPLOAD_SKIPPED_AFTER_FAILURE", {
                                     ...ctx,
                                     surfId: String(surfId),
+                                    videoId: video.id,
                                     failedMode: "presigned",
-                                    err: err?.message || String(err || "")
+                                    err: err?.message || String(err || ""),
+                                    thumbnailDebug: this.mediaHelper.preserveDebugFile(thumbnailPath, "SURF_THUMBNAIL_UPLOAD_FAILED", {
+                                        ...ctx,
+                                        videoId: video.id,
+                                        surfId: String(surfId)
+                                    })
                                 });
                             }
                             const videoUpload = await this.mediaHelper.uploadMediaViaPresignedLink(accessToken, {

@@ -27,12 +27,6 @@ export class FeedApiService {
         });
     }
 
-    static async repostPost(accessToken: string, id: string | number, headers = buildHeaders(), agent?: any) {
-        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/posts/repost`, ApiClient.buildPayload({ id: String(id) }), {
-            headers: { ...headers, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
-        });
-    }
-
     static async reportPost(accessToken: string, id: string | number, headers = buildHeaders(), agent?: any) {
         return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/posts/report`, ApiClient.buildPayload({ id: String(id) }), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }

@@ -35,6 +35,8 @@ class AccountMissionService {
                 return "friend";
             case "POST":
                 return "post";
+            case "COMMENT":
+                return "comment";
         }
     }
     getWeeklyActionRewardField(category) {
@@ -45,6 +47,8 @@ class AccountMissionService {
                 return "weeklyFriend";
             case "POST":
                 return "weeklyPost";
+            case "COMMENT":
+                return "weeklyComment";
         }
     }
     getActionRewardField(category, scope) {
@@ -60,6 +64,8 @@ class AccountMissionService {
                 return "friendProgress";
             case "POST":
                 return "postProgress";
+            case "COMMENT":
+                return "commentProgress";
         }
     }
     getWeeklyActionRewardProgressField(category) {
@@ -70,6 +76,8 @@ class AccountMissionService {
                 return "weeklyFriendProgress";
             case "POST":
                 return "weeklyPostProgress";
+            case "COMMENT":
+                return "weeklyCommentProgress";
         }
     }
     getActionRewardProgressField(category, scope) {
@@ -82,6 +90,7 @@ class AccountMissionService {
             case "REACTION":
             case "FRIEND":
             case "POST":
+            case "COMMENT":
                 return 1;
         }
     }
@@ -94,6 +103,8 @@ class AccountMissionService {
                     return 30;
                 case "POST":
                     return 20;
+                case "COMMENT":
+                    return 30;
             }
         }
         switch (category) {
@@ -103,6 +114,8 @@ class AccountMissionService {
                 return 2;
             case "POST":
                 return 1;
+            case "COMMENT":
+                return 3;
         }
     }
     getDefaultActionRewardCounters(dayKey, weekKey) {
@@ -112,15 +125,19 @@ class AccountMissionService {
             reaction: 0,
             friend: 0,
             post: 0,
+            comment: 0,
             reactionProgress: 0,
             friendProgress: 0,
             postProgress: 0,
+            commentProgress: 0,
             weeklyReaction: 0,
             weeklyFriend: 0,
             weeklyPost: 0,
+            weeklyComment: 0,
             weeklyReactionProgress: 0,
             weeklyFriendProgress: 0,
-            weeklyPostProgress: 0
+            weeklyPostProgress: 0,
+            weeklyCommentProgress: 0
         };
     }
     getActionRewardCounters(phone, now = new Date()) {
@@ -139,15 +156,19 @@ class AccountMissionService {
             reaction: sameDay ? Number(stored.reaction || 0) : 0,
             friend: sameDay ? Number(stored.friend || 0) : 0,
             post: sameDay ? Number(stored.post || 0) : 0,
+            comment: sameDay ? Number(stored.comment || 0) : 0,
             reactionProgress: sameDay ? Number(stored.reactionProgress || 0) : 0,
             friendProgress: sameDay ? Number(stored.friendProgress || 0) : 0,
             postProgress: sameDay ? Number(stored.postProgress || 0) : 0,
+            commentProgress: sameDay ? Number(stored.commentProgress || 0) : 0,
             weeklyReaction: sameWeek ? Number(stored.weeklyReaction || 0) : 0,
             weeklyFriend: sameWeek ? Number(stored.weeklyFriend || 0) : 0,
             weeklyPost: sameWeek ? Number(stored.weeklyPost || 0) : 0,
+            weeklyComment: sameWeek ? Number(stored.weeklyComment || 0) : 0,
             weeklyReactionProgress: sameWeek ? Number(stored.weeklyReactionProgress || 0) : 0,
             weeklyFriendProgress: sameWeek ? Number(stored.weeklyFriendProgress || 0) : 0,
-            weeklyPostProgress: sameWeek ? Number(stored.weeklyPostProgress || 0) : 0
+            weeklyPostProgress: sameWeek ? Number(stored.weeklyPostProgress || 0) : 0,
+            weeklyCommentProgress: sameWeek ? Number(stored.weeklyCommentProgress || 0) : 0
         };
     }
     saveActionRewardCounters(phone, counters) {
@@ -194,6 +215,16 @@ class AccountMissionService {
         this.saveActionRewardCounters(phone, counters);
         return counters;
     }
+    syncActionRewardProgressFromMission(phone, category, scope, mission, now = new Date()) {
+        const backendCurrentValue = Number(mission?.currentValue);
+        if (!Number.isFinite(backendCurrentValue) || backendCurrentValue < 0)
+            return null;
+        const counters = this.getActionRewardCounters(phone, now);
+        const progressField = this.getActionRewardProgressField(category, scope);
+        counters[progressField] = Math.floor(backendCurrentValue);
+        this.saveActionRewardCounters(phone, counters);
+        return counters;
+    }
     isClaimableRegularMission(mission) {
         if (!mission || this.isStreakMission(mission))
             return false;
@@ -227,6 +258,11 @@ class AccountMissionService {
             normalizedName.includes("friend");
         if (matchesFriend)
             return "FRIEND";
+        const matchesComment = signals.includes("COMMENT") ||
+            normalizedName.includes("binh luan") ||
+            normalizedName.includes("comment");
+        if (matchesComment)
+            return "COMMENT";
         const matchesPost = (signals.includes("POST") || signals.includes("CREATE_POST") || signals.includes("PUBLISH_POST")) &&
             !signals.includes("REPOST") &&
             !signals.includes("SURF") &&
@@ -349,6 +385,20 @@ class AccountMissionService {
                         currentValue: candidate?.currentValue ?? null,
                         targetValue: candidate?.targetValue ?? null
                     };
+                    if (!this.isClaimableRegularMission(candidate)) {
+                        const counters = this.syncActionRewardProgressFromMission(phone, category, pending.scope, candidate);
+                        this.logger.info("AUTO_MISSION_REWARD_CANDIDATE_NOT_READY", {
+                            ...ctx,
+                            category,
+                            scope: pending.scope,
+                            missionId: candidate?.missionId || candidate?.id || null,
+                            status: candidate?.status || null,
+                            currentValue: candidate?.currentValue ?? null,
+                            targetValue: candidate?.targetValue ?? null,
+                            counters
+                        });
+                        continue;
+                    }
                     const quota = this.canClaimActionReward(phone, category, pending.scope);
                     if (!quota.allowed) {
                         this.logger.info("AUTO_MISSION_REWARD_LIMIT_REACHED", {

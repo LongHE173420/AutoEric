@@ -111,10 +111,11 @@ export class EricWorker {
                 if (me.ok) {
                     const userId = me.data?.id || me.data?.userId || me.data?.accountId;
                     if (userId) {
+                        this.acc.app_user_id = String(userId);
                         await saveAppUserId(phone, String(userId));
                     }
                     const tokenToUse = getStoredTokens(phone)?.accessToken || stored.accessToken;
-                    await this.runMissions(tokenToUse, activeDeviceId, ctx);
+                    await this.runMissions(tokenToUse, activeDeviceId, ctx, userId ? String(userId) : null);
                     return { success: true, relogin: false, alreadyOk: true };
                 }
                 clearTokensForUser(phone);
@@ -155,10 +156,11 @@ export class EricWorker {
 
                 const userId = me.data?.id || me.data?.userId || me.data?.accountId;
                 if (userId) {
+                    this.acc.app_user_id = String(userId);
                     await saveAppUserId(phone, String(userId));
                 }
 
-                await this.runMissions(final.accessToken, activeDeviceId, ctx);
+                await this.runMissions(final.accessToken, activeDeviceId, ctx, userId ? String(userId) : null);
                 return { success: true, relogin: !!stored, alreadyOk: false };
             }
 
@@ -169,13 +171,13 @@ export class EricWorker {
         }
     }
 
-    private async runMissions(accessToken: string, deviceId: string, ctx: any) {
+    private async runMissions(accessToken: string, deviceId: string, ctx: any, currentUserId?: string | null) {
         try {
             this.logger.info("BOT_MISSIONS_START", ctx);
             const h = buildHeaders(deviceId, this.acc.userAgent);
 
             const accountSvc = new AccountMissionService(this.logger, this.proxyHelper.proxyAgent);
-            const interactSvc = new InteractionService(this.logger, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username || "");
+            const interactSvc = new InteractionService(this.logger, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username || "", currentUserId || this.acc.app_user_id || null);
             const relationSvc = new RelationService(this.logger, this.proxyHelper.proxyAgent, this.acc.phone || this.acc.username);
             const postSvc = new PostService(this.logger, this.acc, this.proxyHelper.proxyAgent);
             const surfSvc = new SurfService(this.logger, this.acc, this.proxyHelper.proxyAgent);
@@ -186,6 +188,7 @@ export class EricWorker {
 
             if (!TEST_ONLY_POST) {
                 await this.runMissionStage("PROFILE_AND_SOCIAL", ctx, () => accountSvc.handleProfileAndSocial(accessToken, h, ctx, boundDoMission));
+                await this.runMissionStage("STREAK_CLAIMING", ctx, () => accountSvc.handleRewardClaiming(accessToken, h, ctx, boundDoMission));
                 await this.runMissionStage("FEED_AND_INTERACT", ctx, () => interactSvc.handleFeedAndInteract(accessToken, h, ctx, boundDoMission));
             }
 
