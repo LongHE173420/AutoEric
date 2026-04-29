@@ -6,6 +6,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ENV = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
+function firstNonEmpty(...values) {
+    for (const value of values) {
+        const normalized = String(value ?? "").trim();
+        if (normalized)
+            return normalized;
+    }
+    return "";
+}
 function num(name, def) {
     const v = process.env[name];
     if (v == null || v === "")
@@ -24,20 +32,17 @@ function bool(name, def) {
     return String(v).toLowerCase() === "true" || String(v) === "1";
 }
 const defaultKongUrl = str("KONG_URL", "http://localhost:8000");
-const defaultSocialApiUrl = str("SOCIAL_API_URL", defaultKongUrl);
-const defaultPostApiUrl = str("POST_API_URL", defaultSocialApiUrl);
-const defaultSurfApiUrl = str("SURF_API_URL", defaultSocialApiUrl);
-const defaultMediaApiUrl = str("MEDIA_API_URL", defaultSocialApiUrl);
-const defaultMediaUploadApiUrl = str("MEDIA_UPLOAD_API_URL", defaultSocialApiUrl);
+const legacySocialApiUrl = str("SOCIAL_API_URL", "");
+const legacyPostApiUrl = str("POST_API_URL", "");
+const legacySurfApiUrl = str("SURF_API_URL", "");
+const legacyMediaApiUrl = str("MEDIA_API_URL", "");
+const legacyMediaUploadApiUrl = str("MEDIA_UPLOAD_API_URL", "");
+const defaultMediaApiUrl = firstNonEmpty(legacyMediaApiUrl, legacyMediaUploadApiUrl, legacySocialApiUrl, legacyPostApiUrl, legacySurfApiUrl, defaultKongUrl);
 const defaultMediaUploadApiUrls = str("MEDIA_UPLOAD_API_URLS", "");
-const defaultUploadPublicBaseUrl = str("UPLOAD_PUBLIC_BASE_URL", defaultSocialApiUrl || "https://upload.eric.pro.vn");
+const defaultUploadPublicBaseUrl = firstNonEmpty(str("UPLOAD_PUBLIC_BASE_URL", ""), defaultMediaApiUrl, "https://upload.eric.pro.vn");
 exports.ENV = {
     KONG_URL: defaultKongUrl,
-    SOCIAL_API_URL: defaultSocialApiUrl,
-    POST_API_URL: defaultPostApiUrl,
-    SURF_API_URL: defaultSurfApiUrl,
     MEDIA_API_URL: defaultMediaApiUrl,
-    MEDIA_UPLOAD_API_URL: defaultMediaUploadApiUrl,
     MEDIA_UPLOAD_API_URLS: defaultMediaUploadApiUrls,
     UPLOAD_PUBLIC_BASE_URL: defaultUploadPublicBaseUrl,
     INTERVAL_MS: num("INTERVAL_MS", 60000),
@@ -47,8 +52,13 @@ exports.ENV = {
     TARGETED_CONCURRENCY: num("TARGETED_CONCURRENCY", 5),
     ACCOUNT_FETCH_BATCH_SIZE: num("ACCOUNT_FETCH_BATCH_SIZE", 200),
     ACCOUNT_BATCH_SIZE: num("ACCOUNT_BATCH_SIZE", 50),
-    ACCOUNT_BATCH_DELAY_MS: num("ACCOUNT_BATCH_DELAY_MS", 1500),
-    ACCOUNT_START_STAGGER_MS: num("ACCOUNT_START_STAGGER_MS", 150),
+    ACCOUNT_BATCH_DELAY_MS: num("ACCOUNT_BATCH_DELAY_MS", 0),
+    ACCOUNT_START_STAGGER_MS: num("ACCOUNT_START_STAGGER_MS", 0),
+    FEED_PAGE_DELAY_MS: num("FEED_PAGE_DELAY_MS", 300),
+    SURF_HOME_DELAY_MS: num("SURF_HOME_DELAY_MS", 500),
+    INTERACTION_ACTION_DELAY_MS: num("INTERACTION_ACTION_DELAY_MS", 250),
+    POST_COMPLETE_SETTLE_MS: num("POST_COMPLETE_SETTLE_MS", 700),
+    SURF_COMPLETE_SETTLE_MS: num("SURF_COMPLETE_SETTLE_MS", 700),
     VIDEO_CLAIM_TTL_MS: num("VIDEO_CLAIM_TTL_MS", 5 * 60000),
     API_RETRY_BACKOFF_MS: num("API_RETRY_BACKOFF_MS", 1500),
     DEVICE_ID: str("DEVICE_ID", ""),

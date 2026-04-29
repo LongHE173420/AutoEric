@@ -2,7 +2,7 @@ import { ENV } from '../../config/env';
 import { ApiClient } from '../../utils/ApiClient';
 import { buildHeaders } from '../../utils/headers';
 
-const SURF_API_BASE_URL = ENV.SURF_API_URL || ENV.SOCIAL_API_URL || ENV.KONG_URL;
+const SURF_API_BASE_URL = ENV.KONG_URL;
 
 export class SurfApiService {
     static async generateId(accessToken: string, headers = buildHeaders(), agent?: any) {

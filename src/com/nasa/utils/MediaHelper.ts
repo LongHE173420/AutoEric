@@ -405,7 +405,7 @@ export class MediaHelper {
         let uploadResponse: any;
         try {
             uploadResponse = await MediaApiService.uploadMedia(accessToken, formData, uploadHeaders, this.proxyAgent, {
-                preferredBaseUrl: forcedBaseUrl || (ENV as any).MEDIA_UPLOAD_API_URL || ENV.MEDIA_API_URL || ENV.KONG_URL,
+                preferredBaseUrl: forcedBaseUrl || ENV.MEDIA_API_URL || ENV.KONG_URL,
                 allowFallbackBaseUrls: false,
                 skipSignature
             });

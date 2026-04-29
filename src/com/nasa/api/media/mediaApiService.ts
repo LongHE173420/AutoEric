@@ -4,7 +4,7 @@ import { ENV } from '../../config/env';
 import { ApiClient } from '../../utils/ApiClient';
 import { buildHeaders } from '../../utils/headers';
 
-const MEDIA_API_BASE_URL = ENV.MEDIA_API_URL || ENV.KONG_URL;
+const MEDIA_API_BASE_URL = ENV.MEDIA_API_URL;
 
 type MediaUploadRequestOptions = {
     preferredBaseUrl?: string;
@@ -27,7 +27,6 @@ function getMediaUploadBaseUrls(preferredBaseUrl?: string): string[] {
     const candidates = [
         normalizeBaseUrl(preferredBaseUrl),
         fallbackKongUrl,
-        normalizeBaseUrl((ENV as any).MEDIA_UPLOAD_API_URL),
         ...configuredExtraBaseUrls,
         normalizeBaseUrl(MEDIA_API_BASE_URL)
     ];

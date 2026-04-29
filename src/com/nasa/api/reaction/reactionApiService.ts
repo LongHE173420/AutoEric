@@ -4,7 +4,7 @@ import { buildHeaders } from '../../utils/headers';
 
 export class ReactionApiService {
     static async sendReaction(accessToken: string, postId: string, type: string, headers = buildHeaders(), agent?: any) {
-        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/posts/reaction/send`, ApiClient.buildPayload({ postId: String(postId), reactionTypeCode: type }), {
+        return ApiClient.createSignedClient(headers, agent).post(`${ENV.KONG_URL}/api/posts/reaction/send`, ApiClient.buildPayload({ postId: String(postId), type, reactionTypeCode: type }), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
         });
     }

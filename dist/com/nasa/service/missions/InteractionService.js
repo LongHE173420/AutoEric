@@ -14,13 +14,6 @@ class InteractionService {
         this.proxyAgent = proxyAgent;
         this.currentPhone = currentPhone;
         this.currentUserId = currentUserId;
-        this.commentTemplates = [
-            "Hay qu\u00e1",
-            "B\u00e0i n\u00e0y \u1ed5n",
-            "N\u1ed9i dung \u0111\u01b0\u1ee3c \u0111\u00f3",
-            "Xem c\u0169ng kh\u00e1 hay",
-            "B\u00ecnh lu\u1eadn r\u1ea5t t\u1ef1 nhi\u00ean"
-        ];
     }
     getInteractionStoreKey() {
         return `interactedPosts:${String(this.currentPhone || "").trim().toLowerCase()}`;
@@ -56,7 +49,12 @@ class InteractionService {
         try {
             const key = this.getCommentedPostStoreKey();
             const stored = asyncStore_1.AsyncStore.getItem(key);
-            return new Set(Array.isArray(stored) ? stored.map(v => String(v)) : []);
+            const legacy = asyncStore_1.AsyncStore.getItem(this.getInteractionStoreKey());
+            const merged = [
+                ...(Array.isArray(legacy) ? legacy : []),
+                ...(Array.isArray(stored) ? stored : [])
+            ];
+            return new Set(merged.map(v => String(v)));
         }
         catch (e) {
             this.logger.warn("LOAD_COMMENTED_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
@@ -150,33 +148,128 @@ class InteractionService {
             post?.account?.name ??
             "").trim();
     }
+    sanitizePostText(value) {
+        return String(value ?? "")
+            .replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+    parseStructuredContentSegments(raw) {
+        const segments = [];
+        const input = String(raw || "").trim();
+        if (!input)
+            return segments;
+        for (let i = 0; i < input.length; i++) {
+            if (input[i] !== "!" || input[i + 1] !== "{")
+                continue;
+            let cursor = i + 1;
+            let depth = 0;
+            let inString = false;
+            let escaped = false;
+            for (; cursor < input.length; cursor++) {
+                const ch = input[cursor];
+                if (escaped) {
+                    escaped = false;
+                    continue;
+                }
+                if (ch === "\\") {
+                    escaped = true;
+                    continue;
+                }
+                if (ch === "\"") {
+                    inString = !inString;
+                    continue;
+                }
+                if (inString)
+                    continue;
+                if (ch === "{")
+                    depth++;
+                if (ch === "}") {
+                    depth--;
+                    if (depth === 0) {
+                        segments.push(input.slice(i + 1, cursor + 1));
+                        i = cursor;
+                        break;
+                    }
+                }
+            }
+        }
+        return segments;
+    }
+    extractTextFromStructuredContent(raw) {
+        const input = String(raw || "").trim();
+        if (!input)
+            return "";
+        const texts = [];
+        const segments = this.parseStructuredContentSegments(input);
+        if (segments.length === 0 && input.startsWith("{") && input.endsWith("}")) {
+            segments.push(input);
+        }
+        for (const segment of segments) {
+            try {
+                const parsed = JSON.parse(segment);
+                const text = this.sanitizePostText(parsed?.text ??
+                    parsed?.content ??
+                    parsed?.caption ??
+                    parsed?.description ??
+                    parsed?.title ??
+                    "");
+                if (text) {
+                    texts.push(text);
+                }
+            }
+            catch {
+                continue;
+            }
+        }
+        return texts.join(" ").trim();
+    }
     extractPostText(post) {
-        const raw = String(post?.content ?? post?.caption ?? post?.text ?? post?.description ?? "").trim();
-        if (!raw)
+        const directCandidates = [
+            post?.caption,
+            post?.text,
+            post?.description,
+            post?.title,
+            post?.message,
+            post?.status,
+            post?.content?.text,
+            post?.content?.caption,
+            post?.content?.description
+        ];
+        for (const candidate of directCandidates) {
+            const normalized = this.sanitizePostText(candidate);
+            if (normalized) {
+                return normalized.slice(0, 700);
+            }
+        }
+        const rawContent = typeof post?.content === "string" ? post.content.trim() : "";
+        if (!rawContent)
             return "";
-        if (raw.startsWith("!{"))
+        const structuredText = this.extractTextFromStructuredContent(rawContent);
+        if (structuredText) {
+            return structuredText.slice(0, 700);
+        }
+        if (rawContent.startsWith("!{"))
             return "";
-        return raw.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").slice(0, 700);
+        return this.sanitizePostText(rawContent).slice(0, 700);
     }
-    getFallbackComment(index) {
-        return this.commentTemplates[index % this.commentTemplates.length];
-    }
-    async generateCommentForPost(post, index, ctx) {
+    async generateCommentForPost(input, ctx) {
         const openAiDebug = openAiCommentService_1.OpenAiCommentService.getDebugInfo();
         if (!openAiCommentService_1.OpenAiCommentService.isEnabled()) {
             this.logger.warn("OPENAI_COMMENT_DISABLED", { ...ctx, reason: "OPENAI_API_KEY_EMPTY", openAi: openAiDebug });
-            return this.getFallbackComment(index);
+            return null;
         }
         try {
-            const generated = await openAiCommentService_1.OpenAiCommentService.generateComment({
-                postText: this.extractPostText(post),
-                authorName: this.extractPostAuthorName(post)
-            });
+            const generated = await openAiCommentService_1.OpenAiCommentService.generateComment(input);
             if (generated) {
                 this.logger.info("OPENAI_COMMENT_GENERATED", { ...ctx, length: generated.length, openAi: openAiDebug });
                 return generated;
             }
-            this.logger.warn("OPENAI_COMMENT_EMPTY_RESPONSE", { ...ctx, openAi: openAiDebug });
+            this.logger.warn("OPENAI_COMMENT_EMPTY_RESPONSE", {
+                ...ctx,
+                openAi: openAiDebug,
+                responseMeta: openAiCommentService_1.OpenAiCommentService.getLastResponseMeta()
+            });
         }
         catch (e) {
             this.logger.warn("OPENAI_COMMENT_GENERATION_FAILED", {
@@ -184,11 +277,11 @@ class InteractionService {
                 err: e.message || String(e),
                 status: e.response?.status,
                 responseData: e.response?.data,
-                openAi: openAiDebug
+                openAi: openAiDebug,
+                responseMeta: openAiCommentService_1.OpenAiCommentService.getLastResponseMeta()
             });
         }
-        this.logger.info("OPENAI_COMMENT_FALLBACK_USED", { ...ctx, openAi: openAiDebug });
-        return this.getFallbackComment(index);
+        return null;
     }
     async handleFeedAndInteract(accessToken, h, ctx, doMission) {
         try {
@@ -255,6 +348,7 @@ class InteractionService {
             if (allItems.length > 0) {
                 const uniqueItems = Array.from(new Map(allItems.map(i => [i.id, i])).values());
                 const seenPostIds = this.getSeenPostIds();
+                const commentedPostIds = this.getCommentedPostIds();
                 const reactedPostIds = this.getReactedPostIds();
                 const unseenItems = uniqueItems.filter((item) => !seenPostIds.has(String(item?.id || "")));
                 const interactItems = uniqueItems;
@@ -281,20 +375,43 @@ class InteractionService {
                     const currentUserId = this.normalizeId(this.currentUserId);
                     const isOwnPost = Boolean(authorId && currentUserId && authorId === currentUserId);
                     const alreadyReacted = reactedPostIds.has(String(postId));
+                    const alreadyCommented = commentedPostIds.has(String(postId));
+                    const postText = this.extractPostText(post);
                     if (alreadyReacted) {
                         this.logger.info("SKIP_REACTION_ALREADY_REACTED", { ...ctx, postId: String(postId) });
                     }
+                    else if (isOwnPost) {
+                        this.logger.info("SKIP_REACTION_OWN_POST", { ...ctx, postId: String(postId), authorId });
+                    }
                     else {
                         const rType = reactionCodes[Math.floor(Math.random() * reactionCodes.length)] || "LIKE";
-                        await doMission(`PostReaction_${postId}`, () => reactionApiService_1.ReactionApiService.sendReaction(accessToken, postId, rType, h, this.proxyAgent), ctx);
+                        const reactionCtx = { ...ctx, postId: String(postId), reactionType: rType };
+                        this.logger.info("REACTION_SELECTED", reactionCtx);
+                        await doMission(`PostReaction_${postId}`, () => reactionApiService_1.ReactionApiService.sendReaction(accessToken, postId, rType, h, this.proxyAgent), reactionCtx);
                         await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "REACTION");
                         reactedPostIds.add(String(postId));
                     }
-                    if (isOwnPost) {
+                    if (alreadyCommented) {
+                        this.logger.info("SKIP_COMMENT_ALREADY_COMMENTED", { ...ctx, postId: String(postId) });
+                    }
+                    else if (isOwnPost) {
                         this.logger.info("SKIP_COMMENT_OWN_POST", { ...ctx, postId: String(postId), authorId });
                     }
+                    else if (!postText) {
+                        this.logger.info("SKIP_COMMENT_NO_CONTENT", { ...ctx, postId: String(postId) });
+                    }
                     else {
-                        const commentText = await this.generateCommentForPost(post, i, ctx);
+                        const commentText = await this.generateCommentForPost({
+                            postText,
+                            authorName: this.extractPostAuthorName(post)
+                        }, {
+                            ...ctx,
+                            postId: String(postId)
+                        });
+                        if (!commentText) {
+                            this.logger.warn("SKIP_COMMENT_NO_OPENAI_OUTPUT", { ...ctx, postId: String(postId) });
+                            continue;
+                        }
                         await doMission(`PostComment_${postId}`, () => commentApiService_1.CommentApiService.createComment(accessToken, {
                             postId: String(postId),
                             parentId: "",
@@ -303,11 +420,14 @@ class InteractionService {
                             mentions: "",
                             media: ""
                         }, h, this.proxyAgent), ctx);
+                        commentedPostIds.add(String(postId));
+                        this.saveCommentedPostIds(commentedPostIds);
                         await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "COMMENT");
                     }
                     seenPostIds.add(String(postId));
                 }
                 this.saveSeenPostIds(seenPostIds);
+                this.saveCommentedPostIds(commentedPostIds);
                 this.saveReactedPostIds(reactedPostIds);
             }
         }

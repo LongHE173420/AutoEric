@@ -6,7 +6,7 @@ const ApiClient_1 = require("../../utils/ApiClient");
 const headers_1 = require("../../utils/headers");
 class ReactionApiService {
     static async sendReaction(accessToken, postId, type, headers = (0, headers_1.buildHeaders)(), agent) {
-        return ApiClient_1.ApiClient.createSignedClient(headers, agent).post(`${env_1.ENV.KONG_URL}/api/posts/reaction/send`, ApiClient_1.ApiClient.buildPayload({ postId: String(postId), reactionTypeCode: type }), {
+        return ApiClient_1.ApiClient.createSignedClient(headers, agent).post(`${env_1.ENV.KONG_URL}/api/posts/reaction/send`, ApiClient_1.ApiClient.buildPayload({ postId: String(postId), type, reactionTypeCode: type }), {
             headers: { ...headers, Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
         });
     }

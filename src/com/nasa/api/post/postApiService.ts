@@ -2,7 +2,7 @@ import { ENV } from '../../config/env';
 import { ApiClient } from '../../utils/ApiClient';
 import { buildHeaders } from '../../utils/headers';
 
-const POST_API_BASE_URL = ENV.POST_API_URL || ENV.KONG_URL;
+const POST_API_BASE_URL = ENV.KONG_URL;
 
 export class PostApiService {
     static async createPost(accessToken: string, postData: any, headers = buildHeaders(), agent?: any) {

@@ -31,44 +31,177 @@ class OpenAiCommentService {
     static isEnabled() {
         return this.getDebugInfo().enabled;
     }
+    static getLastResponseMeta() {
+        return this.lastResponseMeta;
+    }
+    static buildSystemPrompt() {
+        return [
+            "Ban viet binh luan mang xa hoi bang tieng Viet co dau, tu nhien.",
+            "Chi tra ve dung noi dung binh luan, khong giai thich.",
+            "Binh luan ngan 3-12 tu, lich su, than thien, khong spam.",
+            "Khong dung hashtag, khong tag ten, khong emoji, khong dung dau ngoac kep."
+        ].join(" ");
+    }
+    static buildUserPrompt(input) {
+        const postText = String(input.postText || "").trim().slice(0, 700);
+        const authorName = String(input.authorName || "").slice(0, 80);
+        return [
+            authorName ? `Tac gia: ${authorName}` : "",
+            `Noi dung bai viet: ${postText}`,
+            "Hay tao mot binh luan phu hop bang tieng Viet co dau."
+        ].filter(Boolean).join("\n");
+    }
+    static extractTextParts(value) {
+        if (typeof value === "string") {
+            return [value];
+        }
+        if (!value || typeof value !== "object") {
+            return [];
+        }
+        if (Array.isArray(value)) {
+            return value.flatMap((item) => this.extractTextParts(item));
+        }
+        const result = [];
+        if (typeof value.text === "string") {
+            result.push(value.text);
+        }
+        if (typeof value.content === "string") {
+            result.push(value.content);
+        }
+        else if (Array.isArray(value.content)) {
+            result.push(...value.content.flatMap((item) => this.extractTextParts(item)));
+        }
+        return result;
+    }
+    static extractTextFromPayload(data) {
+        const candidates = [];
+        candidates.push(...this.extractTextParts(data?.output_text));
+        if (Array.isArray(data?.output)) {
+            for (const item of data.output) {
+                candidates.push(...this.extractTextParts(item?.content));
+            }
+        }
+        if (Array.isArray(data?.choices)) {
+            for (const choice of data.choices) {
+                candidates.push(...this.extractTextParts(choice?.message?.content));
+                candidates.push(...this.extractTextParts(choice?.text));
+            }
+        }
+        for (const candidate of candidates) {
+            const normalized = this.sanitizeComment(candidate);
+            if (normalized) {
+                return normalized;
+            }
+        }
+        return "";
+    }
+    static summarizePayload(source, data, text) {
+        return {
+            source,
+            id: data?.id || "",
+            model: data?.model || "",
+            textLength: text.length,
+            outputCount: Array.isArray(data?.output) ? data.output.length : 0,
+            choiceCount: Array.isArray(data?.choices) ? data.choices.length : 0,
+            finishReason: data?.choices?.[0]?.finish_reason || "",
+            refusal: data?.choices?.[0]?.message?.refusal || ""
+        };
+    }
+    static summarizeError(source, error) {
+        return {
+            source,
+            err: error?.message || String(error),
+            status: error?.response?.status,
+            data: error?.response?.data
+        };
+    }
     static async generateComment(input) {
         if (!this.isEnabled()) {
             return "";
         }
-        const postText = String(input.postText || "").slice(0, 700);
+        const postText = String(input.postText || "").trim().slice(0, 700);
         const authorName = String(input.authorName || "").slice(0, 80);
-        const response = await axios_1.default.post("https://api.openai.com/v1/chat/completions", {
-            model: env_1.ENV.OPENAI_COMMENT_MODEL,
-            temperature: 0.8,
-            max_tokens: 40,
-            messages: [
-                {
-                    role: "system",
-                    content: [
-                        "B\u1ea1n vi\u1ebft b\u00ecnh lu\u1eadn m\u1ea1ng x\u00e3 h\u1ed9i b\u1eb1ng ti\u1ebfng Vi\u1ec7t c\u00f3 d\u1ea5u, t\u1ef1 nhi\u00ean.",
-                        "Ch\u1ec9 tr\u1ea3 v\u1ec1 \u0111\u00fang n\u1ed9i dung b\u00ecnh lu\u1eadn, kh\u00f4ng gi\u1ea3i th\u00edch.",
-                        "B\u00ecnh lu\u1eadn ng\u1eafn 3-12 t\u1eeb, l\u1ecbch s\u1ef1, th\u00e2n thi\u1ec7n, kh\u00f4ng spam.",
-                        "Kh\u00f4ng d\u00f9ng hashtag, kh\u00f4ng tag t\u00ean, kh\u00f4ng emoji, kh\u00f4ng d\u00f9ng d\u1ea5u ngo\u1eb7c k\u00e9p."
-                    ].join(" ")
-                },
-                {
-                    role: "user",
-                    content: [
-                        authorName ? `T\u00e1c gi\u1ea3: ${authorName}` : "",
-                        postText ? `N\u1ed9i dung b\u00e0i vi\u1ebft: ${postText}` : "B\u00e0i vi\u1ebft kh\u00f4ng c\u00f3 caption r\u00f5 r\u00e0ng.",
-                        "H\u00e3y t\u1ea1o m\u1ed9t b\u00ecnh lu\u1eadn ph\u00f9 h\u1ee3p b\u1eb1ng ti\u1ebfng Vi\u1ec7t c\u00f3 d\u1ea5u."
-                    ].filter(Boolean).join("\n")
-                }
-            ]
-        }, {
-            timeout: env_1.ENV.OPENAI_COMMENT_TIMEOUT_MS,
-            headers: {
-                Authorization: `Bearer ${this.getRawApiKey()}`,
-                "Content-Type": "application/json"
+        if (!postText) {
+            return "";
+        }
+        const systemPrompt = this.buildSystemPrompt();
+        const userPrompt = this.buildUserPrompt(input);
+        const headers = {
+            Authorization: `Bearer ${this.getRawApiKey()}`,
+            "Content-Type": "application/json"
+        };
+        const attempts = [];
+        let lastError = null;
+        try {
+            const response = await axios_1.default.post("https://api.openai.com/v1/responses", {
+                model: env_1.ENV.OPENAI_COMMENT_MODEL,
+                temperature: 0.8,
+                max_output_tokens: 40,
+                input: [
+                    {
+                        role: "developer",
+                        content: [
+                            { type: "input_text", text: systemPrompt }
+                        ]
+                    },
+                    {
+                        role: "user",
+                        content: [
+                            { type: "input_text", text: userPrompt }
+                        ]
+                    }
+                ]
+            }, {
+                timeout: env_1.ENV.OPENAI_COMMENT_TIMEOUT_MS,
+                headers
+            });
+            const text = this.extractTextFromPayload(response.data);
+            attempts.push(this.summarizePayload("responses", response.data, text));
+            if (text) {
+                this.lastResponseMeta = { attempts };
+                return text;
             }
-        });
-        const content = response.data?.choices?.[0]?.message?.content;
-        return this.sanitizeComment(content || "");
+        }
+        catch (error) {
+            lastError = error;
+            attempts.push(this.summarizeError("responses", error));
+        }
+        try {
+            const response = await axios_1.default.post("https://api.openai.com/v1/chat/completions", {
+                model: env_1.ENV.OPENAI_COMMENT_MODEL,
+                temperature: 0.8,
+                max_tokens: 40,
+                messages: [
+                    {
+                        role: "developer",
+                        content: systemPrompt
+                    },
+                    {
+                        role: "user",
+                        content: userPrompt
+                    }
+                ]
+            }, {
+                timeout: env_1.ENV.OPENAI_COMMENT_TIMEOUT_MS,
+                headers
+            });
+            const text = this.extractTextFromPayload(response.data);
+            attempts.push(this.summarizePayload("chat.completions", response.data, text));
+            this.lastResponseMeta = { attempts };
+            if (text) {
+                return text;
+            }
+        }
+        catch (error) {
+            lastError = error;
+            attempts.push(this.summarizeError("chat.completions", error));
+        }
+        this.lastResponseMeta = { attempts };
+        if (attempts.length > 0 && attempts.every((attempt) => attempt?.status || attempt?.err)) {
+            throw lastError;
+        }
+        return "";
     }
 }
 exports.OpenAiCommentService = OpenAiCommentService;
+OpenAiCommentService.lastResponseMeta = null;

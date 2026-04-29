@@ -4,7 +4,7 @@ exports.SurfApiService = void 0;
 const env_1 = require("../../config/env");
 const ApiClient_1 = require("../../utils/ApiClient");
 const headers_1 = require("../../utils/headers");
-const SURF_API_BASE_URL = env_1.ENV.SURF_API_URL || env_1.ENV.SOCIAL_API_URL || env_1.ENV.KONG_URL;
+const SURF_API_BASE_URL = env_1.ENV.KONG_URL;
 class SurfApiService {
     static async generateId(accessToken, headers = (0, headers_1.buildHeaders)(), agent) {
         return ApiClient_1.ApiClient.createSignedClient(headers, agent).post(`${SURF_API_BASE_URL}/api/surf/generate-id`, "", {

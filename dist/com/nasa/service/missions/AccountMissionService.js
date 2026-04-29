@@ -94,30 +94,6 @@ class AccountMissionService {
                 return 1;
         }
     }
-    getActionRewardTarget(category, scope) {
-        if (scope === "WEEKLY") {
-            switch (category) {
-                case "REACTION":
-                    return 20;
-                case "FRIEND":
-                    return 30;
-                case "POST":
-                    return 20;
-                case "COMMENT":
-                    return 30;
-            }
-        }
-        switch (category) {
-            case "REACTION":
-                return 3;
-            case "FRIEND":
-                return 2;
-            case "POST":
-                return 1;
-            case "COMMENT":
-                return 3;
-        }
-    }
     getDefaultActionRewardCounters(dayKey, weekKey) {
         return {
             dayKey,
@@ -191,19 +167,13 @@ class AccountMissionService {
         const counters = this.getActionRewardCounters(phone, now);
         const dailyProgressField = this.getActionRewardProgressField(category, "DAILY");
         const weeklyProgressField = this.getActionRewardProgressField(category, "WEEKLY");
-        const dailyTarget = this.getActionRewardTarget(category, "DAILY");
-        const weeklyTarget = this.getActionRewardTarget(category, "WEEKLY");
         counters[dailyProgressField] = Number(counters[dailyProgressField] || 0) + 1;
         counters[weeklyProgressField] = Number(counters[weeklyProgressField] || 0) + 1;
         this.saveActionRewardCounters(phone, counters);
         return {
             counters,
-            dailyTarget,
-            weeklyTarget,
             dailyProgress: Number(counters[dailyProgressField] || 0),
-            weeklyProgress: Number(counters[weeklyProgressField] || 0),
-            dailyReady: Number(counters[dailyProgressField] || 0) >= dailyTarget,
-            weeklyReady: Number(counters[weeklyProgressField] || 0) >= weeklyTarget
+            weeklyProgress: Number(counters[weeklyProgressField] || 0)
         };
     }
     markActionRewardClaimed(phone, category, scope, target, now = new Date()) {
@@ -221,7 +191,7 @@ class AccountMissionService {
             return null;
         const counters = this.getActionRewardCounters(phone, now);
         const progressField = this.getActionRewardProgressField(category, scope);
-        counters[progressField] = Math.floor(backendCurrentValue);
+        counters[progressField] = Math.max(Number(counters[progressField] || 0), Math.floor(backendCurrentValue));
         this.saveActionRewardCounters(phone, counters);
         return counters;
     }
@@ -272,11 +242,19 @@ class AccountMissionService {
             return "POST";
         return null;
     }
+    inferMissionScope(mission) {
+        const type = String(mission?.type || "").toUpperCase();
+        return type === "WEEKLY" ? "WEEKLY" : "DAILY";
+    }
     isActionRewardMission(mission, category, scope) {
         if (!mission || this.isStreakMission(mission))
             return false;
-        const type = String(mission?.type || "").toUpperCase();
-        if (type !== scope) {
+        // Infer scope from mission.type: only "WEEKLY" counts as weekly, everything else is DAILY.
+        // This mirrors the same logic used in claimAllMissions so that missions whose
+        // type field is the action name (e.g. "REACTION", "COMMENT") are not incorrectly
+        // filtered out when scope is "DAILY".
+        const inferredScope = this.inferMissionScope(mission);
+        if (inferredScope !== scope) {
             return false;
         }
         const status = String(mission?.status || "").toUpperCase();
@@ -331,134 +309,106 @@ class AccountMissionService {
             const phone = String(ctx?.phone || "").trim().toLowerCase();
             if (!phone)
                 return false;
-            const progressState = this.markActionRewardProgress(phone, category);
-            if (!progressState.dailyReady && !progressState.weeklyReady) {
-                this.logger.info("AUTO_MISSION_REWARD_PROGRESS", {
+            // Tăng local progress counter (dùng để track claim limit mỗi ngày)
+            this.markActionRewardProgress(phone, category);
+            let claimedAny = false;
+            const lastCandidates = {};
+            // Fetch missions một lần duy nhất
+            const res = await missionApiService_1.MissionApiService.getCurrentUserMissions(accessToken, h, this.proxyAgent);
+            const missions = Array.isArray(res.data?.data || res.data) ? (res.data?.data || res.data) : [];
+            for (const scope of ["DAILY", "WEEKLY"]) {
+                const candidate = this.findActionRewardMission(missions, category, scope);
+                if (!candidate)
+                    continue;
+                const missionId = candidate?.missionId || candidate?.id || null;
+                const missionStatus = String(candidate?.status || "").toUpperCase();
+                lastCandidates[scope] = {
+                    missionId,
+                    name: candidate?.name || null,
+                    type: candidate?.type || null,
+                    actionType: candidate?.actionType || null,
+                    status: missionStatus,
+                    currentValue: candidate?.currentValue ?? null,
+                    targetValue: candidate?.targetValue ?? null
+                };
+                this.logger.info("AUTO_MISSION_REWARD_CANDIDATE", {
                     ...ctx,
                     category,
-                    dailyProgress: progressState.dailyProgress,
-                    dailyTarget: progressState.dailyTarget,
-                    weeklyProgress: progressState.weeklyProgress,
-                    weeklyTarget: progressState.weeklyTarget,
-                    counters: progressState.counters
+                    scope,
+                    missionId,
+                    status: missionStatus,
+                    currentValue: candidate?.currentValue ?? null,
+                    targetValue: candidate?.targetValue ?? null
                 });
-                return false;
-            }
-            const pendingRewards = [
-                {
-                    scope: "DAILY",
-                    ready: progressState.dailyReady,
-                    target: progressState.dailyTarget,
-                    claimed: false
-                },
-                {
-                    scope: "WEEKLY",
-                    ready: progressState.weeklyReady,
-                    target: progressState.weeklyTarget,
-                    claimed: false
+                // Bỏ qua nếu đã claimed/expired
+                if (missionStatus === "CLAIMED" || missionStatus === "EXPIRED" || missionStatus === "DISABLED") {
+                    continue;
                 }
-            ].filter((reward) => reward.ready);
-            const pollDelaysMs = [0, 1200, 2500];
-            let lastMissionSnapshot = [];
-            const lastCandidates = {};
-            let claimedAny = false;
-            for (let attemptIndex = 0; attemptIndex < pollDelaysMs.length; attemptIndex++) {
-                const delayMs = pollDelaysMs[attemptIndex];
-                if (delayMs > 0) {
-                    await new Promise((resolve) => setTimeout(resolve, delayMs));
-                }
-                const res = await missionApiService_1.MissionApiService.getCurrentUserMissions(accessToken, h, this.proxyAgent);
-                const missions = Array.isArray(res.data?.data || res.data) ? (res.data?.data || res.data) : [];
-                lastMissionSnapshot = this.summarizeMissionsForLog(missions);
-                for (const pending of pendingRewards) {
-                    if (pending.claimed)
-                        continue;
-                    const candidate = this.findActionRewardMission(missions, category, pending.scope);
-                    if (!candidate)
-                        continue;
-                    lastCandidates[pending.scope] = {
-                        missionId: candidate?.missionId || candidate?.id || null,
-                        name: candidate?.name || null,
-                        type: candidate?.type || null,
-                        actionType: candidate?.actionType || null,
-                        status: candidate?.status || null,
-                        currentValue: candidate?.currentValue ?? null,
-                        targetValue: candidate?.targetValue ?? null
-                    };
-                    if (!this.isClaimableRegularMission(candidate)) {
-                        const counters = this.syncActionRewardProgressFromMission(phone, category, pending.scope, candidate);
-                        this.logger.info("AUTO_MISSION_REWARD_CANDIDATE_NOT_READY", {
-                            ...ctx,
-                            category,
-                            scope: pending.scope,
-                            missionId: candidate?.missionId || candidate?.id || null,
-                            status: candidate?.status || null,
-                            currentValue: candidate?.currentValue ?? null,
-                            targetValue: candidate?.targetValue ?? null,
-                            counters
-                        });
-                        continue;
-                    }
-                    const quota = this.canClaimActionReward(phone, category, pending.scope);
-                    if (!quota.allowed) {
-                        this.logger.info("AUTO_MISSION_REWARD_LIMIT_REACHED", {
-                            ...ctx,
-                            category,
-                            scope: pending.scope,
-                            used: quota.used,
-                            limit: quota.limit,
-                            dayKey: quota.counters.dayKey,
-                            weekKey: quota.counters.weekKey
-                        });
-                        pending.claimed = true;
-                        continue;
-                    }
-                    const balanceRes = await missionApiService_1.MissionApiService.getPointBalance(accessToken, h, this.proxyAgent);
-                    const balanceData = balanceRes.data?.data || balanceRes.data || {};
-                    const dailyRemainingPoint = Number(balanceData?.dailyRemainingPoint ?? balanceData?.remainingPoint ?? 0);
-                    if (dailyRemainingPoint <= 0) {
-                        this.logger.info("AUTO_MISSION_REWARD_SKIPPED_NO_DAILY_POINT", {
-                            ...ctx,
-                            category,
-                            scope: pending.scope,
-                            dailyRemainingPoint,
-                            balance: balanceData
-                        });
-                        pending.claimed = true;
-                        continue;
-                    }
-                    const claimed = await this.claimRegularMission(candidate, accessToken, h, ctx, doMission, category, pending.scope);
-                    if (!claimed) {
-                        continue;
-                    }
-                    const target = Number(candidate?.targetValue || pending.target || 0) || pending.target;
-                    const counters = this.markActionRewardClaimed(phone, category, pending.scope, target);
-                    this.logger.info("AUTO_MISSION_REWARD_CLAIMED", {
+                // Kiểm tra quota local (tránh spam claim)
+                const quota = this.canClaimActionReward(phone, category, scope);
+                if (!quota.allowed) {
+                    this.logger.info("AUTO_MISSION_REWARD_LIMIT_REACHED", {
                         ...ctx,
                         category,
-                        scope: pending.scope,
-                        missionId: candidate?.missionId || candidate?.id || null,
-                        target,
-                        counters
+                        scope,
+                        used: quota.used,
+                        limit: quota.limit,
+                        dayKey: quota.counters.dayKey,
+                        weekKey: quota.counters.weekKey
                     });
-                    pending.claimed = true;
-                    claimedAny = true;
+                    continue;
                 }
-                if (pendingRewards.every((pending) => pending.claimed)) {
-                    return claimedAny;
+                // Kiểm tra daily point balance
+                const balanceRes = await missionApiService_1.MissionApiService.getPointBalance(accessToken, h, this.proxyAgent);
+                const balanceData = balanceRes.data?.data || balanceRes.data || {};
+                const dailyRemainingPoint = Number(balanceData?.dailyRemainingPoint ?? balanceData?.remainingPoint ?? 0);
+                if (dailyRemainingPoint <= 0) {
+                    this.logger.info("AUTO_MISSION_REWARD_SKIPPED_NO_DAILY_POINT", {
+                        ...ctx,
+                        category,
+                        scope,
+                        dailyRemainingPoint,
+                        balance: balanceData
+                    });
+                    continue;
                 }
+                // Claim ngay - backend tự quyết định dựa trên tiến trình nội bộ của nó.
+                // Backend không expose currentValue realtime nên không thể chờ nó update.
+                // Nếu chưa đủ điều kiện → backend trả 400/409 → doMission bỏ qua lặng lẽ.
+                // Nếu đủ điều kiện → backend trả success → điểm được cộng.
+                this.logger.info("AUTO_MISSION_REWARD_ATTEMPT_CLAIM", {
+                    ...ctx,
+                    category,
+                    scope,
+                    missionId,
+                    status: missionStatus,
+                    currentValue: candidate?.currentValue ?? null,
+                    targetValue: candidate?.targetValue ?? null,
+                    dailyRemainingPoint
+                });
+                const claimed = await this.claimRegularMission(candidate, accessToken, h, ctx, doMission, category, scope);
+                if (!claimed) {
+                    continue;
+                }
+                const target = Number(candidate?.targetValue || 0);
+                const claimedCounters = this.markActionRewardClaimed(phone, category, scope, target);
+                this.logger.info("AUTO_MISSION_REWARD_CLAIMED", {
+                    ...ctx,
+                    category,
+                    scope,
+                    missionId,
+                    target,
+                    counters: claimedCounters
+                });
+                claimedAny = true;
             }
-            this.logger.info("AUTO_MISSION_REWARD_NOT_FOUND", {
-                ...ctx,
-                category,
-                candidates: lastCandidates,
-                pendingScopes: pendingRewards.filter((pending) => !pending.claimed).map((pending) => pending.scope)
-            });
-            this.logger.debug("AUTO_MISSION_REWARD_MISSION_LIST", {
-                ...ctx,
-                category,
-                missions: lastMissionSnapshot
-            });
+            if (Object.keys(lastCandidates).length === 0) {
+                this.logger.info("AUTO_MISSION_REWARD_NO_CANDIDATE", {
+                    ...ctx,
+                    category,
+                    totalMissions: missions.length
+                });
+            }
             return claimedAny;
         }
         catch (e) {
@@ -753,6 +703,29 @@ class AccountMissionService {
                             todayKey: streakClaimState.todayKey,
                             timeZone: this.streakTimeZone
                         });
+                    }
+                    continue;
+                }
+                if (this.isClaimableRegularMission(m)) {
+                    const category = this.getMissionActionCategory(m);
+                    const scope = String(m?.type || "").toUpperCase() === "WEEKLY" ? "WEEKLY" : "DAILY";
+                    this.logger.info("MISSION_REWARD_CLAIM_REQUEST", {
+                        ...ctx,
+                        claimType: "REGULAR",
+                        category,
+                        scope,
+                        missionId,
+                        name: m.name || null,
+                        type: m.type || null,
+                        actionType: m.actionType || null,
+                        status: m.status || null,
+                        cv: m.currentValue ?? 0,
+                        tv: m.targetValue ?? 0
+                    });
+                    await doMission(`ClaimMission_${scope}_${missionId}`, () => missionApiService_1.MissionApiService.claimMissionReward(accessToken, Number(missionId), h, this.proxyAgent), ctx);
+                    const phone = String(ctx?.phone || "").trim().toLowerCase();
+                    if (phone && category) {
+                        this.markActionRewardClaimed(phone, category, scope, Number(m?.targetValue || 0));
                     }
                     continue;
                 }

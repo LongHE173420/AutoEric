@@ -62,9 +62,7 @@ async function runOnce(reason) {
             logger.debug("Service_CONFIG", {
                 config: {
                     KONG_URL: env_1.ENV.KONG_URL,
-                    POST_API_URL: env_1.ENV.POST_API_URL,
                     MEDIA_API_URL: env_1.ENV.MEDIA_API_URL,
-                    MEDIA_UPLOAD_API_URL: env_1.ENV.MEDIA_UPLOAD_API_URL,
                     MEDIA_UPLOAD_API_URLS: env_1.ENV.MEDIA_UPLOAD_API_URLS,
                     UPLOAD_PUBLIC_BASE_URL: env_1.ENV.UPLOAD_PUBLIC_BASE_URL,
                     INTERVAL_MS: env_1.ENV.INTERVAL_MS,

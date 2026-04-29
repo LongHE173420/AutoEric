@@ -79,6 +79,26 @@ type LogLevel = "debug" | "info" | "warn" | "error";
 
 const multistream = (pino as any).multistream as (streams: any[]) => any;
 
+function pad(value: number, length = 2) {
+  return String(Math.trunc(Math.abs(value))).padStart(length, "0");
+}
+
+function getLocalIsoTimestamp() {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  const seconds = pad(d.getSeconds());
+  const millis = pad(d.getMilliseconds(), 3);
+  const offsetMinutes = -d.getTimezoneOffset();
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const offsetHours = pad(Math.floor(Math.abs(offsetMinutes) / 60));
+  const offsetRemainder = pad(Math.abs(offsetMinutes) % 60);
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${millis}${sign}${offsetHours}:${offsetRemainder}`;
+}
+
 export class Log {
   private static root: PinoLogger;
   private static consoleRoot?: PinoLogger;
@@ -140,7 +160,13 @@ export class Log {
       base: {
         app: opts?.appName,
       },
-      timestamp: () => `,"time":"${new Date().toISOString().split('T')[1].split('Z')[0]}"`,
+      formatters: {
+        level: (label: string, number: number) => ({
+          level: label.toUpperCase(),
+          levelValue: number
+        })
+      },
+      timestamp: () => `,"time":"${getLocalIsoTimestamp()}"`,
     };
 
     if (opts?.filePath) {
@@ -177,14 +203,19 @@ export class Log {
     const fileLogger = this.fileRoot?.child({ logger: name });
 
     const write = (level: LogLevel, msg: string, obj?: any) => {
+      const payload = {
+        ...(obj || {}),
+        event: obj?.event || msg
+      };
+
       if (consoleLogger) {
-        (consoleLogger as any)[level](obj || {}, msg);
+        (consoleLogger as any)[level](payload, msg);
       } else if (!fileLogger) {
-        (logger as any)[level](obj || {}, msg);
+        (logger as any)[level](payload, msg);
       }
 
       if (fileLogger && this.shouldWriteToFile(msg)) {
-        (fileLogger as any)[level](this.compactForFile(msg, obj) || {}, msg);
+        (fileLogger as any)[level](this.compactForFile(msg, payload) || {}, msg);
       }
     };
 

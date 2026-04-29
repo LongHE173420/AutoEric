@@ -8,7 +8,7 @@ const axios_1 = __importDefault(require("axios"));
 const env_1 = require("../../config/env");
 const ApiClient_1 = require("../../utils/ApiClient");
 const headers_1 = require("../../utils/headers");
-const MEDIA_API_BASE_URL = env_1.ENV.MEDIA_API_URL || env_1.ENV.KONG_URL;
+const MEDIA_API_BASE_URL = env_1.ENV.MEDIA_API_URL;
 function normalizeBaseUrl(value) {
     const normalized = String(value || "").trim().replace(/\/+$/, "");
     return normalized || undefined;
@@ -22,7 +22,6 @@ function getMediaUploadBaseUrls(preferredBaseUrl) {
     const candidates = [
         normalizeBaseUrl(preferredBaseUrl),
         fallbackKongUrl,
-        normalizeBaseUrl(env_1.ENV.MEDIA_UPLOAD_API_URL),
         ...configuredExtraBaseUrls,
         normalizeBaseUrl(MEDIA_API_BASE_URL)
     ];
