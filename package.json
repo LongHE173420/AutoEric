@@ -12,7 +12,8 @@
     "pm2:start": "pm2 start ecosystem.config.cjs --only auto-eric",
     "pm2:restart": "pm2 restart auto-eric",
     "pm2:stop": "pm2 stop auto-eric",
-    "pm2:logs": "pm2 logs auto-eric"
+    "pm2:logs": "pm2 logs auto-eric",
+    "logs:file": "node scripts/show-current-log.cjs"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",

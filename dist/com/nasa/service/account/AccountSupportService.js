@@ -1,25 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AccountMissionService = void 0;
+exports.AccountSupportService = void 0;
 const userApiService_1 = require("../../api/user/userApiService");
 const notificationApiService_1 = require("../../api/notification/notificationApiService");
 const friendApiService_1 = require("../../api/friend/friendApiService");
 const feedApiService_1 = require("../../api/feed/feedApiService");
 const reactionApiService_1 = require("../../api/reaction/reactionApiService");
-const AccountActionRewardService_1 = require("./AccountActionRewardService");
-const AccountMissionRewardService_1 = require("./AccountMissionRewardService");
-class AccountMissionService {
+class AccountSupportService {
     constructor(logger, proxyAgent) {
         this.logger = logger;
         this.proxyAgent = proxyAgent;
-        this.actionRewardService = new AccountActionRewardService_1.AccountActionRewardService(logger, proxyAgent);
-        this.missionRewardService = new AccountMissionRewardService_1.AccountMissionRewardService(logger, proxyAgent, this.actionRewardService);
-    }
-    async handleActionRewardClaim(accessToken, h, ctx, doMission, category) {
-        return this.actionRewardService.handleActionRewardClaim(accessToken, h, ctx, doMission, category);
-    }
-    getCachedDailyPointSummary(phone, now = new Date()) {
-        return this.actionRewardService.getCachedDailyPointSummary(phone, now);
     }
     async handleProfileAndSocial(accessToken, h, ctx, doMission) {
         try {
@@ -32,9 +22,6 @@ class AccountMissionService {
             throw e;
         }
     }
-    async handleRewardClaiming(accessToken, h, ctx, doMission) {
-        return this.missionRewardService.handleRewardClaiming(accessToken, h, ctx, doMission);
-    }
     async handleActivityGeneration(accessToken, h, ctx, doMission) {
         try {
             await doMission("BackgroundColor", () => feedApiService_1.FeedApiService.getFeedBackgroundColor(accessToken, h, this.proxyAgent), ctx);
@@ -46,4 +33,4 @@ class AccountMissionService {
         }
     }
 }
-exports.AccountMissionService = AccountMissionService;
+exports.AccountSupportService = AccountSupportService;

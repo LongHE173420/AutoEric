@@ -6,7 +6,7 @@ const surfApiService_1 = require("../../api/surf/surfApiService");
 const reactionApiService_1 = require("../../api/reaction/reactionApiService");
 const commentApiService_1 = require("../../api/comment/commentApiService");
 const openAiCommentService_1 = require("../../api/openai/openAiCommentService");
-const AccountMissionService_1 = require("./account/AccountMissionService");
+const AccountMissionService_1 = require("../missions/AccountMissionService");
 const asyncStore_1 = require("../../storage/asyncStore");
 class InteractionService {
     constructor(logger, proxyAgent, currentPhone, currentUserId) {
@@ -286,10 +286,26 @@ class InteractionService {
     async handleFeedAndInteract(accessToken, h, ctx, doMission) {
         try {
             const missionSvc = new AccountMissionService_1.AccountMissionService(this.logger, this.proxyAgent);
+            const phone = String(ctx?.phone || this.currentPhone || "").trim().toLowerCase();
+            const cachedDailyPointState = phone ? missionSvc.getCachedDailyPointSummary(phone) : null;
+            const lightFeedMode = Boolean(cachedDailyPointState &&
+                cachedDailyPointState.dailyRemainingPoint !== null &&
+                cachedDailyPointState.dailyRemainingPoint <= 0);
+            const pagesToLoad = lightFeedMode ? 1 : 3;
             let allItems = [];
             let lastPostId = "";
             let lastCreatedAt = Date.now();
             const reactionCodes = ["LIKE"];
+            if (lightFeedMode) {
+                this.logger.info("FEED_LIGHT_MODE_NO_DAILY_POINT", {
+                    ...ctx,
+                    dayKey: cachedDailyPointState?.dayKey,
+                    dailyRemainingPoint: cachedDailyPointState?.dailyRemainingPoint,
+                    dailyEarnedPoint: cachedDailyPointState?.dailyEarnedPoint,
+                    dailyPointLimit: cachedDailyPointState?.dailyPointLimit,
+                    pagesToLoad
+                });
+            }
             await reactionApiService_1.ReactionApiService.listReactions(accessToken, h, 50, 0, this.proxyAgent)
                 .then(reactionRes => {
                 const codes = this.extractReactionCodes(reactionRes.data);
@@ -302,7 +318,7 @@ class InteractionService {
                 this.logger.warn("FAILED_TO_FETCH_REACTION_CODES", { ...ctx, err: err?.message });
             });
             this.logger.info("REACTION_CODES_READY", { ...ctx, reactionCodes });
-            for (let page = 0; page < 3; page++) {
+            for (let page = 0; page < pagesToLoad; page++) {
                 await doMission(`FeedHome_Page_${page + 1}`, async () => {
                     let res = await feedApiService_1.FeedApiService.getFeedHome(accessToken, h, lastPostId, lastCreatedAt, 10, this.proxyAgent);
                     let isEmpty = true;
@@ -340,11 +356,24 @@ class InteractionService {
                     }
                     return res;
                 }, ctx);
-                if (page < 2)
+                if (page < pagesToLoad - 1)
                     await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1500));
             }
-            await doMission("SurfHome", () => surfApiService_1.SurfApiService.getSurfHome(accessToken, h, "", Math.floor(Date.now() / 1000), 4, this.proxyAgent), ctx);
-            this.logger.info("DEBUG_FEEDHOME", { itemsLength: allItems.length, pagesScrolled: 3 });
+            if (!lightFeedMode) {
+                await doMission("SurfHome", () => surfApiService_1.SurfApiService.getSurfHome(accessToken, h, "", Math.floor(Date.now() / 1000), 4, this.proxyAgent), ctx);
+            }
+            this.logger.info("DEBUG_FEEDHOME", { itemsLength: allItems.length, pagesScrolled: pagesToLoad });
+            if (lightFeedMode) {
+                this.logger.info("FEED_LIGHT_MODE_DONE", {
+                    ...ctx,
+                    itemsLength: allItems.length,
+                    pagesScrolled: pagesToLoad,
+                    dailyRemainingPoint: cachedDailyPointState?.dailyRemainingPoint,
+                    dailyEarnedPoint: cachedDailyPointState?.dailyEarnedPoint,
+                    dailyPointLimit: cachedDailyPointState?.dailyPointLimit
+                });
+                return;
+            }
             if (allItems.length > 0) {
                 const uniqueItems = Array.from(new Map(allItems.map(i => [i.id, i])).values());
                 const seenPostIds = this.getSeenPostIds();

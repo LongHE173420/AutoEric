@@ -1,6 +1,6 @@
 import { FriendApiService } from "../../api/friend/friendApiService";
 import { getUsersForFriendRequest, recordFriendRequest, updateFriendRequestStatus } from "../../data/mysqlStore";
-import { AccountMissionService } from "./AccountMissionService";
+import { AccountMissionService } from "../missions/AccountMissionService";
 import { Log } from "../../utils/log";
 
 type AppLogger = ReturnType<typeof Log.getLogger>;

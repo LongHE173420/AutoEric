@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RelationService = void 0;
 const friendApiService_1 = require("../../api/friend/friendApiService");
 const mysqlStore_1 = require("../../data/mysqlStore");
-const AccountMissionService_1 = require("./account/AccountMissionService");
+const AccountMissionService_1 = require("../missions/AccountMissionService");
 class RelationService {
     constructor(logger, proxyAgent, currentPhone) {
         this.logger = logger;

@@ -39,7 +39,7 @@ const path = __importStar(require("path"));
 const crypto_1 = require("crypto");
 const postApiService_1 = require("../../api/post/postApiService");
 const mysqlStore_1 = require("../../data/mysqlStore");
-const AccountMissionService_1 = require("./account/AccountMissionService");
+const AccountMissionService_1 = require("../missions/AccountMissionService");
 const MediaHelper_1 = require("../../utils/MediaHelper");
 class PostService {
     constructor(logger, acc, proxyAgent) {

@@ -3,7 +3,7 @@ import { SurfApiService } from "../../api/surf/surfApiService";
 import { ReactionApiService } from "../../api/reaction/reactionApiService";
 import { CommentApiService } from "../../api/comment/commentApiService";
 import { OpenAiCommentService } from "../../api/openai/openAiCommentService";
-import { AccountMissionService } from "./AccountMissionService";
+import { AccountMissionService } from "../missions/AccountMissionService";
 import { AsyncStore } from "../../storage/asyncStore";
 import { Log } from "../../utils/log";
 
@@ -320,10 +320,29 @@ export class InteractionService {
     async handleFeedAndInteract(accessToken: string, h: any, ctx: any, doMission: Function) {
         try {
             const missionSvc = new AccountMissionService(this.logger, this.proxyAgent);
+            const phone = String(ctx?.phone || this.currentPhone || "").trim().toLowerCase();
+            const cachedDailyPointState = phone ? missionSvc.getCachedDailyPointSummary(phone) : null;
+            const lightFeedMode = Boolean(
+                cachedDailyPointState &&
+                cachedDailyPointState.dailyRemainingPoint !== null &&
+                cachedDailyPointState.dailyRemainingPoint <= 0
+            );
+            const pagesToLoad = lightFeedMode ? 1 : 3;
             let allItems: any[] = [];
             let lastPostId = "";
             let lastCreatedAt = Date.now();
             const reactionCodes = ["LIKE"];
+
+            if (lightFeedMode) {
+                this.logger.info("FEED_LIGHT_MODE_NO_DAILY_POINT", {
+                    ...ctx,
+                    dayKey: cachedDailyPointState?.dayKey,
+                    dailyRemainingPoint: cachedDailyPointState?.dailyRemainingPoint,
+                    dailyEarnedPoint: cachedDailyPointState?.dailyEarnedPoint,
+                    dailyPointLimit: cachedDailyPointState?.dailyPointLimit,
+                    pagesToLoad
+                });
+            }
 
             await ReactionApiService.listReactions(accessToken, h, 50, 0, this.proxyAgent)
                 .then(reactionRes => {
@@ -339,7 +358,7 @@ export class InteractionService {
 
             this.logger.info("REACTION_CODES_READY", { ...ctx, reactionCodes });
 
-            for (let page = 0; page < 3; page++) {
+            for (let page = 0; page < pagesToLoad; page++) {
                 await doMission(`FeedHome_Page_${page + 1}`, async () => {
                     let res = await FeedApiService.getFeedHome(accessToken, h, lastPostId, lastCreatedAt, 10, this.proxyAgent);
                     let isEmpty = true;
@@ -371,12 +390,26 @@ export class InteractionService {
                     return res;
                 }, ctx);
 
-                if (page < 2) await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1500));
+                if (page < pagesToLoad - 1) await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1500));
             }
 
-            await doMission("SurfHome", () => SurfApiService.getSurfHome(accessToken, h, "", Math.floor(Date.now() / 1000), 4, this.proxyAgent), ctx);
+            if (!lightFeedMode) {
+                await doMission("SurfHome", () => SurfApiService.getSurfHome(accessToken, h, "", Math.floor(Date.now() / 1000), 4, this.proxyAgent), ctx);
+            }
 
-            this.logger.info("DEBUG_FEEDHOME", { itemsLength: allItems.length, pagesScrolled: 3 });
+            this.logger.info("DEBUG_FEEDHOME", { itemsLength: allItems.length, pagesScrolled: pagesToLoad });
+
+            if (lightFeedMode) {
+                this.logger.info("FEED_LIGHT_MODE_DONE", {
+                    ...ctx,
+                    itemsLength: allItems.length,
+                    pagesScrolled: pagesToLoad,
+                    dailyRemainingPoint: cachedDailyPointState?.dailyRemainingPoint,
+                    dailyEarnedPoint: cachedDailyPointState?.dailyEarnedPoint,
+                    dailyPointLimit: cachedDailyPointState?.dailyPointLimit
+                });
+                return;
+            }
 
             if (allItems.length > 0) {
                 const uniqueItems = Array.from(new Map(allItems.map(i => [i.id, i])).values());

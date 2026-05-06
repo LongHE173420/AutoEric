@@ -71,9 +71,14 @@ export class MasterWorker {
                     );
 
                     await worker.run().then(async (result) => {
+                        if (!result.executed) {
+                            return;
+                        }
+
+                        await recordRunInDb(acc.phone).catch(() => {});
+
                         if (result.success) {
                             summary.success++;
-                            await recordRunInDb(acc.phone).catch(() => {});
                             if (result.alreadyOk) summary.alreadyOk++;
                             if (result.relogin) summary.relogin++;
                         } else {

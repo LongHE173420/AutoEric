@@ -3,7 +3,7 @@ import * as path from "path";
 import { randomUUID } from "crypto";
 import { PostApiService } from "../../api/post/postApiService";
 import { markVideoPosted, getNextVideoToPost, releaseVideoReservation } from "../../data/mysqlStore";
-import { AccountMissionService } from "./AccountMissionService";
+import { AccountMissionService } from "../missions/AccountMissionService";
 import { Log } from "../../utils/log";
 import { MediaHelper } from "../../utils/MediaHelper";
 
@@ -90,7 +90,7 @@ export class PostService {
         };
     }
 
-    async handleAutoCreatePost(accessToken: string, h: any, ctx: any, doMission: Function) {
+    async handleAutoCreatePost(accessToken: string, h: any, ctx: any, doMission: Function): Promise<boolean> {
         try {
             const missionSvc = new AccountMissionService(this.logger, this.proxyAgent);
             const phone = String(this.acc.phone || "").trim();
@@ -311,10 +311,11 @@ export class PostService {
                 }, ctx).catch(handleVideoFailure);
 
                 if (executionResult?.action === "continue") continue;
-                return;
+                return executionResult?.action === "success";
             }
 
             this.logger.info("NO_VIDEO_AVAILABLE_SKIP_POST", ctx);
+            return false;
         } catch (e: any) {
             this.logger.error("HANDLE_AUTO_CREATE_POST_ERROR", { ...ctx, err: e.message || String(e) });
             throw e;

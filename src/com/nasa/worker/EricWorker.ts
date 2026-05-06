@@ -2,7 +2,7 @@ import { AuthServiceApi } from "../api/auth/authApiService";
 import { maskPassword, Log } from "../utils/log";
 import { getStoredTokens, setStoredTokens, clearTokensForUser } from "../storage/tokenStore";
 import { getMeWithAutoAuth, loginWithOtpFlow } from "../service/auth/LoginFlowService";
-import { saveTokensToDb, saveAppUserId } from "../data/mysqlStore";
+import { saveTokensToDb, saveAppUserId, recordDailyPublishInDb } from "../data/mysqlStore";
 import { ProxyManager } from "../proxy/ProxyManager";
 import { v4 as uuidv4 } from "uuid";
 import { ENV } from "../config/env";
@@ -10,15 +10,17 @@ import { buildHeaders } from "../utils/headers";
 import { isNetworkError } from "../utils/errorUtils";
 import { ProxyHelper } from "../proxy/ProxyHelper";
 import { sleep } from "../utils/async";
+import { AccountActivityPolicy, AccountActivityDecision } from "../policy/AccountActivityPolicy";
 
 import { AccountMissionService } from "../service/missions/AccountMissionService";
-import { InteractionService } from "../service/missions/InteractionService";
-import { RelationService } from "../service/missions/RelationService";
-import { PostService } from "../service/missions/PostService";
-import { SurfService } from "../service/missions/SurfService";
+import { InteractionService } from "../service/action/InteractionService";
+import { RelationService } from "../service/action/RelationService";
+import { PostService } from "../service/action/PostService";
+import { SurfService } from "../service/action/SurfService";
 
 export type UserServiceResult = {
     success: boolean;
+    executed: boolean;
     relogin: boolean;
     alreadyOk: boolean;
     reason?: string;
@@ -30,6 +32,7 @@ export class EricWorker {
     private logger: AppLogger;
     private api: AuthServiceApi;
     private proxyHelper: ProxyHelper;
+    private activityPolicy: AccountActivityPolicy;
 
     constructor(
         private readonly acc: any,
@@ -40,6 +43,7 @@ export class EricWorker {
         try {
             this.logger = parentLogger;
             this.proxyHelper = new ProxyHelper(this.acc, this.proxyManager, this.logger);
+            this.activityPolicy = new AccountActivityPolicy();
 
             const activeDeviceId = this.acc.deviceId || uuidv4();
             this.acc.deviceId = activeDeviceId;
@@ -48,6 +52,7 @@ export class EricWorker {
             parentLogger.error("WORKER_INIT_ERROR", { err: e.message });
             this.logger = parentLogger;
             this.proxyHelper = new ProxyHelper(this.acc, this.proxyManager, this.logger);
+            this.activityPolicy = new AccountActivityPolicy();
             this.api = new AuthServiceApi(uuidv4(), ENV.KONG_URL, this.proxyHelper.proxyAgent);
         }
     }
@@ -67,7 +72,37 @@ export class EricWorker {
             const ctx = this.logContext();
             this.logger.info("ACCOUNT_START", { ...ctx, password: maskPassword(password) });
 
-            if (!phone || !password) return { success: false, relogin: false, alreadyOk: false, reason: "INVALID_CREDENTIALS" };
+            if (!phone || !password) return { success: false, executed: false, relogin: false, alreadyOk: false, reason: "INVALID_CREDENTIALS" };
+
+            const currentDailyRunCount = Number(this.acc.dailyRunCount || 0);
+            const currentDailyPostCount = Number(this.acc.dailyPostCount || 0);
+            const currentDailySurfCount = Number(this.acc.dailySurfCount || 0);
+            const runDecision = this.activityPolicy.decideRun(
+                currentDailyRunCount,
+                currentDailyPostCount,
+                currentDailySurfCount,
+                new Date()
+            );
+
+            this.logger.info("ACCOUNT_ACTIVITY_DECISION", {
+                ...ctx,
+                dayKey: runDecision.dayKey,
+                dailyRunLimit: runDecision.dailyRunLimit,
+                currentDailyRunCount,
+                currentDailyPostCount,
+                currentDailySurfCount,
+                runIndex: runDecision.runIndex,
+                remainingRuns: runDecision.remainingRuns,
+                runProgressPercent: runDecision.runProgressPercent,
+                postChancePercent: runDecision.postChancePercent,
+                surfChancePercent: runDecision.surfChancePercent,
+                shouldPost: runDecision.shouldPost,
+                shouldSurf: runDecision.shouldSurf,
+                postsDone: runDecision.postsDone,
+                surfsDone: runDecision.surfsDone,
+                remainingPostQuota: runDecision.remainingPostQuota,
+                remainingSurfQuota: runDecision.remainingSurfQuota
+            });
 
             const executeAttempt = async (attempt: number): Promise<UserServiceResult> => {
                 if (attempt === 1 && !this.acc.proxy) {
@@ -76,25 +111,32 @@ export class EricWorker {
                         this.api = new AuthServiceApi(this.acc.deviceId || uuidv4(), ENV.KONG_URL, this.proxyHelper.proxyAgent);
                     }
                 }
-                return await this.attemptRunProcess(phone, password, ctx);
+                return await this.attemptRunProcess(phone, password, ctx, runDecision);
             };
 
-            return await executeAttempt(1).catch(async (err: any) => {
+            return await executeAttempt(1).then((result) => ({
+                ...result,
+                executed: true
+            })).catch(async (err: any) => {
                 if ((isNetworkError(err) || err?.__proxyAuthIssue) && this.acc.proxy) {
                     if (await this.proxyHelper.switchProxy(ctx)) {
                         this.api = new AuthServiceApi(this.acc.deviceId || uuidv4(), ENV.KONG_URL, this.proxyHelper.proxyAgent);
-                        return await executeAttempt(2);
+                        const retried = await executeAttempt(2);
+                        return {
+                            ...retried,
+                            executed: true
+                        };
                     }
                 }
                 throw err;
             });
         } catch (e: any) {
             this.logger?.error("WORKER_RUN_ERROR", { err: e.message });
-            return { success: false, relogin: false, alreadyOk: false, reason: e.message || "WORKER_RUN_ERROR" };
+            return { success: false, executed: false, relogin: false, alreadyOk: false, reason: e.message || "WORKER_RUN_ERROR" };
         }
     }
 
-    private async attemptRunProcess(phone: string, password: string, ctx: any): Promise<UserServiceResult> {
+    private async attemptRunProcess(phone: string, password: string, ctx: any, runDecision: AccountActivityDecision): Promise<UserServiceResult> {
         try {
             const stored = getStoredTokens(phone);
             const activeDeviceId = this.acc.deviceId || stored?.deviceId || uuidv4();
@@ -115,8 +157,8 @@ export class EricWorker {
                         await saveAppUserId(phone, String(userId));
                     }
                     const tokenToUse = getStoredTokens(phone)?.accessToken || stored.accessToken;
-                    await this.runMissions(tokenToUse, activeDeviceId, ctx, userId ? String(userId) : null);
-                    return { success: true, relogin: false, alreadyOk: true };
+                    await this.runMissions(tokenToUse, activeDeviceId, ctx, runDecision, userId ? String(userId) : null);
+                    return { success: true, executed: true, relogin: false, alreadyOk: true };
                 }
                 clearTokensForUser(phone);
             }
@@ -128,7 +170,7 @@ export class EricWorker {
 
                 if (!lr.ok) {
                     if (loginAttempt === 2) {
-                        return { success: false, relogin: false, alreadyOk: false, reason: lr.reason };
+                        return { success: false, executed: true, relogin: false, alreadyOk: false, reason: lr.reason };
                     }
                     continue;
                 }
@@ -136,7 +178,7 @@ export class EricWorker {
                 const final = getStoredTokens(phone);
                 if (!final?.accessToken || !final?.refreshToken) {
                     if (loginAttempt === 2) {
-                        return { success: false, relogin: false, alreadyOk: false, reason: "TOKENS_MISSING_AFTER_LOGIN" };
+                        return { success: false, executed: true, relogin: false, alreadyOk: false, reason: "TOKENS_MISSING_AFTER_LOGIN" };
                     }
                     clearTokensForUser(phone);
                     continue;
@@ -149,7 +191,7 @@ export class EricWorker {
                     this.logger.warn("GET_ME_FAILED_AFTER_LOGIN_RETRY", { ...ctx, loginAttempt, reason: me.message });
                     clearTokensForUser(phone);
                     if (loginAttempt === 2) {
-                        return { success: false, relogin: false, alreadyOk: false, reason: me.message || "ME_FAIL_AFTER_LOGIN" };
+                        return { success: false, executed: true, relogin: false, alreadyOk: false, reason: me.message || "ME_FAIL_AFTER_LOGIN" };
                     }
                     continue;
                 }
@@ -160,20 +202,26 @@ export class EricWorker {
                     await saveAppUserId(phone, String(userId));
                 }
 
-                await this.runMissions(final.accessToken, activeDeviceId, ctx, userId ? String(userId) : null);
-                return { success: true, relogin: !!stored, alreadyOk: false };
+                await this.runMissions(final.accessToken, activeDeviceId, ctx, runDecision, userId ? String(userId) : null);
+                return { success: true, executed: true, relogin: !!stored, alreadyOk: false };
             }
 
-            return { success: false, relogin: false, alreadyOk: false, reason: "LOGIN_VALIDATION_FAILED" };
+            return { success: false, executed: true, relogin: false, alreadyOk: false, reason: "LOGIN_VALIDATION_FAILED" };
         } catch (e: any) {
             this.logger?.error("ATTEMPT_RUN_PROCESS_ERROR", { ...ctx, err: e.message });
-            return { success: false, relogin: false, alreadyOk: false, reason: e.message || "ATTEMPT_RUN_PROCESS_ERROR" };
+            return { success: false, executed: true, relogin: false, alreadyOk: false, reason: e.message || "ATTEMPT_RUN_PROCESS_ERROR" };
         }
     }
 
-    private async runMissions(accessToken: string, deviceId: string, ctx: any, currentUserId?: string | null) {
+    private async runMissions(accessToken: string, deviceId: string, ctx: any, runDecision: AccountActivityDecision, currentUserId?: string | null) {
         try {
-            this.logger.info("BOT_MISSIONS_START", ctx);
+            this.logger.info("BOT_MISSIONS_START", {
+                ...ctx,
+                runIndex: runDecision.runIndex,
+                dailyRunLimit: runDecision.dailyRunLimit,
+                shouldPost: runDecision.shouldPost,
+                shouldSurf: runDecision.shouldSurf
+            });
             const h = buildHeaders(deviceId, this.acc.userAgent);
 
             const accountSvc = new AccountMissionService(this.logger, this.proxyHelper.proxyAgent);
@@ -192,10 +240,46 @@ export class EricWorker {
                 await this.runMissionStage("FEED_AND_INTERACT", ctx, () => interactSvc.handleFeedAndInteract(accessToken, h, ctx, boundDoMission));
             }
 
-            await this.runMissionStage("CREATE_VIDEO_POST", ctx, () => postSvc.handleAutoCreatePost(accessToken, h, ctx, boundDoMission));
+            if (runDecision.shouldPost) {
+                const posted = await this.runMissionStage("CREATE_VIDEO_POST", ctx, () => postSvc.handleAutoCreatePost(accessToken, h, ctx, boundDoMission));
+                if (posted) {
+                    const postCounters = await recordDailyPublishInDb(String(this.acc.phone || this.acc.username || "").trim(), "post");
+                    this.logger.info("ACCOUNT_DAILY_POST_RECORDED", {
+                        ...ctx,
+                        runIndex: runDecision.runIndex,
+                        postsDone: Number(postCounters?.daily_post_count || 0),
+                        surfsDone: Number(postCounters?.daily_surf_count || 0),
+                        postLimit: ENV.ACCOUNT_DAILY_POST_LIMIT
+                    });
+                }
+            } else {
+                this.logger.info("CREATE_VIDEO_POST_SKIPPED_BY_RANDOM", {
+                    ...ctx,
+                    runIndex: runDecision.runIndex,
+                    dailyRunLimit: runDecision.dailyRunLimit
+                });
+            }
 
             if (!TEST_ONLY_POST) {
-                await this.runMissionStage("CREATE_SURF", ctx, () => surfSvc.handleAutoCreateSurf(accessToken, h, ctx, boundDoMission));
+                if (runDecision.shouldSurf) {
+                    const surfed = await this.runMissionStage("CREATE_SURF", ctx, () => surfSvc.handleAutoCreateSurf(accessToken, h, ctx, boundDoMission));
+                    if (surfed) {
+                        const surfCounters = await recordDailyPublishInDb(String(this.acc.phone || this.acc.username || "").trim(), "surf");
+                        this.logger.info("ACCOUNT_DAILY_SURF_RECORDED", {
+                            ...ctx,
+                            runIndex: runDecision.runIndex,
+                            postsDone: Number(surfCounters?.daily_post_count || 0),
+                            surfsDone: Number(surfCounters?.daily_surf_count || 0),
+                            surfLimit: ENV.ACCOUNT_DAILY_SURF_LIMIT
+                        });
+                    }
+                } else {
+                    this.logger.info("CREATE_SURF_SKIPPED_BY_RANDOM", {
+                        ...ctx,
+                        runIndex: runDecision.runIndex,
+                        dailyRunLimit: runDecision.dailyRunLimit
+                    });
+                }
                 await this.runMissionStage("ACTIVITY_GENERATION", ctx, () => accountSvc.handleActivityGeneration(accessToken, h, ctx, boundDoMission));
                 await this.runMissionStage("FRIEND_MANAGEMENT", ctx, () => relationSvc.handleFriendManagement(accessToken, h, ctx, boundDoMission));
                 await this.runMissionStage("REWARD_CLAIMING", ctx, () => accountSvc.handleRewardClaiming(accessToken, h, ctx, boundDoMission));
@@ -209,11 +293,12 @@ export class EricWorker {
         }
     }
 
-    private async runMissionStage(stage: string, ctx: any, work: () => Promise<void>) {
+    private async runMissionStage<T>(stage: string, ctx: any, work: () => Promise<T>) {
         this.logger.info("MISSION_STAGE_START", { ...ctx, stage });
         try {
-            await work();
+            const result = await work();
             this.logger.info("MISSION_STAGE_DONE", { ...ctx, stage });
+            return result;
         } catch (e: any) {
             this.logger.error("MISSION_STAGE_ERROR", { ...ctx, stage, err: e.message || String(e) });
             throw e;

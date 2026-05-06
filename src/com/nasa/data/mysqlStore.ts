@@ -12,6 +12,7 @@ function getLocalDateString(): string {
 async function getConnection() {
     return await mysql.createConnection({
         host: ENV.DB_HOST,
+        port: ENV.DB_PORT,
         user: ENV.DB_USER,
         password: ENV.DB_PASS,
         database: ENV.DB_NAME
@@ -25,6 +26,9 @@ export type AppDataAccountRow = {
     userAgent?: string | null;
     app_user_id?: string | null;
     daily_run_count?: number | null;
+    daily_post_count?: number | null;
+    daily_surf_count?: number | null;
+    daily_limit_date?: string | null;
     last_run_date?: string | null;
     accessToken?: string | null;
     refreshToken?: string | null;
@@ -57,20 +61,50 @@ export async function getAccountsBatchFromDb(lastSeenId: number, limit: number):
     const connection = await getConnection();
     try {
         const today = getLocalDateString();
+        const maxDailyRuns = Math.max(1, ENV.ACCOUNT_DAILY_RUN_LIMIT);
         const [rows] = await connection.execute(
             `
-            SELECT id, phone, password, deviceId, userAgent, accessToken, refreshToken
+            SELECT
+                id,
+                phone,
+                password,
+                deviceId,
+                userAgent,
+                accessToken,
+                refreshToken,
+                CASE
+                    WHEN daily_limit_date = ? THEN COALESCE(daily_run_count, 0)
+                    ELSE 0
+                END AS daily_run_count,
+                CASE
+                    WHEN daily_limit_date = ? THEN COALESCE(daily_post_count, 0)
+                    ELSE 0
+                END AS daily_post_count,
+                CASE
+                    WHEN daily_limit_date = ? THEN COALESCE(daily_surf_count, 0)
+                    ELSE 0
+                END AS daily_surf_count,
+                daily_limit_date,
+                last_run_date
             FROM users
             WHERE id > ?
               AND (
-                    daily_run_count < 2
-                 OR last_run_date < ?
-                 OR last_run_date IS NULL
+                    daily_limit_date IS NULL
+                 OR daily_limit_date < ?
+                 OR COALESCE(daily_run_count, 0) < ?
               )
             ORDER BY id ASC
             LIMIT ?
             `,
-            [Math.max(0, Number(lastSeenId) || 0), today, Math.max(1, Number(limit) || 1)]
+            [
+                today,
+                today,
+                today,
+                Math.max(0, Number(lastSeenId) || 0),
+                today,
+                maxDailyRuns,
+                Math.max(1, Number(limit) || 1)
+            ]
         );
         return rows as any[];
     } finally {
@@ -144,18 +178,107 @@ export async function recordRunInDb(phone: string) {
     const connection = await getConnection();
     try {
         const today = getLocalDateString();
+        const maxDailyRuns = Math.max(1, ENV.ACCOUNT_DAILY_RUN_LIMIT);
         await connection.execute(
             `
             UPDATE users
             SET
-                daily_run_count = IF(last_run_date = ?, daily_run_count + 1, 1),
+                daily_run_count = CASE
+                    WHEN daily_limit_date = ? THEN LEAST(?, COALESCE(daily_run_count, 0) + 1)
+                    ELSE 1
+                END,
+                daily_post_count = CASE
+                    WHEN daily_limit_date = ? THEN COALESCE(daily_post_count, 0)
+                    ELSE 0
+                END,
+                daily_surf_count = CASE
+                    WHEN daily_limit_date = ? THEN COALESCE(daily_surf_count, 0)
+                    ELSE 0
+                END,
+                daily_limit_date = ?,
                 last_run_date = ?
             WHERE phone = ?
             `,
-            [today, today, phone]
+            [today, maxDailyRuns, today, today, today, today, phone]
         );
     } catch (e) {
         console.error("Failed to update daily_run_count for", phone, e);
+    } finally {
+        await connection.end();
+    }
+}
+
+export async function recordDailyPublishInDb(phone: string, type: "post" | "surf") {
+    const connection = await getConnection();
+    try {
+        const today = getLocalDateString();
+        const maxDailyPosts = Math.max(0, ENV.ACCOUNT_DAILY_POST_LIMIT);
+        const maxDailySurfs = Math.max(0, ENV.ACCOUNT_DAILY_SURF_LIMIT);
+        await connection.execute(
+            `
+            UPDATE users
+            SET
+                daily_run_count = CASE
+                    WHEN daily_limit_date = ? THEN COALESCE(daily_run_count, 0)
+                    ELSE 0
+                END,
+                daily_post_count = CASE
+                    WHEN ? = 'post' THEN
+                        CASE
+                            WHEN daily_limit_date = ? THEN LEAST(?, COALESCE(daily_post_count, 0) + 1)
+                            ELSE 1
+                        END
+                    ELSE
+                        CASE
+                            WHEN daily_limit_date = ? THEN COALESCE(daily_post_count, 0)
+                            ELSE 0
+                        END
+                END,
+                daily_surf_count = CASE
+                    WHEN ? = 'surf' THEN
+                        CASE
+                            WHEN daily_limit_date = ? THEN LEAST(?, COALESCE(daily_surf_count, 0) + 1)
+                            ELSE 1
+                        END
+                    ELSE
+                        CASE
+                            WHEN daily_limit_date = ? THEN COALESCE(daily_surf_count, 0)
+                            ELSE 0
+                        END
+                END,
+                daily_limit_date = ?
+            WHERE phone = ?
+            `,
+            [today, type, today, maxDailyPosts, today, type, today, maxDailySurfs, today, today, phone]
+        );
+
+        const [rows]: any = await connection.execute(
+            `
+            SELECT
+                CASE
+                    WHEN daily_limit_date = ? THEN COALESCE(daily_run_count, 0)
+                    ELSE 0
+                END AS daily_run_count,
+                CASE
+                    WHEN daily_limit_date = ? THEN COALESCE(daily_post_count, 0)
+                    ELSE 0
+                END AS daily_post_count,
+                CASE
+                    WHEN daily_limit_date = ? THEN COALESCE(daily_surf_count, 0)
+                    ELSE 0
+                END AS daily_surf_count,
+                daily_limit_date
+            FROM users
+            WHERE phone = ?
+            LIMIT 1
+            `,
+            [today, today, today, phone]
+        );
+
+        return rows?.[0] ?? null;
+    } catch (e) {
+        console.error(`Failed to update daily_${type}_count for`, phone, e);
+        return null;
     } finally {
         await connection.end();
     }

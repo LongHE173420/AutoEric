@@ -75,9 +75,9 @@ export class SurfService {
         }
     }
 
-    async handleAutoCreateSurf(accessToken: string, h: any, ctx: any, doMission: Function) {
+    async handleAutoCreateSurf(accessToken: string, h: any, ctx: any, doMission: Function): Promise<boolean> {
         try {
-            await this.runSequentialSurf(async () => {
+            return await this.runSequentialSurf(async () => {
                 const phone = String(this.acc.phone || "").trim();
                 const maxVideoAttempts = 3;
 
@@ -240,10 +240,11 @@ export class SurfService {
                     }, ctx).catch(handleVideoFailure);
 
                     if (executionResult?.action === "continue") continue;
-                    return;
+                    return executionResult?.action === "success";
                 }
                 
                 this.logger.info("NO_SURF_VIDEO_AVAILABLE_SKIP", ctx);
+                return false;
             });
         } catch (e: any) {
             this.logger.error("HANDLE_AUTO_CREATE_SURF_ERROR", { ...ctx, err: e.message || String(e) });

@@ -46,9 +46,12 @@ class MasterWorker {
                     }
                     const worker = new EricWorker_1.EricWorker(acc, this.logger, rowNo, proxyManager);
                     await worker.run().then(async (result) => {
+                        if (!result.executed) {
+                            return;
+                        }
+                        await (0, mysqlStore_1.recordRunInDb)(acc.phone).catch(() => { });
                         if (result.success) {
                             summary.success++;
-                            await (0, mysqlStore_1.recordRunInDb)(acc.phone).catch(() => { });
                             if (result.alreadyOk)
                                 summary.alreadyOk++;
                             if (result.relogin)
