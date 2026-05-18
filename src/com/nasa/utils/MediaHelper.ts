@@ -24,6 +24,81 @@ export class MediaHelper {
         }
     }
 
+    private extractErrorText(err: any): string {
+        const parts = [
+            err?.message,
+            this.stringifyForLog(err?.response?.data),
+            err?.requestDebug?.backendRaw
+        ].filter(Boolean);
+
+        return parts.join(" | ").toLowerCase();
+    }
+
+    private extractErrorStatus(err: any): number {
+        const status = Number(err?.response?.status || err?.requestDebug?.responseStatus || 0);
+        return Number.isFinite(status) ? status : 0;
+    }
+
+    private hasAnyKeyword(text: string, keywords: string[]): boolean {
+        return keywords.some((keyword) => text.includes(keyword));
+    }
+
+    wasBrokenVideoCleanupHandled(err: any): boolean {
+        return Boolean(err && typeof err === "object" && err.__brokenVideoCleanupHandled === true);
+    }
+
+    getBrokenVideoReason(err: any): string | null {
+        const text = this.extractErrorText(err);
+        const status = this.extractErrorStatus(err);
+
+        if (!text && !status) {
+            return null;
+        }
+
+        if (text.includes("video file not found")) {
+            return "FILE_NOT_FOUND";
+        }
+
+        if (text.includes("video too large")) {
+            return "FILE_TOO_LARGE";
+        }
+
+        if (text.includes("ffmpeg") || text.includes("ffprobe")) {
+            return "LOCAL_VIDEO_PROCESSING_FAILED";
+        }
+
+        const hardRejectStatuses = new Set([413, 415, 422]);
+        if (hardRejectStatuses.has(status)) {
+            return `VIDEO_REJECTED_HTTP_${status}`;
+        }
+
+        const mediaRelatedKeywords = [
+            "unsupported",
+            "invalid video",
+            "invalid file",
+            "corrupt",
+            "corrupted",
+            "codec",
+            "mime",
+            "format",
+            "duration",
+            "resolution",
+            "thumbnail",
+            "media",
+            "mp4",
+            "file too large"
+        ];
+
+        if (this.hasAnyKeyword(text, mediaRelatedKeywords)) {
+            const maybePermanentStatuses = new Set([400, 404, 409, 410]);
+            if (!status || maybePermanentStatuses.has(status)) {
+                return status ? `VIDEO_REJECTED_HTTP_${status}` : "VIDEO_REJECTED_BY_API";
+            }
+        }
+
+        return null;
+    }
+
     private extractHttpFailureDebug(err: any) {
         const requestDebug = err?.requestDebug;
 
@@ -437,7 +512,7 @@ export class MediaHelper {
     }
 
     async deleteBrokenVideo(
-        video: { id: number; local_path: string; source_url?: string; },
+        video: { id: number; local_path: string; source_url?: string; claimToken?: string; },
         ctx: any,
         reason: string,
         err?: any,
@@ -460,7 +535,7 @@ export class MediaHelper {
         }
 
         try {
-            await deleteVideoFromQueue(video.id);
+            await deleteVideoFromQueue(video.id, video?.claimToken ?? null);
         } catch (dbErr: any) {
             this.logger.warn(`${logPrefix}_DB_DELETE_FAILED`, {
                 ...ctx,
@@ -468,6 +543,11 @@ export class MediaHelper {
                 reason,
                 err: dbErr?.message
             });
+        }
+
+        if (err && typeof err === "object") {
+            err.__brokenVideoCleanupHandled = true;
+            err.__brokenVideoReason = reason;
         }
 
         this.logger.warn(`${logPrefix}_REMOVED`, {

@@ -1,5 +1,6 @@
 import mysql from "mysql2/promise";
 import { randomUUID } from "crypto";
+import * as fs from "fs";
 import { ENV } from "../config/env";
 
 function getLocalDateString(): string {
@@ -35,6 +36,19 @@ export type AppDataAccountRow = {
 };
 
 const MAX_POSTS_PER_VIDEO = 1;
+
+async function resetQueuedVideoState(conn: mysql.Connection, videoId: number) {
+    await conn.execute(
+        `UPDATE crawled_videos
+         SET local_path = NULL,
+             downloaded = 0,
+             claim_token = NULL,
+             claim_by = NULL,
+             claim_expires_at = NULL
+         WHERE id = ?`,
+        [videoId]
+    );
+}
 
 export async function releaseVideoReservation(videoId?: number | null, claimToken?: string | null) {
     if (typeof videoId !== "number" || !Number.isFinite(videoId) || !claimToken) {
@@ -322,6 +336,12 @@ export async function getNextVideoToPost(accountPhone: string): Promise<{
                 continue;
             }
 
+            const localPath = String(row?.local_path || "").trim();
+            if (!localPath || !fs.existsSync(localPath)) {
+                await resetQueuedVideoState(conn, videoId).catch(() => { });
+                continue;
+            }
+
             const claimToken = randomUUID();
             const [claimRes]: any = await conn.execute(
                 `UPDATE crawled_videos
@@ -413,6 +433,49 @@ export async function markVideoPosted(
     } catch (err) {
         try { await conn.rollback(); } catch { }
         throw err;
+    } finally {
+        await conn.end();
+    }
+}
+
+export async function syncQueuedVideosWithLocalFiles(limit: number = 200): Promise<{
+    scanned: number;
+    missing: number;
+    reset: number;
+}> {
+    const conn = await getConnection();
+    try {
+        const safeLimit = Math.max(1, Math.min(1000, Number(limit) || 200));
+        const [rows]: any = await conn.execute(
+            `SELECT id, local_path
+             FROM crawled_videos
+             WHERE downloaded = 1
+               AND local_path IS NOT NULL
+               AND COALESCE(post_count, 0) < ?
+             ORDER BY created_at ASC
+             LIMIT ?`,
+            [MAX_POSTS_PER_VIDEO, safeLimit]
+        );
+
+        let scanned = 0;
+        let missing = 0;
+        let reset = 0;
+
+        for (const row of rows as any[]) {
+            scanned++;
+            const videoId = Number(row?.id);
+            const localPath = String(row?.local_path || "").trim();
+            const missingLocalFile = !localPath || !fs.existsSync(localPath);
+            if (!Number.isFinite(videoId) || !missingLocalFile) {
+                continue;
+            }
+
+            missing++;
+            await resetQueuedVideoState(conn, videoId).catch(() => { });
+            reset++;
+        }
+
+        return { scanned, missing, reset };
     } finally {
         await conn.end();
     }

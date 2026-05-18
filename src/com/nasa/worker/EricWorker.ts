@@ -11,6 +11,7 @@ import { isNetworkError } from "../utils/errorUtils";
 import { ProxyHelper } from "../proxy/ProxyHelper";
 import { sleep } from "../utils/async";
 import { AccountActivityPolicy, AccountActivityDecision } from "../policy/AccountActivityPolicy";
+import { getSharedPlannerStateStore } from "../storage/plannerStateStore";
 
 import { AccountMissionService } from "../service/missions/AccountMissionService";
 import { InteractionService } from "../service/action/InteractionService";
@@ -33,6 +34,7 @@ export class EricWorker {
     private api: AuthServiceApi;
     private proxyHelper: ProxyHelper;
     private activityPolicy: AccountActivityPolicy;
+    private plannerStateStore = getSharedPlannerStateStore();
 
     constructor(
         private readonly acc: any,
@@ -65,7 +67,7 @@ export class EricWorker {
         }
     }
 
-    async run(): Promise<UserServiceResult> {
+    async run(plannedDecision?: AccountActivityDecision | null): Promise<UserServiceResult> {
         try {
             const phone = String(this.acc.phone || this.acc.username || "").trim();
             const password = String(this.acc.password || "").trim();
@@ -77,7 +79,7 @@ export class EricWorker {
             const currentDailyRunCount = Number(this.acc.dailyRunCount || 0);
             const currentDailyPostCount = Number(this.acc.dailyPostCount || 0);
             const currentDailySurfCount = Number(this.acc.dailySurfCount || 0);
-            const runDecision = this.activityPolicy.decideRun(
+            const runDecision = plannedDecision ?? this.activityPolicy.decideRun(
                 currentDailyRunCount,
                 currentDailyPostCount,
                 currentDailySurfCount,
@@ -98,6 +100,15 @@ export class EricWorker {
                 surfChancePercent: runDecision.surfChancePercent,
                 shouldPost: runDecision.shouldPost,
                 shouldSurf: runDecision.shouldSurf,
+                postWeight: runDecision.postWeight,
+                surfWeight: runDecision.surfWeight,
+                eligibleForPost: runDecision.eligibleForPost,
+                eligibleForSurf: runDecision.eligibleForSurf,
+                postGapRunsRemaining: runDecision.postGapRunsRemaining,
+                surfGapRunsRemaining: runDecision.surfGapRunsRemaining,
+                decisionSource: runDecision.decisionSource,
+                postJitterMs: runDecision.postJitterMs,
+                surfJitterMs: runDecision.surfJitterMs,
                 postsDone: runDecision.postsDone,
                 surfsDone: runDecision.surfsDone,
                 remainingPostQuota: runDecision.remainingPostQuota,
@@ -241,44 +252,70 @@ export class EricWorker {
             }
 
             if (runDecision.shouldPost) {
+                if (runDecision.postJitterMs > 0) {
+                    await sleep(runDecision.postJitterMs);
+                }
+
+                const postCounters = await recordDailyPublishInDb(String(this.acc.phone || this.acc.username || "").trim(), "post");
+                await this.plannerStateStore.recordActionRun(runDecision.dayKey, String(this.acc.phone || this.acc.username || "").trim(), "post", runDecision.runIndex).catch(() => { });
+                this.logger.info("ACCOUNT_DAILY_POST_ATTEMPT_RECORDED", {
+                    ...ctx,
+                    runIndex: runDecision.runIndex,
+                    postsDone: Number(postCounters?.daily_post_count || 0),
+                    surfsDone: Number(postCounters?.daily_surf_count || 0),
+                    postLimit: ENV.ACCOUNT_DAILY_POST_LIMIT
+                });
+
                 const posted = await this.runMissionStage("CREATE_VIDEO_POST", ctx, () => postSvc.handleAutoCreatePost(accessToken, h, ctx, boundDoMission));
                 if (posted) {
-                    const postCounters = await recordDailyPublishInDb(String(this.acc.phone || this.acc.username || "").trim(), "post");
-                    this.logger.info("ACCOUNT_DAILY_POST_RECORDED", {
+                    this.logger.info("ACCOUNT_DAILY_POST_ATTEMPT_SUCCEEDED", {
                         ...ctx,
-                        runIndex: runDecision.runIndex,
-                        postsDone: Number(postCounters?.daily_post_count || 0),
-                        surfsDone: Number(postCounters?.daily_surf_count || 0),
-                        postLimit: ENV.ACCOUNT_DAILY_POST_LIMIT
+                        runIndex: runDecision.runIndex
                     });
                 }
             } else {
-                this.logger.info("CREATE_VIDEO_POST_SKIPPED_BY_RANDOM", {
+                this.logger.info(
+                    runDecision.decisionSource === "planner" ? "CREATE_VIDEO_POST_SKIPPED_BY_RUN_PLAN" : "CREATE_VIDEO_POST_SKIPPED_BY_RANDOM",
+                    {
                     ...ctx,
                     runIndex: runDecision.runIndex,
                     dailyRunLimit: runDecision.dailyRunLimit
-                });
+                    }
+                );
             }
 
             if (!TEST_ONLY_POST) {
                 if (runDecision.shouldSurf) {
+                    if (runDecision.surfJitterMs > 0) {
+                        await sleep(runDecision.surfJitterMs);
+                    }
+
+                    const surfCounters = await recordDailyPublishInDb(String(this.acc.phone || this.acc.username || "").trim(), "surf");
+                    await this.plannerStateStore.recordActionRun(runDecision.dayKey, String(this.acc.phone || this.acc.username || "").trim(), "surf", runDecision.runIndex).catch(() => { });
+                    this.logger.info("ACCOUNT_DAILY_SURF_ATTEMPT_RECORDED", {
+                        ...ctx,
+                        runIndex: runDecision.runIndex,
+                        postsDone: Number(surfCounters?.daily_post_count || 0),
+                        surfsDone: Number(surfCounters?.daily_surf_count || 0),
+                        surfLimit: ENV.ACCOUNT_DAILY_SURF_LIMIT
+                    });
+
                     const surfed = await this.runMissionStage("CREATE_SURF", ctx, () => surfSvc.handleAutoCreateSurf(accessToken, h, ctx, boundDoMission));
                     if (surfed) {
-                        const surfCounters = await recordDailyPublishInDb(String(this.acc.phone || this.acc.username || "").trim(), "surf");
-                        this.logger.info("ACCOUNT_DAILY_SURF_RECORDED", {
+                        this.logger.info("ACCOUNT_DAILY_SURF_ATTEMPT_SUCCEEDED", {
                             ...ctx,
-                            runIndex: runDecision.runIndex,
-                            postsDone: Number(surfCounters?.daily_post_count || 0),
-                            surfsDone: Number(surfCounters?.daily_surf_count || 0),
-                            surfLimit: ENV.ACCOUNT_DAILY_SURF_LIMIT
+                            runIndex: runDecision.runIndex
                         });
                     }
                 } else {
-                    this.logger.info("CREATE_SURF_SKIPPED_BY_RANDOM", {
+                    this.logger.info(
+                        runDecision.decisionSource === "planner" ? "CREATE_SURF_SKIPPED_BY_RUN_PLAN" : "CREATE_SURF_SKIPPED_BY_RANDOM",
+                        {
                         ...ctx,
                         runIndex: runDecision.runIndex,
                         dailyRunLimit: runDecision.dailyRunLimit
-                    });
+                        }
+                    );
                 }
                 await this.runMissionStage("ACTIVITY_GENERATION", ctx, () => accountSvc.handleActivityGeneration(accessToken, h, ctx, boundDoMission));
                 await this.runMissionStage("FRIEND_MANAGEMENT", ctx, () => relationSvc.handleFriendManagement(accessToken, h, ctx, boundDoMission));

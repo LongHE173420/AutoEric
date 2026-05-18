@@ -147,26 +147,26 @@
     "309179509511434240"
   ],
   "dailyPointState:kyohi2286@proton.me": {
-    "dayKey": "2026-05-06",
+    "dayKey": "2026-05-07",
     "dailyRemainingPoint": 0,
-    "dailyEarnedPoint": 33,
-    "dailyPointLimit": 33
+    "dailyEarnedPoint": 3,
+    "dailyPointLimit": 3
   },
   "dailyPointState:kyohi3108@proton.me": {
-    "dayKey": "2026-05-06",
+    "dayKey": "2026-05-07",
     "dailyRemainingPoint": 0,
-    "dailyEarnedPoint": 33,
-    "dailyPointLimit": 33
+    "dailyEarnedPoint": 3,
+    "dailyPointLimit": 3
   },
-  "refresh:kyohi2286@proton.me": "eyJraWQiOiJhZGQxNDI2MC1iNjkzLTQzZDktYmQ4Zi0wMmQxNDU2YjM3NDkiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJreW9oaS4xNzc0OTM5MzEwNjI1MjUxNDM3IiwiY2xpZW50VHlwZSI6Im1vYmlsZSIsInJvbGVzIjpbIlVTRVIiXSwiaXAiOiIxMC4yMDAuMi4yIiwiaXNzIjoiYXV0aC1zZXJ2aWNlIiwiaWQiOjg2NDY5MTEyODQ1NTEzODIzMzYsImV4cCI6MTc3ODY0NDQyNCwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3NzgwMzc4MjQsImRldmljZUlkIjoiRjJBN0Q5QzEtNkUzQi00RDg0LThBMUYtOUI1QzJFN0QwQTRGIn0.ja1higmnpQ9VtG9HqEbKjwiX-1ky8lUXYAL8ieISncX6h_9v00QRbT2sWXY9uPzJPRewKOYaCB3n3WswP59FMjxtOzpIP0yvLSyEQvIwA2th_QONwkeSh_FBaSpKozVjCHpJBx9i3Nw-trBuRu0tknt-LEmnDr8LJWlJ3fDWhfSVpyAbal58u9jTGwRpx_6ur2cVcH65XyZnhaXL96OCnXAHGGfzqmsHwHYeGdWmSnhpeiPy505DU-vNdIXvjY6A0lF577wP5Pup7rBs_m_3lhPDCGxGLb-BybOrN8Iw8V20V2MOz4gt_d2b-9B9jdqqYdwEFr0i4OJgGGsc6XDhHA",
+  "refresh:kyohi2286@proton.me": "eyJraWQiOiJkMzk3N2M0ZC00NmZmLTQ0ZDItYjk3NC0xOTYxZjg1YWI2ODMiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJreW9oaS4xNzc0OTM5MzEwNjI1MjUxNDM3IiwiY2xpZW50VHlwZSI6Im1vYmlsZSIsInJvbGVzIjpbIlVTRVIiXSwiaXAiOiIxMC4yMDAuMi4yIiwiaXNzIjoiYXV0aC1zZXJ2aWNlIiwiaWQiOjg2NDY5MTEyODQ1NTEzODIzMzYsImV4cCI6MTc3ODc1NDM3MSwidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3NzgxNDc3NzEsImRldmljZUlkIjoiRjJBN0Q5QzEtNkUzQi00RDg0LThBMUYtOUI1QzJFN0QwQTRGIn0.EbYx4sJtBqFuyrqEXMmS7ETs0rjo2OLv3XDtrPLcjwXBiRhLhLpB9kyazuMlBye7L4U1XQircrJfWpY39WSYbsLJOkZ5PHUdsZK5FwjJU3m6p9AxTGo1B7N7a9eRXJbncXcx_gmHaQir-ShpuW0UPkuWo4GejVyVtRYeIu9pKrQOyCbp5i_X0tJJxMne8gLf9kHBjHeeZmoUMdkOQ8q0IuxzJcEiIvh_GMoLrBDc2kax_d6WLmDqgt_Az8h1bcYbKVfdhKW826Ij1jBozkRxVKTKCBtljvwTwNhgE638WqzBknc5GMrpUiU-fdBu8BVDGm7NJ_swpKL0ocA2hOAqAg",
   "meta:kyohi2286@proton.me": {
-    "savedAt": 1778038650635,
+    "savedAt": 1778147892117,
     "deviceId": "F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F",
     "userAgent": "ERIC/1.0.0 (iOS; 18.6.2; iPhone 16 Plus)"
   },
-  "refresh:kyohi3108@proton.me": "eyJraWQiOiJhZGQxNDI2MC1iNjkzLTQzZDktYmQ4Zi0wMmQxNDU2YjM3NDkiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJreW9tYXNrLjE3NzQ5NDA0MTM3OTEwNzY2OTgiLCJjbGllbnRUeXBlIjoibW9iaWxlIiwicm9sZXMiOlsiVVNFUiJdLCJpcCI6IjEwLjIwMC4yLjIiLCJpc3MiOiJhdXRoLXNlcnZpY2UiLCJpZCI6NDYxMTY4NjAxODQyNzM4NzkyNywiZXhwIjoxNzc4NjQ0NDI0LCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3ODAzNzgyNCwiZGV2aWNlSWQiOiIxQTNFNUY5Qy0yQjhELTQ3MEEtQTFGMy04QzJFNEQ5QjZBMUYifQ.IhEUMOAV_n8Tx5CFLI_UOLK1WkvJXqiYpsW_lLugVRzlBP94VbbTuzxfv9COU4dE_oCl2Q4X8a4uytxZ9LedQzUtx86JeqzvXGLHv9W_m4qHVEaWVCtRFfUXSOrc_s1MUmIfQZKTPotDDgK-1iSVLioKbePExrUk5Et0LBHUkvyJUM8vmQjlrQdk_jjS_iozX5l8Cp1PTzFM-4SmxDaT9-dA9uc529BSF_05D0lUZufNNN7rm5WwSxm3ORxCGQYwWqpv8GHtf3SU2HNqpNq-oVdAWOlyDZcg-nDb_J4m4pjFFeVEYhaNPXZ0CuGLPQ7a0qF-gaxLtMjDwDDSDnbkYA",
+  "refresh:kyohi3108@proton.me": "eyJraWQiOiJkMzk3N2M0ZC00NmZmLTQ0ZDItYjk3NC0xOTYxZjg1YWI2ODMiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJreW9tYXNrLjE3NzQ5NDA0MTM3OTEwNzY2OTgiLCJjbGllbnRUeXBlIjoibW9iaWxlIiwicm9sZXMiOlsiVVNFUiJdLCJpcCI6IjEwLjIwMC4yLjIiLCJpc3MiOiJhdXRoLXNlcnZpY2UiLCJpZCI6NDYxMTY4NjAxODQyNzM4NzkyNywiZXhwIjoxNzc4NzU0MzcxLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3ODE0Nzc3MSwiZGV2aWNlSWQiOiIxQTNFNUY5Qy0yQjhELTQ3MEEtQTFGMy04QzJFNEQ5QjZBMUYifQ.Yy2sUChbmnoUkiOZcXHsWvvpiErOjhETAooW-YinbeeCanniccWNh1C2Y1hdaA9o-aQdnr6iCHV0ySYHd7u1fa18dOlVHE7gtBrWMqy1LVDmxzyDj96zaJ3_octEou5g3RR3wRjARg_ihwAPHozpiQv81J6Krqwg-q_olXOhDx46ABX8-Ffi6-pu0fksGAo97puswHUKeOy_QeMPdaUqKOcetLjxEZt_i88Q2C07qw8dmYltX0STjcarvnZNYyP6tYi9RB5jDlEpHvOW72AnKEdJOL45mfKeERYStDXctPXzJkUALqmuOLcp8XYQldzEIqRatoLw8TtBswQpXAy9Kg",
   "meta:kyohi3108@proton.me": {
-    "savedAt": 1778038650675,
+    "savedAt": 1778147892139,
     "deviceId": "1A3E5F9C-2B8D-470A-A1F3-8C2E4D9B6A1F",
     "userAgent": "ERIC/1.2.0 (Android; 13; Oppo Find X6)"
   }

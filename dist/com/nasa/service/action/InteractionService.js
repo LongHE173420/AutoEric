@@ -7,13 +7,14 @@ const reactionApiService_1 = require("../../api/reaction/reactionApiService");
 const commentApiService_1 = require("../../api/comment/commentApiService");
 const openAiCommentService_1 = require("../../api/openai/openAiCommentService");
 const AccountMissionService_1 = require("../missions/AccountMissionService");
-const asyncStore_1 = require("../../storage/asyncStore");
+const interactionStateStore_1 = require("../../storage/interactionStateStore");
 class InteractionService {
     constructor(logger, proxyAgent, currentPhone, currentUserId) {
         this.logger = logger;
         this.proxyAgent = proxyAgent;
         this.currentPhone = currentPhone;
         this.currentUserId = currentUserId;
+        this.interactionStore = (0, interactionStateStore_1.getSharedInteractionStateStore)();
     }
     getInteractionStoreKey() {
         return `interactedPosts:${String(this.currentPhone || "").trim().toLowerCase()}`;
@@ -24,69 +25,96 @@ class InteractionService {
     getReactedPostStoreKey() {
         return `reactedPosts:${String(this.currentPhone || "").trim().toLowerCase()}`;
     }
-    getSeenPostIds() {
+    getStoreTypeFromKey(storeKey) {
+        if (storeKey.startsWith("reactedPosts:"))
+            return "reactedPosts";
+        if (storeKey.startsWith("commentedPosts:"))
+            return "commentedPosts";
+        if (storeKey.startsWith("interactedPosts:"))
+            return "interactedPosts";
+        return "unknown";
+    }
+    logRedisStoreOperation(event, storeKey, count) {
+        const backendInfo = this.interactionStore.getBackendInfo();
+        if (backendInfo.backend !== "redis") {
+            return;
+        }
+        this.logger.info(event, {
+            phone: this.currentPhone,
+            backend: backendInfo.backend,
+            keyPrefix: backendInfo.keyPrefix,
+            storeKey,
+            storeType: this.getStoreTypeFromKey(storeKey),
+            count: Math.max(0, Number(count) || 0)
+        });
+    }
+    async getSeenPostIds() {
         try {
             const key = this.getInteractionStoreKey();
-            const stored = asyncStore_1.AsyncStore.getItem(key);
-            return new Set(Array.isArray(stored) ? stored.map(v => String(v)) : []);
+            const values = await this.interactionStore.loadIds(key, { limit: 300 });
+            this.logRedisStoreOperation("INTERACTION_REDIS_LOAD", key, values.size);
+            return values;
         }
         catch (e) {
             this.logger.warn("LOAD_SEEN_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
             return new Set();
         }
     }
-    saveSeenPostIds(values) {
+    async saveSeenPostIds(values) {
         try {
             const key = this.getInteractionStoreKey();
-            const unique = Array.from(new Set(Array.from(values).map(v => String(v)).filter(Boolean)));
-            asyncStore_1.AsyncStore.setItem(key, unique.slice(-300));
+            const snapshot = Array.from(values);
+            await this.interactionStore.saveIds(key, snapshot, { limit: 300 });
+            this.logRedisStoreOperation("INTERACTION_REDIS_SAVE", key, snapshot.length);
         }
         catch (e) {
             this.logger.warn("SAVE_SEEN_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
         }
     }
-    getCommentedPostIds() {
+    async getCommentedPostIds() {
         try {
             const key = this.getCommentedPostStoreKey();
-            const stored = asyncStore_1.AsyncStore.getItem(key);
-            const legacy = asyncStore_1.AsyncStore.getItem(this.getInteractionStoreKey());
-            const merged = [
-                ...(Array.isArray(legacy) ? legacy : []),
-                ...(Array.isArray(stored) ? stored : [])
-            ];
-            return new Set(merged.map(v => String(v)));
+            const values = await this.interactionStore.loadIds(key, {
+                legacyKeys: [this.getInteractionStoreKey()],
+                limit: 500
+            });
+            this.logRedisStoreOperation("INTERACTION_REDIS_LOAD", key, values.size);
+            return values;
         }
         catch (e) {
             this.logger.warn("LOAD_COMMENTED_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
             return new Set();
         }
     }
-    saveCommentedPostIds(values) {
+    async saveCommentedPostIds(values) {
         try {
             const key = this.getCommentedPostStoreKey();
-            const unique = Array.from(new Set(Array.from(values).map(v => String(v)).filter(Boolean)));
-            asyncStore_1.AsyncStore.setItem(key, unique.slice(-500));
+            const snapshot = Array.from(values);
+            await this.interactionStore.saveIds(key, snapshot, { limit: 500 });
+            this.logRedisStoreOperation("INTERACTION_REDIS_SAVE", key, snapshot.length);
         }
         catch (e) {
             this.logger.warn("SAVE_COMMENTED_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
         }
     }
-    getReactedPostIds() {
+    async getReactedPostIds() {
         try {
             const key = this.getReactedPostStoreKey();
-            const stored = asyncStore_1.AsyncStore.getItem(key);
-            return new Set(Array.isArray(stored) ? stored.map(v => String(v)) : []);
+            const values = await this.interactionStore.loadIds(key, { limit: 500 });
+            this.logRedisStoreOperation("INTERACTION_REDIS_LOAD", key, values.size);
+            return values;
         }
         catch (e) {
             this.logger.warn("LOAD_REACTED_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
             return new Set();
         }
     }
-    saveReactedPostIds(values) {
+    async saveReactedPostIds(values) {
         try {
             const key = this.getReactedPostStoreKey();
-            const unique = Array.from(new Set(Array.from(values).map(v => String(v)).filter(Boolean)));
-            asyncStore_1.AsyncStore.setItem(key, unique.slice(-500));
+            const snapshot = Array.from(values);
+            await this.interactionStore.saveIds(key, snapshot, { limit: 500 });
+            this.logRedisStoreOperation("INTERACTION_REDIS_SAVE", key, snapshot.length);
         }
         catch (e) {
             this.logger.warn("SAVE_REACTED_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
@@ -291,6 +319,18 @@ class InteractionService {
             const lightFeedMode = Boolean(cachedDailyPointState &&
                 cachedDailyPointState.dailyRemainingPoint !== null &&
                 cachedDailyPointState.dailyRemainingPoint <= 0);
+            const backendInfo = this.interactionStore.getBackendInfo();
+            const backendStateKey = `${backendInfo.backend}:${backendInfo.keyPrefix}:${lightFeedMode ? "light" : "full"}`;
+            if (!InteractionService.announcedStoreStates.has(backendStateKey)) {
+                InteractionService.announcedStoreStates.add(backendStateKey);
+                this.logger.info("INTERACTION_STORE_STATUS", {
+                    ...ctx,
+                    backend: backendInfo.backend,
+                    keyPrefix: backendInfo.keyPrefix,
+                    redisConfigured: backendInfo.redisConfigured,
+                    lightFeedMode
+                });
+            }
             const pagesToLoad = lightFeedMode ? 1 : 3;
             let allItems = [];
             let lastPostId = "";
@@ -376,9 +416,9 @@ class InteractionService {
             }
             if (allItems.length > 0) {
                 const uniqueItems = Array.from(new Map(allItems.map(i => [i.id, i])).values());
-                const seenPostIds = this.getSeenPostIds();
-                const commentedPostIds = this.getCommentedPostIds();
-                const reactedPostIds = this.getReactedPostIds();
+                const seenPostIds = await this.getSeenPostIds();
+                const commentedPostIds = await this.getCommentedPostIds();
+                const reactedPostIds = await this.getReactedPostIds();
                 const unseenItems = uniqueItems.filter((item) => !seenPostIds.has(String(item?.id || "")));
                 const interactItems = uniqueItems;
                 this.logger.info("MISSION_ACTION_DEPENDENT_START", {
@@ -419,6 +459,7 @@ class InteractionService {
                         await doMission(`PostReaction_${postId}`, () => reactionApiService_1.ReactionApiService.sendReaction(accessToken, postId, rType, h, this.proxyAgent), reactionCtx);
                         await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "REACTION");
                         reactedPostIds.add(String(postId));
+                        await this.saveReactedPostIds(reactedPostIds);
                     }
                     if (alreadyCommented) {
                         this.logger.info("SKIP_COMMENT_ALREADY_COMMENTED", { ...ctx, postId: String(postId) });
@@ -450,14 +491,14 @@ class InteractionService {
                             media: ""
                         }, h, this.proxyAgent), ctx);
                         commentedPostIds.add(String(postId));
-                        this.saveCommentedPostIds(commentedPostIds);
+                        await this.saveCommentedPostIds(commentedPostIds);
                         await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "COMMENT");
                     }
                     seenPostIds.add(String(postId));
                 }
-                this.saveSeenPostIds(seenPostIds);
-                this.saveCommentedPostIds(commentedPostIds);
-                this.saveReactedPostIds(reactedPostIds);
+                await this.saveSeenPostIds(seenPostIds);
+                await this.saveCommentedPostIds(commentedPostIds);
+                await this.saveReactedPostIds(reactedPostIds);
             }
         }
         catch (e) {
@@ -467,3 +508,4 @@ class InteractionService {
     }
 }
 exports.InteractionService = InteractionService;
+InteractionService.announcedStoreStates = new Set();

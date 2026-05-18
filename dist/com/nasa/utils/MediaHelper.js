@@ -61,6 +61,67 @@ class MediaHelper {
             return undefined;
         }
     }
+    extractErrorText(err) {
+        const parts = [
+            err?.message,
+            this.stringifyForLog(err?.response?.data),
+            err?.requestDebug?.backendRaw
+        ].filter(Boolean);
+        return parts.join(" | ").toLowerCase();
+    }
+    extractErrorStatus(err) {
+        const status = Number(err?.response?.status || err?.requestDebug?.responseStatus || 0);
+        return Number.isFinite(status) ? status : 0;
+    }
+    hasAnyKeyword(text, keywords) {
+        return keywords.some((keyword) => text.includes(keyword));
+    }
+    wasBrokenVideoCleanupHandled(err) {
+        return Boolean(err && typeof err === "object" && err.__brokenVideoCleanupHandled === true);
+    }
+    getBrokenVideoReason(err) {
+        const text = this.extractErrorText(err);
+        const status = this.extractErrorStatus(err);
+        if (!text && !status) {
+            return null;
+        }
+        if (text.includes("video file not found")) {
+            return "FILE_NOT_FOUND";
+        }
+        if (text.includes("video too large")) {
+            return "FILE_TOO_LARGE";
+        }
+        if (text.includes("ffmpeg") || text.includes("ffprobe")) {
+            return "LOCAL_VIDEO_PROCESSING_FAILED";
+        }
+        const hardRejectStatuses = new Set([413, 415, 422]);
+        if (hardRejectStatuses.has(status)) {
+            return `VIDEO_REJECTED_HTTP_${status}`;
+        }
+        const mediaRelatedKeywords = [
+            "unsupported",
+            "invalid video",
+            "invalid file",
+            "corrupt",
+            "corrupted",
+            "codec",
+            "mime",
+            "format",
+            "duration",
+            "resolution",
+            "thumbnail",
+            "media",
+            "mp4",
+            "file too large"
+        ];
+        if (this.hasAnyKeyword(text, mediaRelatedKeywords)) {
+            const maybePermanentStatuses = new Set([400, 404, 409, 410]);
+            if (!status || maybePermanentStatuses.has(status)) {
+                return status ? `VIDEO_REJECTED_HTTP_${status}` : "VIDEO_REJECTED_BY_API";
+            }
+        }
+        return null;
+    }
     extractHttpFailureDebug(err) {
         const requestDebug = err?.requestDebug;
         return {
@@ -430,7 +491,7 @@ class MediaHelper {
             });
         }
         try {
-            await (0, mysqlStore_1.deleteVideoFromQueue)(video.id);
+            await (0, mysqlStore_1.deleteVideoFromQueue)(video.id, video?.claimToken ?? null);
         }
         catch (dbErr) {
             this.logger.warn(`${logPrefix}_DB_DELETE_FAILED`, {
@@ -439,6 +500,10 @@ class MediaHelper {
                 reason,
                 err: dbErr?.message
             });
+        }
+        if (err && typeof err === "object") {
+            err.__brokenVideoCleanupHandled = true;
+            err.__brokenVideoReason = reason;
         }
         this.logger.warn(`${logPrefix}_REMOVED`, {
             ...ctx,

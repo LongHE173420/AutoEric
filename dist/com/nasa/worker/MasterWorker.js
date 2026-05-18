@@ -9,7 +9,7 @@ class MasterWorker {
     constructor(logger) {
         this.logger = logger;
     }
-    async run(accounts, proxyManager) {
+    async run(accounts, proxyManager, runPlan) {
         const summary = {
             success: 0,
             alreadyOk: 0,
@@ -45,8 +45,14 @@ class MasterWorker {
                         await (0, async_1.sleep)(staggerMs);
                     }
                     const worker = new EricWorker_1.EricWorker(acc, this.logger, rowNo, proxyManager);
-                    await worker.run().then(async (result) => {
+                    const plannedDecision = runPlan?.byPhone?.[String(acc?.phone || acc?.username || "").trim()];
+                    await worker.run(plannedDecision).then(async (result) => {
                         if (!result.executed) {
+                            this.logger.warn("ACCOUNT_RUN_SKIPPED", {
+                                rowNo,
+                                phone: String(acc?.phone || acc?.username || "").trim(),
+                                reason: result.reason || "NOT_EXECUTED"
+                            });
                             return;
                         }
                         await (0, mysqlStore_1.recordRunInDb)(acc.phone).catch(() => { });
@@ -58,9 +64,19 @@ class MasterWorker {
                                 summary.relogin++;
                         }
                         else {
+                            this.logger.error("ACCOUNT_RUN_FAILED", {
+                                rowNo,
+                                phone: String(acc?.phone || acc?.username || "").trim(),
+                                reason: result.reason || "UNKNOWN_ACCOUNT_RUN_FAILURE"
+                            });
                             summary.fail++;
                         }
-                    }).catch(() => {
+                    }).catch((err) => {
+                        this.logger.error("ACCOUNT_RUN_CRASH", {
+                            rowNo,
+                            phone: String(acc?.phone || acc?.username || "").trim(),
+                            err: err?.message ?? String(err)
+                        });
                         summary.fail++;
                     });
                 });

@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { randomUUID } from "crypto";
 import { SurfApiService } from "../../api/surf/surfApiService";
-import { getNextVideoToPost, markVideoPosted, releaseVideoReservation } from "../../data/mysqlStore";
+import { getNextVideoToPost, markVideoPosted, releaseVideoReservation, syncQueuedVideosWithLocalFiles } from "../../data/mysqlStore";
 import { Log } from "../../utils/log";
 import { MediaHelper } from "../../utils/MediaHelper";
 
@@ -83,19 +83,29 @@ export class SurfService {
 
                 for (let attempt = 1; attempt <= maxVideoAttempts; attempt++) {
                     const video = await getNextVideoToPost(phone).catch(() => null);
-                    if (!video) break;
+                    if (!video) {
+                        const syncSummary = await syncQueuedVideosWithLocalFiles().catch(() => null);
+                        if (syncSummary && (syncSummary.missing > 0 || syncSummary.reset > 0)) {
+                            this.logger.info("SURF_VIDEO_QUEUE_SYNC_ON_EMPTY", { ...ctx, syncSummary });
+                        }
+                        break;
+                    }
 
                     this.logger.info("SURF_VIDEO_START", { ...ctx, videoId: video.id, source: video.source_url, attempt });
 
                     const handleVideoFailure = async (err: any) => {
                         await releaseVideoReservation(video?.id, video?.claimToken).catch(() => {});
-                        const isBrokenLocalVideo =
-                            err?.message?.includes("Video file not found") ||
-                            err?.message?.includes("Video too large") ||
-                            err?.message?.includes("ffmpeg exited with code 1") ||
-                            err?.message?.includes("ffprobe");
+                        const syncSummary = await syncQueuedVideosWithLocalFiles().catch(() => null);
+                        if (syncSummary && (syncSummary.missing > 0 || syncSummary.reset > 0)) {
+                            this.logger.info("SURF_VIDEO_QUEUE_SYNC_AFTER_ERROR", { ...ctx, videoId: video?.id, attempt, syncSummary });
+                        }
+                        const brokenVideoReason = this.mediaHelper.getBrokenVideoReason(err);
 
-                        if (isBrokenLocalVideo && attempt < maxVideoAttempts) {
+                        if (brokenVideoReason && !this.mediaHelper.wasBrokenVideoCleanupHandled(err)) {
+                            await this.mediaHelper.deleteBrokenVideo(video, ctx, brokenVideoReason, err, "BROKEN_SURF_VIDEO").catch(() => {});
+                        }
+
+                        if (brokenVideoReason && attempt < maxVideoAttempts) {
                             this.logger.warn("BROKEN_SURF_VIDEO_RETRY_NEXT", { ...ctx, videoId: video.id, attempt, nextAttempt: attempt + 1 });
                             return { action: "continue" };
                         }

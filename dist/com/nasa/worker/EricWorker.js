@@ -13,6 +13,7 @@ const errorUtils_1 = require("../utils/errorUtils");
 const ProxyHelper_1 = require("../proxy/ProxyHelper");
 const async_1 = require("../utils/async");
 const AccountActivityPolicy_1 = require("../policy/AccountActivityPolicy");
+const plannerStateStore_1 = require("../storage/plannerStateStore");
 const AccountMissionService_1 = require("../service/missions/AccountMissionService");
 const InteractionService_1 = require("../service/action/InteractionService");
 const RelationService_1 = require("../service/action/RelationService");
@@ -23,6 +24,7 @@ class EricWorker {
         this.acc = acc;
         this.rowNo = rowNo;
         this.proxyManager = proxyManager;
+        this.plannerStateStore = (0, plannerStateStore_1.getSharedPlannerStateStore)();
         try {
             this.logger = parentLogger;
             this.proxyHelper = new ProxyHelper_1.ProxyHelper(this.acc, this.proxyManager, this.logger);
@@ -47,7 +49,7 @@ class EricWorker {
             return { row: -1, phone: "UNKNOWN" };
         }
     }
-    async run() {
+    async run(plannedDecision) {
         try {
             const phone = String(this.acc.phone || this.acc.username || "").trim();
             const password = String(this.acc.password || "").trim();
@@ -58,7 +60,7 @@ class EricWorker {
             const currentDailyRunCount = Number(this.acc.dailyRunCount || 0);
             const currentDailyPostCount = Number(this.acc.dailyPostCount || 0);
             const currentDailySurfCount = Number(this.acc.dailySurfCount || 0);
-            const runDecision = this.activityPolicy.decideRun(currentDailyRunCount, currentDailyPostCount, currentDailySurfCount, new Date());
+            const runDecision = plannedDecision ?? this.activityPolicy.decideRun(currentDailyRunCount, currentDailyPostCount, currentDailySurfCount, new Date());
             this.logger.info("ACCOUNT_ACTIVITY_DECISION", {
                 ...ctx,
                 dayKey: runDecision.dayKey,
@@ -73,6 +75,15 @@ class EricWorker {
                 surfChancePercent: runDecision.surfChancePercent,
                 shouldPost: runDecision.shouldPost,
                 shouldSurf: runDecision.shouldSurf,
+                postWeight: runDecision.postWeight,
+                surfWeight: runDecision.surfWeight,
+                eligibleForPost: runDecision.eligibleForPost,
+                eligibleForSurf: runDecision.eligibleForSurf,
+                postGapRunsRemaining: runDecision.postGapRunsRemaining,
+                surfGapRunsRemaining: runDecision.surfGapRunsRemaining,
+                decisionSource: runDecision.decisionSource,
+                postJitterMs: runDecision.postJitterMs,
+                surfJitterMs: runDecision.surfJitterMs,
                 postsDone: runDecision.postsDone,
                 surfsDone: runDecision.surfsDone,
                 remainingPostQuota: runDecision.remainingPostQuota,
@@ -198,20 +209,28 @@ class EricWorker {
                 await this.runMissionStage("FEED_AND_INTERACT", ctx, () => interactSvc.handleFeedAndInteract(accessToken, h, ctx, boundDoMission));
             }
             if (runDecision.shouldPost) {
+                if (runDecision.postJitterMs > 0) {
+                    await (0, async_1.sleep)(runDecision.postJitterMs);
+                }
+                const postCounters = await (0, mysqlStore_1.recordDailyPublishInDb)(String(this.acc.phone || this.acc.username || "").trim(), "post");
+                await this.plannerStateStore.recordActionRun(runDecision.dayKey, String(this.acc.phone || this.acc.username || "").trim(), "post", runDecision.runIndex).catch(() => { });
+                this.logger.info("ACCOUNT_DAILY_POST_ATTEMPT_RECORDED", {
+                    ...ctx,
+                    runIndex: runDecision.runIndex,
+                    postsDone: Number(postCounters?.daily_post_count || 0),
+                    surfsDone: Number(postCounters?.daily_surf_count || 0),
+                    postLimit: env_1.ENV.ACCOUNT_DAILY_POST_LIMIT
+                });
                 const posted = await this.runMissionStage("CREATE_VIDEO_POST", ctx, () => postSvc.handleAutoCreatePost(accessToken, h, ctx, boundDoMission));
                 if (posted) {
-                    const postCounters = await (0, mysqlStore_1.recordDailyPublishInDb)(String(this.acc.phone || this.acc.username || "").trim(), "post");
-                    this.logger.info("ACCOUNT_DAILY_POST_RECORDED", {
+                    this.logger.info("ACCOUNT_DAILY_POST_ATTEMPT_SUCCEEDED", {
                         ...ctx,
-                        runIndex: runDecision.runIndex,
-                        postsDone: Number(postCounters?.daily_post_count || 0),
-                        surfsDone: Number(postCounters?.daily_surf_count || 0),
-                        postLimit: env_1.ENV.ACCOUNT_DAILY_POST_LIMIT
+                        runIndex: runDecision.runIndex
                     });
                 }
             }
             else {
-                this.logger.info("CREATE_VIDEO_POST_SKIPPED_BY_RANDOM", {
+                this.logger.info(runDecision.decisionSource === "planner" ? "CREATE_VIDEO_POST_SKIPPED_BY_RUN_PLAN" : "CREATE_VIDEO_POST_SKIPPED_BY_RANDOM", {
                     ...ctx,
                     runIndex: runDecision.runIndex,
                     dailyRunLimit: runDecision.dailyRunLimit
@@ -219,20 +238,28 @@ class EricWorker {
             }
             if (!TEST_ONLY_POST) {
                 if (runDecision.shouldSurf) {
+                    if (runDecision.surfJitterMs > 0) {
+                        await (0, async_1.sleep)(runDecision.surfJitterMs);
+                    }
+                    const surfCounters = await (0, mysqlStore_1.recordDailyPublishInDb)(String(this.acc.phone || this.acc.username || "").trim(), "surf");
+                    await this.plannerStateStore.recordActionRun(runDecision.dayKey, String(this.acc.phone || this.acc.username || "").trim(), "surf", runDecision.runIndex).catch(() => { });
+                    this.logger.info("ACCOUNT_DAILY_SURF_ATTEMPT_RECORDED", {
+                        ...ctx,
+                        runIndex: runDecision.runIndex,
+                        postsDone: Number(surfCounters?.daily_post_count || 0),
+                        surfsDone: Number(surfCounters?.daily_surf_count || 0),
+                        surfLimit: env_1.ENV.ACCOUNT_DAILY_SURF_LIMIT
+                    });
                     const surfed = await this.runMissionStage("CREATE_SURF", ctx, () => surfSvc.handleAutoCreateSurf(accessToken, h, ctx, boundDoMission));
                     if (surfed) {
-                        const surfCounters = await (0, mysqlStore_1.recordDailyPublishInDb)(String(this.acc.phone || this.acc.username || "").trim(), "surf");
-                        this.logger.info("ACCOUNT_DAILY_SURF_RECORDED", {
+                        this.logger.info("ACCOUNT_DAILY_SURF_ATTEMPT_SUCCEEDED", {
                             ...ctx,
-                            runIndex: runDecision.runIndex,
-                            postsDone: Number(surfCounters?.daily_post_count || 0),
-                            surfsDone: Number(surfCounters?.daily_surf_count || 0),
-                            surfLimit: env_1.ENV.ACCOUNT_DAILY_SURF_LIMIT
+                            runIndex: runDecision.runIndex
                         });
                     }
                 }
                 else {
-                    this.logger.info("CREATE_SURF_SKIPPED_BY_RANDOM", {
+                    this.logger.info(runDecision.decisionSource === "planner" ? "CREATE_SURF_SKIPPED_BY_RUN_PLAN" : "CREATE_SURF_SKIPPED_BY_RANDOM", {
                         ...ctx,
                         runIndex: runDecision.runIndex,
                         dailyRunLimit: runDecision.dailyRunLimit

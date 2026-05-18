@@ -101,16 +101,25 @@ class SurfService {
                 const maxVideoAttempts = 3;
                 for (let attempt = 1; attempt <= maxVideoAttempts; attempt++) {
                     const video = await (0, mysqlStore_1.getNextVideoToPost)(phone).catch(() => null);
-                    if (!video)
+                    if (!video) {
+                        const syncSummary = await (0, mysqlStore_1.syncQueuedVideosWithLocalFiles)().catch(() => null);
+                        if (syncSummary && (syncSummary.missing > 0 || syncSummary.reset > 0)) {
+                            this.logger.info("SURF_VIDEO_QUEUE_SYNC_ON_EMPTY", { ...ctx, syncSummary });
+                        }
                         break;
+                    }
                     this.logger.info("SURF_VIDEO_START", { ...ctx, videoId: video.id, source: video.source_url, attempt });
                     const handleVideoFailure = async (err) => {
                         await (0, mysqlStore_1.releaseVideoReservation)(video?.id, video?.claimToken).catch(() => { });
-                        const isBrokenLocalVideo = err?.message?.includes("Video file not found") ||
-                            err?.message?.includes("Video too large") ||
-                            err?.message?.includes("ffmpeg exited with code 1") ||
-                            err?.message?.includes("ffprobe");
-                        if (isBrokenLocalVideo && attempt < maxVideoAttempts) {
+                        const syncSummary = await (0, mysqlStore_1.syncQueuedVideosWithLocalFiles)().catch(() => null);
+                        if (syncSummary && (syncSummary.missing > 0 || syncSummary.reset > 0)) {
+                            this.logger.info("SURF_VIDEO_QUEUE_SYNC_AFTER_ERROR", { ...ctx, videoId: video?.id, attempt, syncSummary });
+                        }
+                        const brokenVideoReason = this.mediaHelper.getBrokenVideoReason(err);
+                        if (brokenVideoReason && !this.mediaHelper.wasBrokenVideoCleanupHandled(err)) {
+                            await this.mediaHelper.deleteBrokenVideo(video, ctx, brokenVideoReason, err, "BROKEN_SURF_VIDEO").catch(() => { });
+                        }
+                        if (brokenVideoReason && attempt < maxVideoAttempts) {
                             this.logger.warn("BROKEN_SURF_VIDEO_RETRY_NEXT", { ...ctx, videoId: video.id, attempt, nextAttempt: attempt + 1 });
                             return { action: "continue" };
                         }

@@ -5,6 +5,7 @@ import axios from "axios";
 import { applyStandardInterceptors } from "./com/nasa/utils/axiosSignature";
 import { ProxyManager } from "./com/nasa/proxy/ProxyManager";
 import { getAccountsBatchFromDb } from "./com/nasa/data/mysqlStore";
+import { RunPlan, RunPlannerService } from "./com/nasa/policy/RunPlannerService";
 
 applyStandardInterceptors(axios, "global-system");
 
@@ -42,6 +43,13 @@ async function runOnce(reason: string) {
           ACCOUNT_DAILY_RUN_LIMIT: ENV.ACCOUNT_DAILY_RUN_LIMIT,
           ACCOUNT_DAILY_POST_LIMIT: ENV.ACCOUNT_DAILY_POST_LIMIT,
           ACCOUNT_DAILY_SURF_LIMIT: ENV.ACCOUNT_DAILY_SURF_LIMIT,
+          ACCOUNT_ACTIVITY_PLANNER_ENABLED: ENV.ACCOUNT_ACTIVITY_PLANNER_ENABLED,
+          POST_MIN_GAP_RUNS: ENV.POST_MIN_GAP_RUNS,
+          SURF_MIN_GAP_RUNS: ENV.SURF_MIN_GAP_RUNS,
+          ALLOW_POST_AND_SURF_SAME_RUN: ENV.ALLOW_POST_AND_SURF_SAME_RUN,
+          POST_START_JITTER_MS: ENV.POST_START_JITTER_MS,
+          SURF_START_JITTER_MS: ENV.SURF_START_JITTER_MS,
+          REDIS_KEY_PREFIX: ENV.REDIS_KEY_PREFIX,
           VIDEO_CLAIM_TTL_MS: ENV.VIDEO_CLAIM_TTL_MS,
           API_RETRY_BACKOFF_MS: ENV.API_RETRY_BACKOFF_MS,
           AUTO_FETCH_OTP: ENV.AUTO_FETCH_OTP,
@@ -66,9 +74,11 @@ async function runOnce(reason: string) {
 
     const { MasterWorker } = await import("./com/nasa/worker/MasterWorker");
     const master = new MasterWorker(logger);
+    const planner = new RunPlannerService(logger);
 
     let lastSeenId = 0;
     let loadedAccounts = 0;
+    const allAccounts: any[] = [];
     const summary = {
       success: 0,
       alreadyOk: 0,
@@ -102,19 +112,29 @@ async function runOnce(reason: string) {
       }
 
       loadedAccounts += accountsInfo.length;
+      allAccounts.push(...accountsInfo);
       logger.debug("ACCOUNTS_PAGE_LOADED", {
         pageSize: accountsInfo.length,
         loadedAccounts,
         lastSeenId
       });
-
-      const pageSummary = await master.run(accountsInfo, proxyManager);
-      summary.success += pageSummary.success;
-      summary.alreadyOk += pageSummary.alreadyOk;
-      summary.relogin += pageSummary.relogin;
-      summary.fail += pageSummary.fail;
-      summary.accounts += pageSummary.accounts;
     }
+
+    let runPlan: RunPlan | undefined;
+    if (ENV.ACCOUNT_ACTIVITY_PLANNER_ENABLED && allAccounts.length > 0) {
+      try {
+        runPlan = await planner.buildRunPlan(allAccounts, new Date());
+      } catch (plannerErr: any) {
+        logger.error("ACCOUNT_ACTIVITY_RUN_PLAN_FAILED", { err: plannerErr?.message ?? String(plannerErr) });
+      }
+    }
+
+    const pageSummary = await master.run(allAccounts, proxyManager, runPlan);
+    summary.success += pageSummary.success;
+    summary.alreadyOk += pageSummary.alreadyOk;
+    summary.relogin += pageSummary.relogin;
+    summary.fail += pageSummary.fail;
+    summary.accounts += pageSummary.accounts;
 
     logger.debug(`Loaded ${loadedAccounts} accounts from database.`);
 

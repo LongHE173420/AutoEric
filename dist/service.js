@@ -44,6 +44,7 @@ const axios_1 = __importDefault(require("axios"));
 const axiosSignature_1 = require("./com/nasa/utils/axiosSignature");
 const ProxyManager_1 = require("./com/nasa/proxy/ProxyManager");
 const mysqlStore_1 = require("./com/nasa/data/mysqlStore");
+const RunPlannerService_1 = require("./com/nasa/policy/RunPlannerService");
 (0, axiosSignature_1.applyStandardInterceptors)(axios_1.default, "global-system");
 let isRunning = false;
 let started = false;
@@ -76,6 +77,13 @@ async function runOnce(reason) {
                     ACCOUNT_DAILY_RUN_LIMIT: env_1.ENV.ACCOUNT_DAILY_RUN_LIMIT,
                     ACCOUNT_DAILY_POST_LIMIT: env_1.ENV.ACCOUNT_DAILY_POST_LIMIT,
                     ACCOUNT_DAILY_SURF_LIMIT: env_1.ENV.ACCOUNT_DAILY_SURF_LIMIT,
+                    ACCOUNT_ACTIVITY_PLANNER_ENABLED: env_1.ENV.ACCOUNT_ACTIVITY_PLANNER_ENABLED,
+                    POST_MIN_GAP_RUNS: env_1.ENV.POST_MIN_GAP_RUNS,
+                    SURF_MIN_GAP_RUNS: env_1.ENV.SURF_MIN_GAP_RUNS,
+                    ALLOW_POST_AND_SURF_SAME_RUN: env_1.ENV.ALLOW_POST_AND_SURF_SAME_RUN,
+                    POST_START_JITTER_MS: env_1.ENV.POST_START_JITTER_MS,
+                    SURF_START_JITTER_MS: env_1.ENV.SURF_START_JITTER_MS,
+                    REDIS_KEY_PREFIX: env_1.ENV.REDIS_KEY_PREFIX,
                     VIDEO_CLAIM_TTL_MS: env_1.ENV.VIDEO_CLAIM_TTL_MS,
                     API_RETRY_BACKOFF_MS: env_1.ENV.API_RETRY_BACKOFF_MS,
                     AUTO_FETCH_OTP: env_1.ENV.AUTO_FETCH_OTP,
@@ -98,8 +106,10 @@ async function runOnce(reason) {
         logger.debug("JOB_START", { reason });
         const { MasterWorker } = await Promise.resolve().then(() => __importStar(require("./com/nasa/worker/MasterWorker")));
         const master = new MasterWorker(logger);
+        const planner = new RunPlannerService_1.RunPlannerService(logger);
         let lastSeenId = 0;
         let loadedAccounts = 0;
+        const allAccounts = [];
         const summary = {
             success: 0,
             alreadyOk: 0,
@@ -130,18 +140,28 @@ async function runOnce(reason) {
                 });
             }
             loadedAccounts += accountsInfo.length;
+            allAccounts.push(...accountsInfo);
             logger.debug("ACCOUNTS_PAGE_LOADED", {
                 pageSize: accountsInfo.length,
                 loadedAccounts,
                 lastSeenId
             });
-            const pageSummary = await master.run(accountsInfo, proxyManager);
-            summary.success += pageSummary.success;
-            summary.alreadyOk += pageSummary.alreadyOk;
-            summary.relogin += pageSummary.relogin;
-            summary.fail += pageSummary.fail;
-            summary.accounts += pageSummary.accounts;
         }
+        let runPlan;
+        if (env_1.ENV.ACCOUNT_ACTIVITY_PLANNER_ENABLED && allAccounts.length > 0) {
+            try {
+                runPlan = await planner.buildRunPlan(allAccounts, new Date());
+            }
+            catch (plannerErr) {
+                logger.error("ACCOUNT_ACTIVITY_RUN_PLAN_FAILED", { err: plannerErr?.message ?? String(plannerErr) });
+            }
+        }
+        const pageSummary = await master.run(allAccounts, proxyManager, runPlan);
+        summary.success += pageSummary.success;
+        summary.alreadyOk += pageSummary.alreadyOk;
+        summary.relogin += pageSummary.relogin;
+        summary.fail += pageSummary.fail;
+        summary.accounts += pageSummary.accounts;
         logger.debug(`Loaded ${loadedAccounts} accounts from database.`);
         logger.debug("JOB_DONE", { summary });
         const msg = `LOGIN summary: success=${summary.success} alreadyOk=${summary.alreadyOk} relogin=${summary.relogin} fail=${summary.fail}`;

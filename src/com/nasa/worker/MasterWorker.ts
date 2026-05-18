@@ -4,6 +4,7 @@ import { ProxyManager } from "../proxy/ProxyManager";
 import { recordRunInDb } from "../data/mysqlStore";
 import { ENV } from "../config/env";
 import { runWithConcurrency, sleep } from "../utils/async";
+import { RunPlan } from "../policy/RunPlannerService";
 
 export type LoginSummary = {
     success: number;
@@ -20,7 +21,7 @@ export class MasterWorker {
     ) {
     }
 
-    async run(accounts: any[], proxyManager?: ProxyManager): Promise<LoginSummary> {
+    async run(accounts: any[], proxyManager?: ProxyManager, runPlan?: RunPlan): Promise<LoginSummary> {
         const summary: LoginSummary = {
             success: 0,
             alreadyOk: 0,
@@ -70,8 +71,15 @@ export class MasterWorker {
                         proxyManager
                     );
 
-                    await worker.run().then(async (result) => {
+                    const plannedDecision = runPlan?.byPhone?.[String(acc?.phone || acc?.username || "").trim()];
+
+                    await worker.run(plannedDecision).then(async (result) => {
                         if (!result.executed) {
+                            this.logger.warn("ACCOUNT_RUN_SKIPPED", {
+                                rowNo,
+                                phone: String(acc?.phone || acc?.username || "").trim(),
+                                reason: result.reason || "NOT_EXECUTED"
+                            });
                             return;
                         }
 
@@ -82,9 +90,19 @@ export class MasterWorker {
                             if (result.alreadyOk) summary.alreadyOk++;
                             if (result.relogin) summary.relogin++;
                         } else {
+                            this.logger.error("ACCOUNT_RUN_FAILED", {
+                                rowNo,
+                                phone: String(acc?.phone || acc?.username || "").trim(),
+                                reason: result.reason || "UNKNOWN_ACCOUNT_RUN_FAILURE"
+                            });
                             summary.fail++;
                         }
-                    }).catch(() => {
+                    }).catch((err: any) => {
+                        this.logger.error("ACCOUNT_RUN_CRASH", {
+                            rowNo,
+                            phone: String(acc?.phone || acc?.username || "").trim(),
+                            err: err?.message ?? String(err)
+                        });
                         summary.fail++;
                     });
                 });

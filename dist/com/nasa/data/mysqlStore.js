@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -13,10 +46,12 @@ exports.recordRunInDb = recordRunInDb;
 exports.recordDailyPublishInDb = recordDailyPublishInDb;
 exports.getNextVideoToPost = getNextVideoToPost;
 exports.markVideoPosted = markVideoPosted;
+exports.syncQueuedVideosWithLocalFiles = syncQueuedVideosWithLocalFiles;
 exports.deleteVideoFromQueue = deleteVideoFromQueue;
 exports.updateFriendRequestStatus = updateFriendRequestStatus;
 const promise_1 = __importDefault(require("mysql2/promise"));
 const crypto_1 = require("crypto");
+const fs = __importStar(require("fs"));
 const env_1 = require("../config/env");
 function getLocalDateString() {
     const d = new Date();
@@ -34,6 +69,15 @@ async function getConnection() {
     });
 }
 const MAX_POSTS_PER_VIDEO = 1;
+async function resetQueuedVideoState(conn, videoId) {
+    await conn.execute(`UPDATE crawled_videos
+         SET local_path = NULL,
+             downloaded = 0,
+             claim_token = NULL,
+             claim_by = NULL,
+             claim_expires_at = NULL
+         WHERE id = ?`, [videoId]);
+}
 async function releaseVideoReservation(videoId, claimToken) {
     if (typeof videoId !== "number" || !Number.isFinite(videoId) || !claimToken) {
         return;
@@ -287,6 +331,11 @@ async function getNextVideoToPost(accountPhone) {
             if (!Number.isFinite(videoId)) {
                 continue;
             }
+            const localPath = String(row?.local_path || "").trim();
+            if (!localPath || !fs.existsSync(localPath)) {
+                await resetQueuedVideoState(conn, videoId).catch(() => { });
+                continue;
+            }
             const claimToken = (0, crypto_1.randomUUID)();
             const [claimRes] = await conn.execute(`UPDATE crawled_videos
                  SET claim_token = ?,
@@ -352,6 +401,38 @@ async function markVideoPosted(videoId, accountPhone, claimToken) {
         }
         catch { }
         throw err;
+    }
+    finally {
+        await conn.end();
+    }
+}
+async function syncQueuedVideosWithLocalFiles(limit = 200) {
+    const conn = await getConnection();
+    try {
+        const safeLimit = Math.max(1, Math.min(1000, Number(limit) || 200));
+        const [rows] = await conn.execute(`SELECT id, local_path
+             FROM crawled_videos
+             WHERE downloaded = 1
+               AND local_path IS NOT NULL
+               AND COALESCE(post_count, 0) < ?
+             ORDER BY created_at ASC
+             LIMIT ?`, [MAX_POSTS_PER_VIDEO, safeLimit]);
+        let scanned = 0;
+        let missing = 0;
+        let reset = 0;
+        for (const row of rows) {
+            scanned++;
+            const videoId = Number(row?.id);
+            const localPath = String(row?.local_path || "").trim();
+            const missingLocalFile = !localPath || !fs.existsSync(localPath);
+            if (!Number.isFinite(videoId) || !missingLocalFile) {
+                continue;
+            }
+            missing++;
+            await resetQueuedVideoState(conn, videoId).catch(() => { });
+            reset++;
+        }
+        return { scanned, missing, reset };
     }
     finally {
         await conn.end();
