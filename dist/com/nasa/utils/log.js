@@ -139,7 +139,7 @@ class Log {
     static init(opts) {
         if (this.initialized)
             return;
-        const baseConfig = {
+        this.baseConfig = {
             level: opts?.level ?? process.env.LOG_LEVEL,
             base: {
                 app: opts?.appName,
@@ -153,41 +153,80 @@ class Log {
             timestamp: () => `,"time":"${getLocalIsoTimestamp()}"`,
         };
         if (opts?.filePath) {
-            if (!fs_1.default.existsSync(opts.filePath)) {
-                try {
-                    fs_1.default.writeFileSync(opts.filePath, '\uFEFF');
-                }
-                catch (e) { }
-            }
-            const fileStream = pino_1.default.destination({ dest: opts.filePath, sync: false });
-            this.fileRoot = (0, pino_1.default)(baseConfig, fileStream);
+            this.fileLoggingEnabled = true;
+            this.configuredFilePath = opts.filePath;
             if (process.env.LOG_CONSOLE === "true" || process.env.LOG_CONSOLE === "1") {
-                this.consoleRoot = (0, pino_1.default)(baseConfig, pino_1.default.destination(1));
+                this.consoleStream = pino_1.default.destination(1);
+                this.consoleRoot = (0, pino_1.default)(this.baseConfig, this.consoleStream);
             }
-            const streams = [{ stream: fileStream }];
-            if (this.consoleRoot)
-                streams.push({ stream: pino_1.default.destination(1) });
-            this.root = (0, pino_1.default)(baseConfig, multistream(streams));
+            this.rotateFileLogger(opts.filePath);
         }
         else {
             if (process.env.LOG_CONSOLE === "true" || process.env.LOG_CONSOLE === "1") {
-                this.consoleRoot = (0, pino_1.default)(baseConfig);
+                this.consoleRoot = (0, pino_1.default)(this.baseConfig);
                 this.root = this.consoleRoot;
             }
             else {
-                this.root = (0, pino_1.default)({ ...baseConfig, level: "silent" });
+                this.root = (0, pino_1.default)({ ...this.baseConfig, level: "silent" });
             }
         }
         this.initialized = true;
+    }
+    static ensureFileExists(filePath) {
+        if (!fs_1.default.existsSync(filePath)) {
+            try {
+                fs_1.default.writeFileSync(filePath, "\uFEFF");
+            }
+            catch (e) {
+                // ignore
+            }
+        }
+    }
+    static rotateFileLogger(filePath) {
+        this.ensureFileExists(filePath);
+        const nextFileStream = pino_1.default.destination({ dest: filePath, sync: false });
+        const nextFileRoot = (0, pino_1.default)(this.baseConfig, nextFileStream);
+        const streams = [{ stream: nextFileStream }];
+        if (this.consoleStream) {
+            streams.push({ stream: this.consoleStream });
+        }
+        const previousFileStream = this.fileStream;
+        this.fileStream = nextFileStream;
+        this.fileRoot = nextFileRoot;
+        this.configuredFilePath = filePath;
+        this.root = (0, pino_1.default)(this.baseConfig, multistream(streams));
+        if (previousFileStream && previousFileStream !== nextFileStream) {
+            try {
+                previousFileStream.flushSync?.();
+            }
+            catch (e) {
+                // ignore
+            }
+            try {
+                previousFileStream.end?.();
+            }
+            catch (e) {
+                // ignore
+            }
+        }
+    }
+    static ensureDailyFileRotation() {
+        if (!this.fileLoggingEnabled)
+            return;
+        const { filePath } = getTodayLogPath();
+        if (this.configuredFilePath === filePath && this.fileRoot)
+            return;
+        this.rotateFileLogger(filePath);
     }
     static getLogger(name) {
         if (!this.initialized) {
             this.init();
         }
-        const logger = this.root.child({ logger: name });
-        const consoleLogger = this.consoleRoot?.child({ logger: name });
-        const fileLogger = this.fileRoot?.child({ logger: name });
         const write = (level, msg, obj) => {
+            this.ensureDailyFileRotation();
+            const logger = this.root.child({ logger: name });
+            const consoleLogger = this.consoleRoot?.child({ logger: name });
+            const fileLogger = this.fileRoot?.child({ logger: name });
             const payload = {
                 ...(obj || {}),
                 event: obj?.event || msg
@@ -211,4 +250,5 @@ class Log {
     }
 }
 exports.Log = Log;
+Log.fileLoggingEnabled = false;
 Log.initialized = false;
