@@ -7,6 +7,7 @@ exports.getSignature = void 0;
 exports.applyStandardInterceptors = applyStandardInterceptors;
 const crypto_js_1 = __importDefault(require("crypto-js"));
 const uuid_1 = require("uuid");
+const env_1 = require("../config/env");
 const getSignature = (rawData, token) => {
     return crypto_js_1.default.HmacSHA256(rawData, token).toString(crypto_js_1.default.enc.Base64);
 };
@@ -89,7 +90,9 @@ function applyStandardInterceptors(axiosInstance, deviceId) {
         }
         const rawData = method + "|" + path + "|" + timestamp + "|" + body;
         const signature = (0, exports.getSignature)(rawData, token);
-        console.log(`[AxiosSignature] ${method} ${path} -> Sign: ${signature} (Device: ${actualDeviceId})`);
+        if (env_1.ENV.LOG_HTTP || env_1.ENV.LOG_VERBOSE) {
+            console.log(`[AxiosSignature] ${method} ${path} -> Sign: ${signature} (Device: ${actualDeviceId})`);
+        }
         setHeader("X-Timestamp", timestamp);
         setHeader("X-Signature", signature);
         if (!hasHeader("Idempotency-Key")) {

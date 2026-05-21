@@ -20,24 +20,24 @@
     "weeklyCommentProgress": 1
   },
   "actionRewardCounters:kyohi3108@proton.me": {
-    "dayKey": "2026-05-06",
-    "weekKey": "2026-05-04",
-    "reaction": 0,
+    "dayKey": "2026-05-20",
+    "weekKey": "2026-05-18",
+    "reaction": 1,
     "friend": 0,
     "post": 0,
-    "comment": 0,
-    "reactionProgress": 0,
+    "comment": 1,
+    "reactionProgress": 14,
     "friendProgress": 0,
-    "postProgress": 2,
-    "commentProgress": 0,
-    "weeklyReaction": 1,
+    "postProgress": 0,
+    "commentProgress": 14,
+    "weeklyReaction": 0,
     "weeklyFriend": 0,
     "weeklyPost": 0,
     "weeklyComment": 0,
     "weeklyReactionProgress": 39,
-    "weeklyFriendProgress": 0,
-    "weeklyPostProgress": 7,
-    "weeklyCommentProgress": 3
+    "weeklyFriendProgress": 1,
+    "weeklyPostProgress": 0,
+    "weeklyCommentProgress": 43
   },
   "commentedPosts:kyohi2286@proton.me": [
     "308811900425220096",
@@ -153,7 +153,7 @@
     "dailyPointLimit": 3
   },
   "dailyPointState:kyohi3108@proton.me": {
-    "dayKey": "2026-05-07",
+    "dayKey": "2026-05-20",
     "dailyRemainingPoint": 0,
     "dailyEarnedPoint": 3,
     "dailyPointLimit": 3
@@ -164,10 +164,54 @@
     "deviceId": "F2A7D9C1-6E3B-4D84-8A1F-9B5C2E7D0A4F",
     "userAgent": "ERIC/1.0.0 (iOS; 18.6.2; iPhone 16 Plus)"
   },
-  "refresh:kyohi3108@proton.me": "eyJraWQiOiJkMzk3N2M0ZC00NmZmLTQ0ZDItYjk3NC0xOTYxZjg1YWI2ODMiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJreW9tYXNrLjE3NzQ5NDA0MTM3OTEwNzY2OTgiLCJjbGllbnRUeXBlIjoibW9iaWxlIiwicm9sZXMiOlsiVVNFUiJdLCJpcCI6IjEwLjIwMC4yLjIiLCJpc3MiOiJhdXRoLXNlcnZpY2UiLCJpZCI6NDYxMTY4NjAxODQyNzM4NzkyNywiZXhwIjoxNzc4NzU0MzcxLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3ODE0Nzc3MSwiZGV2aWNlSWQiOiIxQTNFNUY5Qy0yQjhELTQ3MEEtQTFGMy04QzJFNEQ5QjZBMUYifQ.Yy2sUChbmnoUkiOZcXHsWvvpiErOjhETAooW-YinbeeCanniccWNh1C2Y1hdaA9o-aQdnr6iCHV0ySYHd7u1fa18dOlVHE7gtBrWMqy1LVDmxzyDj96zaJ3_octEou5g3RR3wRjARg_ihwAPHozpiQv81J6Krqwg-q_olXOhDx46ABX8-Ffi6-pu0fksGAo97puswHUKeOy_QeMPdaUqKOcetLjxEZt_i88Q2C07qw8dmYltX0STjcarvnZNYyP6tYi9RB5jDlEpHvOW72AnKEdJOL45mfKeERYStDXctPXzJkUALqmuOLcp8XYQldzEIqRatoLw8TtBswQpXAy9Kg",
+  "dailyPointState:nguyennam8386@proton.me": {
+    "dayKey": "2026-05-20",
+    "dailyRemainingPoint": 0,
+    "dailyEarnedPoint": 3,
+    "dailyPointLimit": 3
+  },
+  "actionRewardCounters:nguyennam8386@proton.me": {
+    "dayKey": "2026-05-20",
+    "weekKey": "2026-05-18",
+    "reaction": 1,
+    "friend": 0,
+    "post": 0,
+    "comment": 1,
+    "reactionProgress": 6,
+    "friendProgress": 0,
+    "postProgress": 0,
+    "commentProgress": 6,
+    "weeklyReaction": 0,
+    "weeklyFriend": 0,
+    "weeklyPost": 0,
+    "weeklyComment": 0,
+    "weeklyReactionProgress": 26,
+    "weeklyFriendProgress": 1,
+    "weeklyPostProgress": 0,
+    "weeklyCommentProgress": 30
+  },
+  "refresh:trongphuong318@proton.me": "eyJraWQiOiJmMThkZjA4MS1mYWI4LTRhYmItODkwMy01YzA2ZWM1MTMwYzIiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0cm9uZ3BodW9uZy4xNzc5MDk3MjA2OTQxNjQ5NzI2IiwiY2xpZW50VHlwZSI6Im1vYmlsZSIsInJvbGVzIjpbIlVTRVIiXSwiaXAiOiIxMC4yMDAuMi4yIiwiaXNzIjoiYXV0aC1zZXJ2aWNlIiwiaWQiOjMxNDY5ODY1ODIzNjk5MzUzNiwiZXhwIjoxNzc5NzY1MzkzLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3OTE1ODc5MywiZGV2aWNlSWQiOiJBN0MyRDlFMS00QjhGLTRDNkEtOUUzRC0yRjFCN0E1QzhEOTAifQ.OsjaFJVizONzllLtRRkbhyjllgctqd-Ccc_Y7RiYzS7UeGwhFfc_9uu_xZFth_1XLcyQDIRPdtOpleKQS2fIfV8Lsk1gLW07FCJjhZ9wCcAxtWPWk8WnnbPOAv9kMlgqcEd9UCfRoEP8naluoyrqlCi39emRMy1mrXwiZ6K_ZYeVdWGy7EvZdyb7c0GavPybNhEgHnmRLKpIZmE-LRd88QtsTC0Il9Lw5fPIweNCCMUiNTJWqUMuVFlT_02YunmGXjlegY8ANu2u2S_-6WinpRGCnCLq2oFhAO882q6hNtnq7CjZuU5u2xhzM8Fa0rlJOdVnM9qYdNtO8NJ-c1kUcA",
+  "meta:trongphuong318@proton.me": {
+    "savedAt": 1779158793878,
+    "deviceId": "A7C2D9E1-4B8F-4C6A-9E3D-2F1B7A5C8D90",
+    "userAgent": "ERIC/1.0.0 (Android; 14; Samsung Galaxy S24 Ultra)"
+  },
+  "dailyPointState:trongphuong318@proton.me": {
+    "dayKey": "2026-05-19",
+    "dailyRemainingPoint": 3,
+    "dailyEarnedPoint": 0,
+    "dailyPointLimit": 3
+  },
+  "refresh:kyohi3108@proton.me": "eyJraWQiOiI5YTgyOWNjYS02NzM3LTQyZmYtOTZiZS0zMGQ3YmQyM2Y3MWQiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJreW9tYXNrLjE3NzQ5NDA0MTM3OTEwNzY2OTgiLCJjbGllbnRUeXBlIjoibW9iaWxlIiwicm9sZXMiOlsiVVNFUiJdLCJpcCI6IjEwLjIwMC4yLjIiLCJpc3MiOiJhdXRoLXNlcnZpY2UiLCJpZCI6NDYxMTY4NjAxODQyNzM4NzkyNywiZXhwIjoxNzc5OTM3NTM0LCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3OTMzMDkzNCwiZGV2aWNlSWQiOiIxQTNFNUY5Qy0yQjhELTQ3MEEtQTFGMy04QzJFNEQ5QjZBMUYifQ.Xaloo-EoMNKjvNGFqETnk4b7yBQlJW7cq9ZdRqW0vSE13Li6nF6eXS7QLHqDQXQ38pduzBStlm3TkTvXgAlf7PQ19ZiaK63-YAYgKPqh6C1fveuZTAsVo5tG45AdkI133a3BZNYAGpANHj3WlIa5aGj99_qlIyBXBfV30-WI_BXNsdaP8CHbIbvYaeUKQRndxSUWy0JwXSQrmL1Zm-Ph5dORQh1Lx6sMXNWlfdOWOBFbuNtfGZrOw0t9cGfN7CBHJAT_kNfaXtsCFjToLEjXpV765dZhVp1L3EmuNiEzOIaWaKPy8C3FdVnFkOGgry69MoyXqFlhw7Q3TDUMpL2JhQ",
   "meta:kyohi3108@proton.me": {
-    "savedAt": 1778147892139,
+    "savedAt": 1779331600819,
     "deviceId": "1A3E5F9C-2B8D-470A-A1F3-8C2E4D9B6A1F",
     "userAgent": "ERIC/1.2.0 (Android; 13; Oppo Find X6)"
+  },
+  "refresh:nguyennam8386@proton.me": "eyJraWQiOiI5YTgyOWNjYS02NzM3LTQyZmYtOTZiZS0zMGQ3YmQyM2Y3MWQiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJuYW1uZ3V5ZW4uMTc3NzM5MjQwMDk1MzE2MDQ4MyIsImNsaWVudFR5cGUiOiJtb2JpbGUiLCJyb2xlcyI6WyJVU0VSIl0sImlwIjoiMTAuMjAwLjIuMiIsImlzcyI6ImF1dGgtc2VydmljZSIsImlkIjozMDc1NDgxODM2NTgxMDY4ODAsImV4cCI6MTc3OTkzNzkzMywidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3NzkzMzEzMzMsImRldmljZUlkIjoiNUU5QTNDN0QtMkYxQi00QTZFLThDM0QtMUI3RjJBOUU1Qzc3In0.S7WDwNDxIUMge81318nWESNMbBpL5ZeaTIY--VN3AKoleI97V5_6U5wUw2V8PK_jnwD336NOpXwjNPyfBWSyPf-4fcw3yaAM19lKr1LnSCfllmfOC4I8_x8iayncuudjuN8ke6Wq6PHlh_PpDkaPy6_kx7jrKO-viI9-mAYuW43mqmVn9Vq4eF2Z022hgY5PhoaOZLWhaBPFSwAnqq2a2NaeN4d1TetwCiq21IX944tDCl5JiKvpv7C6O8EL1uJCdIqx7OO6de-1W4XmyJEHy9kKEWaoIxm1wwDLOG8dc-zTOkaOR2Dg5UUOeEpUJFJRHAjjAmbBaXYgTFjYKf_J9A",
+  "meta:nguyennam8386@proton.me": {
+    "savedAt": 1779331600798,
+    "deviceId": "5E9A3C7D-2F1B-4A6E-8C3D-1B7F2A9E5C77",
+    "userAgent": "ERIC/1.0.0 (Android; 14; Samsung Galaxy S24 Ultra)"
   }
 }

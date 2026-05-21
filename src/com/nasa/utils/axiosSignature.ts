@@ -1,6 +1,7 @@
 import { AxiosInstance } from "axios";
 import CryptoJS from "crypto-js";
 import { v4 as uuidv4 } from "uuid";
+import { ENV } from "../config/env";
 
 export const getSignature = (rawData: string, token: string): string => {
     return CryptoJS.HmacSHA256(rawData, token).toString(CryptoJS.enc.Base64);
@@ -88,7 +89,9 @@ export function applyStandardInterceptors(axiosInstance: AxiosInstance | any, de
             const rawData = method + "|" + path + "|" + timestamp + "|" + body;
             const signature = getSignature(rawData, token);
 
-            console.log(`[AxiosSignature] ${method} ${path} -> Sign: ${signature} (Device: ${actualDeviceId})`);
+            if (ENV.LOG_HTTP || ENV.LOG_VERBOSE) {
+                console.log(`[AxiosSignature] ${method} ${path} -> Sign: ${signature} (Device: ${actualDeviceId})`);
+            }
 
             setHeader("X-Timestamp", timestamp);
             setHeader("X-Signature", signature);

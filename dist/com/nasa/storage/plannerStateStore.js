@@ -53,6 +53,8 @@ class PlannerStateStore {
         this.baseUrl = String(env_1.ENV.UPSTASH_REDIS_REST_URL || "").replace(/\/$/, "");
         this.token = String(env_1.ENV.UPSTASH_REDIS_REST_TOKEN || "").trim();
         this.keyPrefix = String(env_1.ENV.REDIS_KEY_PREFIX || "ae").trim() || "ae";
+        this.dayTtlSeconds = 3 * 24 * 60 * 60;
+        this.expireTouched = new Set();
     }
     get redisEnabled() {
         return !!(this.baseUrl && this.token);
@@ -89,7 +91,33 @@ class PlannerStateStore {
             return {};
         }
     }
-    async setHashFields(key, fields) {
+    async redisExpire(key, ttlSeconds) {
+        if (ttlSeconds <= 0) {
+            return;
+        }
+        try {
+            await axios_1.default.get(`${this.baseUrl}/expire/${encodeURIComponent(key)}/${ttlSeconds}`, {
+                headers: {
+                    Authorization: `Bearer ${this.token}`
+                }
+            });
+        }
+        catch (err) {
+            console.error("PLANNER_REDIS_EXPIRE_FAIL", key, err?.message || String(err));
+        }
+    }
+    async expireOnce(key, ttlSeconds) {
+        if (ttlSeconds <= 0) {
+            return;
+        }
+        const touchKey = `${key}:${ttlSeconds}`;
+        if (this.expireTouched.has(touchKey)) {
+            return;
+        }
+        this.expireTouched.add(touchKey);
+        await this.redisExpire(key, ttlSeconds);
+    }
+    async setHashFields(key, fields, ttlSeconds) {
         if (!this.redisEnabled) {
             return;
         }
@@ -108,6 +136,9 @@ class PlannerStateStore {
                     Authorization: `Bearer ${this.token}`
                 }
             });
+            if (ttlSeconds) {
+                await this.expireOnce(key, ttlSeconds);
+            }
         }
         catch (err) {
             console.error("PLANNER_REDIS_HSET_FAIL", key, err?.message || String(err));
@@ -140,7 +171,7 @@ class PlannerStateStore {
             state.surfCarry = normalized.surfCarry;
             return;
         }
-        await this.setHashFields(this.key(dayKey, "carry"), normalized);
+        await this.setHashFields(this.key(dayKey, "carry"), normalized, this.dayTtlSeconds);
     }
     async recordActionRun(dayKey, phone, action, runIndex) {
         const normalizedPhone = String(phone || "").trim();
@@ -161,7 +192,7 @@ class PlannerStateStore {
         const targetKey = this.key(dayKey, action === "post" ? "last_post_runs" : "last_surf_runs");
         await this.setHashFields(targetKey, {
             [normalizedPhone]: normalizedRunIndex
-        });
+        }, this.dayTtlSeconds);
     }
 }
 exports.PlannerStateStore = PlannerStateStore;

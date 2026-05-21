@@ -19,7 +19,9 @@ export class AccountMissionRewardService {
             const initialResult = await this.processMissionsAndRewards(accessToken, h, ctx, doMission, {
                 logMissionFetch: true,
                 logMissionDetail: false,
-                missionDetailPhase: "INITIAL"
+                missionDetailPhase: "INITIAL",
+                includeStreak: false,
+                includeRegular: true
             });
 
             if (initialResult.dailyClaimLimitReached) {
@@ -37,7 +39,9 @@ export class AccountMissionRewardService {
                 const result = await this.processMissionsAndRewards(accessToken, h, ctx, doMission, {
                     logMissionFetch: attemptIndex === 0,
                     logMissionDetail: attemptIndex === 0,
-                    missionDetailPhase: attemptIndex === 0 ? "RECHECK" : undefined
+                    missionDetailPhase: attemptIndex === 0 ? "RECHECK" : undefined,
+                    includeStreak: false,
+                    includeRegular: true
                 });
 
                 if (result.dailyClaimLimitReached) {
@@ -120,7 +124,10 @@ export class AccountMissionRewardService {
     }
 
     private getDateKeyInTimeZone(input: number | Date, timeZone = this.streakTimeZone) {
-        const date = input instanceof Date ? input : new Date(input);
+        const normalizedInput = typeof input === "number" && input > 0 && input < 1_000_000_000_000
+            ? input * 1000
+            : input;
+        const date = normalizedInput instanceof Date ? normalizedInput : new Date(normalizedInput);
         if (Number.isNaN(date.getTime())) {
             return null;
         }
@@ -159,6 +166,11 @@ export class AccountMissionRewardService {
         };
     }
 
+    private isActiveStreakMission(mission: any) {
+        const status = String(mission?.status || "").toUpperCase();
+        return status !== "CLAIMED" && status !== "EXPIRED" && status !== "DISABLED";
+    }
+
     private async processMissionsAndRewards(
         accessToken: string,
         h: any,
@@ -168,12 +180,16 @@ export class AccountMissionRewardService {
             logMissionFetch?: boolean;
             logMissionDetail?: boolean;
             missionDetailPhase?: string;
+            includeStreak?: boolean;
+            includeRegular?: boolean;
         }
     ): Promise<{ missions: any[]; dailyClaimLimitReached: boolean; }> {
         try {
             const logMissionFetch = options?.logMissionFetch ?? true;
             const logMissionDetail = options?.logMissionDetail ?? true;
             const missionDetailPhase = options?.missionDetailPhase ?? null;
+            const includeStreak = options?.includeStreak ?? true;
+            const includeRegular = options?.includeRegular ?? true;
             const phone = String(ctx?.phone || "").trim().toLowerCase();
 
             const balanceRes = await MissionApiService.getPointBalance(accessToken, h, this.proxyAgent);
@@ -203,7 +219,7 @@ export class AccountMissionRewardService {
             }
 
             if (phone) {
-                this.actionRewardService.recordDailyPointBalance(phone, balanceData);
+                await this.actionRewardService.recordDailyPointBalance(phone, balanceData);
             }
 
             if (dailyClaimLimitReached) {
@@ -262,7 +278,9 @@ export class AccountMissionRewardService {
                 ctx,
                 doMission,
                 logMissionDetail,
-                dailyClaimLimitReached
+                dailyClaimLimitReached,
+                includeStreak,
+                includeRegular
             );
             return { missions: Array.isArray(missions) ? missions : [], dailyClaimLimitReached };
         } catch (e: any) {
@@ -278,9 +296,13 @@ export class AccountMissionRewardService {
         ctx: any,
         doMission: Function,
         logMissionDetail: boolean,
-        dailyClaimLimitReached: boolean
+        dailyClaimLimitReached: boolean,
+        includeStreak: boolean,
+        includeRegular: boolean
     ) {
         try {
+            const phone = String(ctx?.phone || "").trim().toLowerCase();
+
             for (const mission of missions) {
                 const missionId = mission.missionId || mission.id;
                 if (!missionId) continue;
@@ -300,11 +322,21 @@ export class AccountMissionRewardService {
                 }
 
                 if (this.isStreakMission(mission)) {
-                    const currentValue = mission.currentValue ?? 0;
-                    const nextMilestone = currentValue + 1;
-                    const streakClaimState = this.getStreakClaimState(mission);
+                    if (!includeStreak) {
+                        continue;
+                    }
 
-                    if (streakClaimState.canClaimToday) {
+                    const currentValue = mission.currentValue ?? 0;
+                    const numericCurrentValue = Number(currentValue || 0);
+                    const nextMilestone = numericCurrentValue + 1;
+                    const streakClaimState = this.getStreakClaimState(mission);
+                    const numericMissionId = Number(missionId);
+                    const activeStreakMission = this.isActiveStreakMission(mission);
+                    const locallyClaimedToday = phone
+                        ? await this.actionRewardService.hasStreakClaimedToday(phone, numericMissionId)
+                        : false;
+
+                    if (streakClaimState.canClaimToday && activeStreakMission && !locallyClaimedToday) {
                         this.logger.info("STREAK_MISSION_REWARD_CLAIM_REQUEST", {
                             ...ctx,
                             claimType: "STREAK",
@@ -317,13 +349,25 @@ export class AccountMissionRewardService {
                             lastClaimDateKey: streakClaimState.lastClaimDateKey,
                             timeZone: this.streakTimeZone
                         });
-                        await doMission(
+                        const claimResult = await doMission(
                             `ClaimStreak_${missionId}`,
                             () => MissionApiService.claimStreakMissionReward(accessToken, missionId, nextMilestone, h, this.proxyAgent),
                             ctx
                         );
+
+                        if (claimResult) {
+                            if (phone) {
+                                await this.actionRewardService.markStreakClaimed(phone, numericMissionId);
+                            }
+                        }
                     } else if (logMissionDetail) {
-                        this.logger.debug(`SKIP_STREAK_MISSION_${missionId}`, {
+                        this.logger.debug(
+                            locallyClaimedToday
+                                ? "STREAK_CLAIM_SKIPPED_ALREADY_CLAIMED_TODAY"
+                                : !activeStreakMission
+                                    ? "STREAK_CLAIM_SKIPPED_INACTIVE"
+                                    : `SKIP_STREAK_MISSION_${missionId}`,
+                            {
                             ...ctx,
                             name: mission.name || null,
                             type: mission.type || null,
@@ -336,15 +380,37 @@ export class AccountMissionRewardService {
                             lastStreakDate: mission.lastStreakDate ?? null,
                             lastClaimDateKey: streakClaimState.lastClaimDateKey,
                             todayKey: streakClaimState.todayKey,
-                            timeZone: this.streakTimeZone
-                        });
+                            timeZone: this.streakTimeZone,
+                            activeStreakMission,
+                            locallyClaimedToday
+                            }
+                        );
                     }
+                    continue;
+                }
+
+                if (!includeRegular) {
                     continue;
                 }
 
                 if (this.actionRewardService.isClaimableRegularMission(mission)) {
                     const category = this.actionRewardService.getMissionActionCategory(mission);
                     const scope = this.actionRewardService.inferMissionScope(mission);
+                    const numericMissionId = Number(missionId);
+                    const failureField = category
+                        ? `regular:${scope}:${category}:${numericMissionId}`
+                        : "";
+
+                    if (phone && failureField && await this.actionRewardService.hasClaimFailure(phone, failureField)) {
+                        this.logger.info("AUTO_MISSION_REWARD_CLAIM_FAILED_CACHED", {
+                            ...ctx,
+                            category,
+                            scope,
+                            missionId,
+                            status: mission.status || null
+                        });
+                        continue;
+                    }
 
                     this.logger.info("MISSION_REWARD_CLAIM_REQUEST", {
                         ...ctx,
@@ -360,20 +426,29 @@ export class AccountMissionRewardService {
                         tv: mission.targetValue ?? 0
                     });
 
-                    await doMission(
+                    const claimResult = await doMission(
                         `ClaimMission_${scope}_${missionId}`,
                         () => MissionApiService.claimMissionReward(accessToken, Number(missionId), h, this.proxyAgent),
                         ctx
                     );
 
-                    const phone = String(ctx?.phone || "").trim().toLowerCase();
-                    if (phone && category) {
-                        this.actionRewardService.markActionRewardClaimed(
-                            phone,
+                    if (claimResult) {
+                        if (phone && category) {
+                            await this.actionRewardService.markActionRewardClaimed(
+                                phone,
+                                category,
+                                scope as ActionRewardScope,
+                                Number(mission?.targetValue || 0)
+                            );
+                        }
+                    } else if (phone && failureField) {
+                        await this.actionRewardService.recordClaimFailure(phone, failureField, {
+                            claimType: "REGULAR",
+                            missionId: numericMissionId,
                             category,
-                            scope as ActionRewardScope,
-                            Number(mission?.targetValue || 0)
-                        );
+                            scope,
+                            status: mission.status || null
+                        });
                     }
                     continue;
                 }
@@ -391,6 +466,21 @@ export class AccountMissionRewardService {
             }
         } catch (e: any) {
             this.logger.error("CLAIM_ALL_MISSIONS_ERROR", { ...ctx, err: e.message || String(e) });
+            throw e;
+        }
+    }
+
+    async handleStreakClaiming(accessToken: string, h: any, ctx: any, doMission: Function) {
+        try {
+            return await this.processMissionsAndRewards(accessToken, h, ctx, doMission, {
+                logMissionFetch: true,
+                logMissionDetail: true,
+                missionDetailPhase: "STREAK",
+                includeStreak: true,
+                includeRegular: false
+            });
+        } catch (e: any) {
+            this.logger.error("HANDLE_STREAK_CLAIMING_ERROR", { ...ctx, err: e.message || String(e) });
             throw e;
         }
     }

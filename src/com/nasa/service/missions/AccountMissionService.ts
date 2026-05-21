@@ -31,8 +31,12 @@ export class AccountMissionService {
         return this.actionRewardService.handleActionRewardClaim(accessToken, h, ctx, doMission, category);
     }
 
-    getCachedDailyPointSummary(phone: string, now = new Date()) {
+    async getCachedDailyPointSummary(phone: string, now = new Date()) {
         return this.actionRewardService.getCachedDailyPointSummary(phone, now);
+    }
+
+    async getActionRewardPlan(accessToken: string, h: any, ctx: any, category: ActionRewardCategory) {
+        return this.actionRewardService.getActionRewardPlan(accessToken, h, ctx, category);
     }
 
     async handleProfileAndSocial(accessToken: string, h: any, ctx: any, doMission: Function) {
@@ -48,6 +52,10 @@ export class AccountMissionService {
 
     async handleRewardClaiming(accessToken: string, h: any, ctx: any, doMission: Function) {
         return this.missionRewardService.handleRewardClaiming(accessToken, h, ctx, doMission);
+    }
+
+    async handleStreakClaiming(accessToken: string, h: any, ctx: any, doMission: Function) {
+        return this.missionRewardService.handleStreakClaiming(accessToken, h, ctx, doMission);
     }
 
     async handleActivityGeneration(accessToken: string, h: any, ctx: any, doMission: Function) {

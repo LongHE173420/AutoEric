@@ -113,6 +113,21 @@ class PostService {
             const missionSvc = new AccountMissionService_1.AccountMissionService(this.logger, this.proxyAgent);
             const phone = String(this.acc.phone || "").trim();
             const maxVideoAttempts = 3;
+            const postPlan = await missionSvc.getActionRewardPlan(accessToken, h, ctx, "POST");
+            if (!postPlan.shouldDoAction) {
+                this.logger.info(postPlan.reason === "NO_DAILY_POINT"
+                    ? "ACTION_REWARD_ACTION_SKIPPED_NO_DAILY_POINT"
+                    : postPlan.reason === "ALL_SCOPES_CLAIMED"
+                        ? "ACTION_REWARD_ACTION_SKIPPED_ALL_SCOPES_CLAIMED"
+                        : "ACTION_REWARD_ACTION_SKIPPED_NO_ACTIVE_MISSION", {
+                    ...ctx,
+                    category: "POST",
+                    reason: postPlan.reason || null,
+                    activeScopes: postPlan.activeScopes,
+                    dailyPointState: postPlan.dailyPointState || null
+                });
+                return false;
+            }
             for (let attempt = 1; attempt <= maxVideoAttempts; attempt++) {
                 const video = await (0, mysqlStore_1.getNextVideoToPost)(phone).catch(() => null);
                 if (!video) {

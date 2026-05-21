@@ -247,7 +247,7 @@ export class EricWorker {
 
             if (!TEST_ONLY_POST) {
                 await this.runMissionStage("PROFILE_AND_SOCIAL", ctx, () => accountSvc.handleProfileAndSocial(accessToken, h, ctx, boundDoMission));
-                await this.runMissionStage("STREAK_CLAIMING", ctx, () => accountSvc.handleRewardClaiming(accessToken, h, ctx, boundDoMission));
+                await this.runMissionStage("STREAK_CLAIMING", ctx, () => accountSvc.handleStreakClaiming(accessToken, h, ctx, boundDoMission));
                 await this.runMissionStage("FEED_AND_INTERACT", ctx, () => interactSvc.handleFeedAndInteract(accessToken, h, ctx, boundDoMission));
             }
 
@@ -360,6 +360,25 @@ export class EricWorker {
         }
     }
 
+    private redactHeaders(headers: any) {
+        if (!headers || typeof headers !== "object") return headers;
+
+        const sensitiveHeaders = new Set([
+            "authorization",
+            "cookie",
+            "set-cookie",
+            "x-signature",
+            "x-api-key",
+        ]);
+
+        return Object.fromEntries(
+            Object.entries(headers).map(([key, value]) => [
+                key,
+                sensitiveHeaders.has(key.toLowerCase()) ? "[redacted]" : value,
+            ])
+        );
+    }
+
     private async doMission(name: string, action: () => Promise<any>, ctx: any) {
         try {
             const handleFailure = async (e: any) => {
@@ -376,16 +395,6 @@ export class EricWorker {
                 }
 
                 const url = e.config?.url;
-
-                if (url && url.includes('claim-streak-mission-reward')) {
-                    require('fs').appendFileSync('streak-trace.json', JSON.stringify({
-                        status,
-                        data: e.response?.data,
-                        headers: e.config?.headers,
-                        body: e.config?.data,
-                        sig: e.config?.headers?.['X-Signature']
-                    }, null, 2) + '\n\n');
-                }
 
                 if (status === 400 || status === 403 || status === 404 || status === 409) {
                     this.logger.warn(`MISSION_IGNORED (${status}): ${name}`, {

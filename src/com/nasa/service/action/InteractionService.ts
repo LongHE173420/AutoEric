@@ -6,6 +6,7 @@ import { OpenAiCommentService } from "../../api/openai/openAiCommentService";
 import { AccountMissionService } from "../missions/AccountMissionService";
 import { getSharedInteractionStateStore } from "../../storage/interactionStateStore";
 import { Log } from "../../utils/log";
+import { ENV } from "../../config/env";
 
 type AppLogger = ReturnType<typeof Log.getLogger>;
 
@@ -287,7 +288,6 @@ export class InteractionService {
             post?.description,
             post?.title,
             post?.message,
-            post?.status,
             post?.content?.text,
             post?.content?.caption,
             post?.content?.description
@@ -324,7 +324,13 @@ export class InteractionService {
             const generated = await OpenAiCommentService.generateComment(input);
 
             if (generated) {
-                this.logger.info("OPENAI_COMMENT_GENERATED", { ...ctx, length: generated.length, openAi: openAiDebug });
+                this.logger.info("OPENAI_COMMENT_GENERATED", {
+                    ...ctx,
+                    length: generated.length,
+                    postTextPreview: input.postText.slice(0, 160),
+                    commentPreview: generated,
+                    openAi: openAiDebug
+                });
                 return generated;
             }
 
@@ -351,7 +357,7 @@ export class InteractionService {
         try {
             const missionSvc = new AccountMissionService(this.logger, this.proxyAgent);
             const phone = String(ctx?.phone || this.currentPhone || "").trim().toLowerCase();
-            const cachedDailyPointState = phone ? missionSvc.getCachedDailyPointSummary(phone) : null;
+            const cachedDailyPointState = phone ? await missionSvc.getCachedDailyPointSummary(phone) : null;
             const lightFeedMode = Boolean(
                 cachedDailyPointState &&
                 cachedDailyPointState.dailyRemainingPoint !== null &&
@@ -371,7 +377,9 @@ export class InteractionService {
                 });
             }
 
-            const pagesToLoad = lightFeedMode ? 1 : 3;
+            const pagesToLoad = lightFeedMode
+                ? Math.max(1, Number(ENV.FEED_LIGHT_MODE_PAGES || 1))
+                : Math.max(1, Number(ENV.FEED_PAGES || 3));
             let allItems: any[] = [];
             let lastPostId = "";
             let lastCreatedAt = Date.now();
@@ -444,7 +452,7 @@ export class InteractionService {
             this.logger.info("DEBUG_FEEDHOME", { itemsLength: allItems.length, pagesScrolled: pagesToLoad });
 
             if (lightFeedMode) {
-                this.logger.info("FEED_LIGHT_MODE_DONE", {
+                this.logger.info("FEED_LIGHT_MODE_CONTINUE_FOR_WEEKLY_PROGRESS", {
                     ...ctx,
                     itemsLength: allItems.length,
                     pagesScrolled: pagesToLoad,
@@ -452,7 +460,6 @@ export class InteractionService {
                     dailyEarnedPoint: cachedDailyPointState?.dailyEarnedPoint,
                     dailyPointLimit: cachedDailyPointState?.dailyPointLimit
                 });
-                return;
             }
 
             if (allItems.length > 0) {
@@ -462,6 +469,33 @@ export class InteractionService {
                 const reactedPostIds = await this.getReactedPostIds();
                 const unseenItems = uniqueItems.filter((item) => !seenPostIds.has(String(item?.id || "")));
                 const interactItems = uniqueItems;
+                let reactionPlan = await missionSvc.getActionRewardPlan(accessToken, h, ctx, "REACTION");
+                let commentPlan = await missionSvc.getActionRewardPlan(accessToken, h, ctx, "COMMENT");
+                const maxReactionsPerRun = Math.max(0, Number(ENV.INTERACTION_MAX_REACTIONS_PER_RUN || 0));
+                const maxCommentsPerRun = Math.max(0, Number(ENV.INTERACTION_MAX_COMMENTS_PER_RUN || 0));
+                let reactionsDoneThisRun = 0;
+                let commentsDoneThisRun = 0;
+                let reactionSkipLogged = false;
+                let commentSkipLogged = false;
+                let reactionLimitLogged = false;
+                let commentLimitLogged = false;
+                let stopForDailyPoint = false;
+
+                const logActionSkip = (category: "REACTION" | "COMMENT", plan: any) => {
+                    const skipEvent = plan?.reason === "NO_DAILY_POINT"
+                        ? "ACTION_REWARD_ACTION_SKIPPED_NO_DAILY_POINT"
+                        : plan?.reason === "ALL_SCOPES_CLAIMED"
+                            ? "ACTION_REWARD_ACTION_SKIPPED_ALL_SCOPES_CLAIMED"
+                            : "ACTION_REWARD_ACTION_SKIPPED_NO_ACTIVE_MISSION";
+
+                    this.logger.info(skipEvent, {
+                        ...ctx,
+                        category,
+                        reason: plan?.reason || null,
+                        activeScopes: plan?.activeScopes || [],
+                        dailyPointState: plan?.dailyPointState || null
+                    });
+                };
 
                 this.logger.info("MISSION_ACTION_DEPENDENT_START", {
                     ...ctx,
@@ -469,7 +503,9 @@ export class InteractionService {
                     uniqueItemCount: uniqueItems.length,
                     unseenItemCount: unseenItems.length,
                     seenItemCount: seenPostIds.size,
-                    reactedPostCount: reactedPostIds.size
+                    reactedPostCount: reactedPostIds.size,
+                    maxReactionsPerRun,
+                    maxCommentsPerRun
                 });
 
                 if (interactItems.length === 0) {
@@ -482,6 +518,16 @@ export class InteractionService {
                 }
 
                 for (let i = 0; i < interactItems.length; i++) {
+                    const reactionLimitReached = reactionsDoneThisRun >= maxReactionsPerRun;
+                    const commentLimitReached = commentsDoneThisRun >= maxCommentsPerRun;
+
+                    if (
+                        stopForDailyPoint ||
+                        ((!reactionPlan.shouldDoAction || reactionLimitReached) && (!commentPlan.shouldDoAction || commentLimitReached))
+                    ) {
+                        break;
+                    }
+
                     const post = interactItems[i];
                     const postId = post.id;
                     const authorId = this.extractPostAuthorId(post);
@@ -491,7 +537,22 @@ export class InteractionService {
                     const alreadyCommented = commentedPostIds.has(String(postId));
                     const postText = this.extractPostText(post);
 
-                    if (alreadyReacted) {
+                    if (!reactionPlan.shouldDoAction) {
+                        if (!reactionSkipLogged) {
+                            reactionSkipLogged = true;
+                            logActionSkip("REACTION", reactionPlan);
+                        }
+                    } else if (reactionLimitReached) {
+                        if (!reactionLimitLogged) {
+                            reactionLimitLogged = true;
+                            this.logger.info("ACTION_REWARD_ACTION_SKIPPED_RUN_LIMIT", {
+                                ...ctx,
+                                category: "REACTION",
+                                done: reactionsDoneThisRun,
+                                limit: maxReactionsPerRun
+                            });
+                        }
+                    } else if (alreadyReacted) {
                         this.logger.info("SKIP_REACTION_ALREADY_REACTED", { ...ctx, postId: String(postId) });
                     } else if (isOwnPost) {
                         this.logger.info("SKIP_REACTION_OWN_POST", { ...ctx, postId: String(postId), authorId });
@@ -500,12 +561,37 @@ export class InteractionService {
                         const reactionCtx = { ...ctx, postId: String(postId), reactionType: rType };
                         this.logger.info("REACTION_SELECTED", reactionCtx);
                         await doMission(`PostReaction_${postId}`, () => ReactionApiService.sendReaction(accessToken, postId, rType, h, this.proxyAgent), reactionCtx);
-                        await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "REACTION");
+                        const rewardResult = await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "REACTION");
                         reactedPostIds.add(String(postId));
+                        reactionsDoneThisRun++;
                         await this.saveReactedPostIds(reactedPostIds);
+
+                        if (rewardResult.dailyPointExhausted) {
+                            stopForDailyPoint = true;
+                            break;
+                        }
+
+                        if (rewardResult.planChanged || rewardResult.claimedAny) {
+                            reactionPlan = await missionSvc.getActionRewardPlan(accessToken, h, ctx, "REACTION");
+                        }
                     }
 
-                    if (alreadyCommented) {
+                    if (!commentPlan.shouldDoAction) {
+                        if (!commentSkipLogged) {
+                            commentSkipLogged = true;
+                            logActionSkip("COMMENT", commentPlan);
+                        }
+                    } else if (commentLimitReached) {
+                        if (!commentLimitLogged) {
+                            commentLimitLogged = true;
+                            this.logger.info("ACTION_REWARD_ACTION_SKIPPED_RUN_LIMIT", {
+                                ...ctx,
+                                category: "COMMENT",
+                                done: commentsDoneThisRun,
+                                limit: maxCommentsPerRun
+                            });
+                        }
+                    } else if (alreadyCommented) {
                         this.logger.info("SKIP_COMMENT_ALREADY_COMMENTED", { ...ctx, postId: String(postId) });
                     } else if (isOwnPost) {
                         this.logger.info("SKIP_COMMENT_OWN_POST", { ...ctx, postId: String(postId), authorId });
@@ -538,8 +624,18 @@ export class InteractionService {
                             ctx
                         );
                         commentedPostIds.add(String(postId));
+                        commentsDoneThisRun++;
                         await this.saveCommentedPostIds(commentedPostIds);
-                        await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "COMMENT");
+                        const rewardResult = await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "COMMENT");
+
+                        if (rewardResult.dailyPointExhausted) {
+                            stopForDailyPoint = true;
+                            break;
+                        }
+
+                        if (rewardResult.planChanged || rewardResult.claimedAny) {
+                            commentPlan = await missionSvc.getActionRewardPlan(accessToken, h, ctx, "COMMENT");
+                        }
                     }
 
                     seenPostIds.add(String(postId));

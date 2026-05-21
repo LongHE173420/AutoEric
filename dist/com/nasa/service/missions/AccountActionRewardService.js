@@ -2,12 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountActionRewardService = void 0;
 const missionApiService_1 = require("../../api/missions/missionApiService");
-const asyncStore_1 = require("../../storage/asyncStore");
+const actionRewardStateStore_1 = require("../../storage/actionRewardStateStore");
 class AccountActionRewardService {
     constructor(logger, proxyAgent) {
         this.logger = logger;
         this.proxyAgent = proxyAgent;
         this.timeZone = "Asia/Ho_Chi_Minh";
+        this.stateStore = (0, actionRewardStateStore_1.getSharedActionRewardStateStore)();
     }
     normalizeSearchText(value) {
         return String(value || "")
@@ -70,18 +71,11 @@ class AccountActionRewardService {
     getDailyPointStateStoreKey(phone) {
         return `dailyPointState:${String(phone || "").trim().toLowerCase()}`;
     }
-    getDailyPointState(phone, now = new Date()) {
+    async getDailyPointState(phone, now = new Date()) {
         const dayKey = this.getDateKeyInTimeZone(now) || this.normalizeSearchText(now.toISOString().slice(0, 10));
-        const stored = asyncStore_1.AsyncStore.getItem(this.getDailyPointStateStoreKey(phone));
-        if (!stored || stored.dayKey !== dayKey) {
-            return null;
-        }
-        return stored;
+        return await this.stateStore.getDailyPointState(phone, dayKey);
     }
-    saveDailyPointState(phone, state) {
-        asyncStore_1.AsyncStore.setItem(this.getDailyPointStateStoreKey(phone), state);
-    }
-    recordDailyPointBalance(phone, balanceData, now = new Date()) {
+    async recordDailyPointBalance(phone, balanceData, now = new Date()) {
         const dayKey = this.getDateKeyInTimeZone(now) || this.normalizeSearchText(now.toISOString().slice(0, 10));
         const dailyRemainingPointRaw = balanceData?.dailyRemainingPoint ?? balanceData?.remainingPoint;
         const dailyEarnedPointRaw = balanceData?.dailyEarnedPoint ?? null;
@@ -102,28 +96,16 @@ class AccountActionRewardService {
             dailyEarnedPoint,
             dailyPointLimit
         };
-        this.saveDailyPointState(phone, state);
+        await this.stateStore.setDailyPointState(phone, state);
         return state;
     }
-    getCachedDailyPointSummary(phone, now = new Date()) {
-        const state = this.getDailyPointState(phone, now);
+    async getCachedDailyPointSummary(phone, now = new Date()) {
+        const state = await this.getDailyPointState(phone, now);
         return state ? { ...state } : null;
     }
-    consumeCachedDailyPoint(phone, now = new Date()) {
-        const current = this.getDailyPointState(phone, now);
-        if (!current)
-            return null;
-        const next = {
-            ...current,
-            dailyRemainingPoint: current.dailyRemainingPoint === null
-                ? null
-                : Math.max(0, current.dailyRemainingPoint - 1),
-            dailyEarnedPoint: current.dailyEarnedPoint === null
-                ? null
-                : current.dailyEarnedPoint + 1
-        };
-        this.saveDailyPointState(phone, next);
-        return next;
+    async consumeCachedDailyPoint(phone, now = new Date()) {
+        const dayKey = this.getDateKeyInTimeZone(now) || this.normalizeSearchText(now.toISOString().slice(0, 10));
+        return await this.stateStore.consumeDailyPoint(phone, dayKey);
     }
     getDailyActionRewardField(category) {
         switch (category) {
@@ -214,42 +196,37 @@ class AccountActionRewardService {
             weeklyCommentProgress: 0
         };
     }
-    getActionRewardCounters(phone, now = new Date()) {
+    async getActionRewardCounters(phone, now = new Date()) {
         const dayKey = this.getDateKeyInTimeZone(now) || this.normalizeSearchText(now.toISOString().slice(0, 10));
         const weekKey = this.getWeekKeyInTimeZone(now) || dayKey;
-        const key = this.getActionRewardStoreKey(phone);
-        const stored = asyncStore_1.AsyncStore.getItem(key);
-        if (!stored) {
-            return this.getDefaultActionRewardCounters(dayKey, weekKey);
-        }
-        const sameDay = stored.dayKey === dayKey;
-        const sameWeek = stored.weekKey === weekKey;
+        const dailyRecord = await this.stateStore.getActionRewardRecord(phone, "DAILY", dayKey);
+        const weeklyRecord = await this.stateStore.getActionRewardRecord(phone, "WEEKLY", weekKey);
         return {
             dayKey,
             weekKey,
-            reaction: sameDay ? Number(stored.reaction || 0) : 0,
-            friend: sameDay ? Number(stored.friend || 0) : 0,
-            post: sameDay ? Number(stored.post || 0) : 0,
-            comment: sameDay ? Number(stored.comment || 0) : 0,
-            reactionProgress: sameDay ? Number(stored.reactionProgress || 0) : 0,
-            friendProgress: sameDay ? Number(stored.friendProgress || 0) : 0,
-            postProgress: sameDay ? Number(stored.postProgress || 0) : 0,
-            commentProgress: sameDay ? Number(stored.commentProgress || 0) : 0,
-            weeklyReaction: sameWeek ? Number(stored.weeklyReaction || 0) : 0,
-            weeklyFriend: sameWeek ? Number(stored.weeklyFriend || 0) : 0,
-            weeklyPost: sameWeek ? Number(stored.weeklyPost || 0) : 0,
-            weeklyComment: sameWeek ? Number(stored.weeklyComment || 0) : 0,
-            weeklyReactionProgress: sameWeek ? Number(stored.weeklyReactionProgress || 0) : 0,
-            weeklyFriendProgress: sameWeek ? Number(stored.weeklyFriendProgress || 0) : 0,
-            weeklyPostProgress: sameWeek ? Number(stored.weeklyPostProgress || 0) : 0,
-            weeklyCommentProgress: sameWeek ? Number(stored.weeklyCommentProgress || 0) : 0
+            reaction: Number(dailyRecord.reaction || 0),
+            friend: Number(dailyRecord.friend || 0),
+            post: Number(dailyRecord.post || 0),
+            comment: Number(dailyRecord.comment || 0),
+            reactionProgress: Number(dailyRecord.reactionProgress || 0),
+            friendProgress: Number(dailyRecord.friendProgress || 0),
+            postProgress: Number(dailyRecord.postProgress || 0),
+            commentProgress: Number(dailyRecord.commentProgress || 0),
+            weeklyReaction: Number(weeklyRecord.weeklyReaction || 0),
+            weeklyFriend: Number(weeklyRecord.weeklyFriend || 0),
+            weeklyPost: Number(weeklyRecord.weeklyPost || 0),
+            weeklyComment: Number(weeklyRecord.weeklyComment || 0),
+            weeklyReactionProgress: Number(weeklyRecord.weeklyReactionProgress || 0),
+            weeklyFriendProgress: Number(weeklyRecord.weeklyFriendProgress || 0),
+            weeklyPostProgress: Number(weeklyRecord.weeklyPostProgress || 0),
+            weeklyCommentProgress: Number(weeklyRecord.weeklyCommentProgress || 0)
         };
     }
-    saveActionRewardCounters(phone, counters) {
-        asyncStore_1.AsyncStore.setItem(this.getActionRewardStoreKey(phone), counters);
+    async canClaimActionReward(phone, category, scope, now = new Date()) {
+        const counters = await this.getActionRewardCounters(phone, now);
+        return this.getActionRewardQuotaFromCounters(counters, category, scope);
     }
-    canClaimActionReward(phone, category, scope, now = new Date()) {
-        const counters = this.getActionRewardCounters(phone, now);
+    getActionRewardQuotaFromCounters(counters, category, scope) {
         const limit = this.getActionRewardLimit(category, scope);
         const field = this.getActionRewardField(category, scope);
         const used = Number(counters[field] || 0);
@@ -261,28 +238,35 @@ class AccountActionRewardService {
             allowed: used < limit
         };
     }
-    markActionRewardProgress(phone, category, now = new Date()) {
-        const counters = this.getActionRewardCounters(phone, now);
+    async markActionRewardProgress(phone, category, now = new Date()) {
+        const counters = await this.getActionRewardCounters(phone, now);
         const dailyProgressField = this.getActionRewardProgressField(category, "DAILY");
         const weeklyProgressField = this.getActionRewardProgressField(category, "WEEKLY");
-        counters[dailyProgressField] = Number(counters[dailyProgressField] || 0) + 1;
-        counters[weeklyProgressField] = Number(counters[weeklyProgressField] || 0) + 1;
-        this.saveActionRewardCounters(phone, counters);
+        const [dailyProgress, weeklyProgress] = await Promise.all([
+            this.stateStore.incrementActionRewardProgress(phone, "DAILY", counters.dayKey, dailyProgressField),
+            this.stateStore.incrementActionRewardProgress(phone, "WEEKLY", counters.weekKey, weeklyProgressField)
+        ]);
+        const nextCounters = {
+            ...counters,
+            [dailyProgressField]: Number(dailyProgress || 0),
+            [weeklyProgressField]: Number(weeklyProgress || 0)
+        };
         return {
-            counters,
-            dailyProgress: Number(counters[dailyProgressField] || 0),
-            weeklyProgress: Number(counters[weeklyProgressField] || 0)
+            counters: nextCounters,
+            dailyProgress: Number(nextCounters[dailyProgressField] || 0),
+            weeklyProgress: Number(nextCounters[weeklyProgressField] || 0)
         };
     }
-    markActionRewardClaimed(phone, category, scope, target, now = new Date()) {
-        const counters = this.getActionRewardCounters(phone, now);
+    async markActionRewardClaimed(phone, category, scope, target, now = new Date()) {
+        const counters = await this.getActionRewardCounters(phone, now);
         const field = this.getActionRewardField(category, scope);
-        const progressField = this.getActionRewardProgressField(category, scope);
-        counters[field] = Number(counters[field] || 0) + 1;
-        counters[progressField] = Math.max(0, Number(counters[progressField] || 0) - target);
-        this.saveActionRewardCounters(phone, counters);
-        this.consumeCachedDailyPoint(phone, now);
-        return counters;
+        const periodKey = scope === "WEEKLY" ? counters.weekKey : counters.dayKey;
+        const used = await this.stateStore.incrementActionRewardClaimed(phone, scope, periodKey, field);
+        await this.consumeCachedDailyPoint(phone, now);
+        return {
+            ...counters,
+            [field]: Number(used || 0)
+        };
     }
     isClaimableRegularMission(mission) {
         if (!mission || this.isStreakMission(mission))
@@ -367,6 +351,102 @@ class AccountActionRewardService {
             claimable: this.isClaimableRegularMission(mission)
         }));
     }
+    getActionRewardProgressValue(counters, category, scope) {
+        const field = this.getActionRewardProgressField(category, scope);
+        return Number(counters[field] || 0);
+    }
+    getRegularClaimFailureField(category, scope, missionId) {
+        return `regular:${scope}:${category}:${missionId}`;
+    }
+    getStreakClaimFailureField(missionId) {
+        return `streak:${missionId}`;
+    }
+    async hasClaimFailure(phone, failureField, now = new Date()) {
+        const dayKey = this.getDateKeyInTimeZone(now) || this.normalizeSearchText(now.toISOString().slice(0, 10));
+        return await this.stateStore.hasClaimFailure(phone, dayKey, failureField);
+    }
+    async recordClaimFailure(phone, failureField, detail, now = new Date()) {
+        const dayKey = this.getDateKeyInTimeZone(now) || this.normalizeSearchText(now.toISOString().slice(0, 10));
+        await this.stateStore.recordClaimFailure(phone, dayKey, failureField, detail);
+    }
+    async hasStreakClaimedToday(phone, missionId, now = new Date()) {
+        const dayKey = this.getDateKeyInTimeZone(now) || this.normalizeSearchText(now.toISOString().slice(0, 10));
+        const record = await this.stateStore.getStreakClaim(phone, dayKey);
+        const claimed = Number(record?.claimed || 0) > 0;
+        if (!claimed)
+            return false;
+        return !missionId || Number(record?.missionId || 0) === Number(missionId);
+    }
+    async markStreakClaimed(phone, missionId, now = new Date()) {
+        const dayKey = this.getDateKeyInTimeZone(now) || this.normalizeSearchText(now.toISOString().slice(0, 10));
+        await this.stateStore.setStreakClaim(phone, dayKey, missionId);
+        await this.consumeCachedDailyPoint(phone, now);
+    }
+    async getOrFetchDailyPointState(accessToken, h, phone) {
+        const cached = await this.getDailyPointState(phone);
+        if (cached)
+            return cached;
+        const balanceRes = await missionApiService_1.MissionApiService.getPointBalance(accessToken, h, this.proxyAgent);
+        const balanceData = balanceRes.data?.data || balanceRes.data || {};
+        return await this.recordDailyPointBalance(phone, balanceData);
+    }
+    async getActionRewardPlan(accessToken, h, ctx, category) {
+        const phone = String(ctx?.phone || "").trim().toLowerCase();
+        if (!phone) {
+            return { shouldDoAction: false, reason: "NO_ACTIVE_MISSION", activeScopes: [] };
+        }
+        const dailyPointState = await this.getOrFetchDailyPointState(accessToken, h, phone);
+        const dailyPointExhausted = dailyPointState.dailyRemainingPoint !== null && dailyPointState.dailyRemainingPoint <= 0;
+        const res = await missionApiService_1.MissionApiService.getCurrentUserMissions(accessToken, h, this.proxyAgent);
+        const missions = Array.isArray(res.data?.data || res.data) ? (res.data?.data || res.data) : [];
+        const counters = await this.getActionRewardCounters(phone);
+        const activeScopes = [];
+        let sawCandidate = false;
+        for (const scope of ["DAILY", "WEEKLY"]) {
+            if (dailyPointExhausted && scope === "DAILY") {
+                continue;
+            }
+            const candidate = this.findActionRewardMission(missions, category, scope);
+            if (!candidate)
+                continue;
+            sawCandidate = true;
+            const missionId = Number(candidate?.missionId || candidate?.id || 0);
+            const status = String(candidate?.status || "").toUpperCase();
+            if (!missionId || status === "CLAIMED" || status === "EXPIRED" || status === "DISABLED") {
+                continue;
+            }
+            const quota = this.getActionRewardQuotaFromCounters(counters, category, scope);
+            if (!quota.allowed) {
+                continue;
+            }
+            const failureField = this.getRegularClaimFailureField(category, scope, missionId);
+            if (await this.hasClaimFailure(phone, failureField)) {
+                continue;
+            }
+            const targetValue = Number(candidate?.targetValue || 0);
+            const localProgress = this.getActionRewardProgressValue(counters, category, scope);
+            const serverClaimable = this.isClaimableRegularMission(candidate);
+            const readyByLocal = targetValue > 0 && localProgress >= targetValue;
+            if (!serverClaimable && !readyByLocal) {
+                activeScopes.push(scope);
+            }
+        }
+        if (activeScopes.length === 0) {
+            return {
+                shouldDoAction: false,
+                reason: sawCandidate ? "ALL_SCOPES_CLAIMED" : "NO_ACTIVE_MISSION",
+                activeScopes,
+                dailyPointState,
+                dailyPointExhausted
+            };
+        }
+        return {
+            shouldDoAction: true,
+            activeScopes,
+            dailyPointState,
+            dailyPointExhausted
+        };
+    }
     async claimRegularMission(mission, accessToken, h, ctx, doMission, category, scope) {
         const missionId = Number(mission?.missionId || mission?.id || 0);
         if (!missionId)
@@ -388,12 +468,13 @@ class AccountActionRewardService {
         return result !== null;
     }
     async handleActionRewardClaim(accessToken, h, ctx, doMission, category) {
+        const emptyResult = { claimedAny: false, dailyPointExhausted: false };
         try {
             const phone = String(ctx?.phone || "").trim().toLowerCase();
             if (!phone)
-                return false;
-            this.markActionRewardProgress(phone, category);
-            const cachedDailyPointState = this.getDailyPointState(phone);
+                return emptyResult;
+            const progress = await this.markActionRewardProgress(phone, category);
+            const cachedDailyPointState = await this.getDailyPointState(phone);
             if (cachedDailyPointState && cachedDailyPointState.dailyRemainingPoint !== null && cachedDailyPointState.dailyRemainingPoint <= 0) {
                 this.logger.info("AUTO_MISSION_REWARD_SKIPPED_CACHED_NO_DAILY_POINT", {
                     ...ctx,
@@ -403,9 +484,11 @@ class AccountActionRewardService {
                     dailyPointLimit: cachedDailyPointState.dailyPointLimit,
                     dayKey: cachedDailyPointState.dayKey
                 });
-                return false;
+                return { claimedAny: false, dailyPointExhausted: false, planChanged: true };
             }
             let claimedAny = false;
+            let dailyPointExhausted = false;
+            let planChanged = false;
             const lastCandidates = {};
             const res = await missionApiService_1.MissionApiService.getCurrentUserMissions(accessToken, h, this.proxyAgent);
             const missions = Array.isArray(res.data?.data || res.data) ? (res.data?.data || res.data) : [];
@@ -436,7 +519,7 @@ class AccountActionRewardService {
                 if (missionStatus === "CLAIMED" || missionStatus === "EXPIRED" || missionStatus === "DISABLED") {
                     continue;
                 }
-                const quota = this.canClaimActionReward(phone, category, scope);
+                const quota = this.getActionRewardQuotaFromCounters(progress.counters, category, scope);
                 if (!quota.allowed) {
                     this.logger.info("AUTO_MISSION_REWARD_LIMIT_REACHED", {
                         ...ctx,
@@ -449,11 +532,41 @@ class AccountActionRewardService {
                     });
                     continue;
                 }
+                const targetValue = Number(candidate?.targetValue || 0);
+                const localProgress = this.getActionRewardProgressValue(progress.counters, category, scope);
+                const serverClaimable = this.isClaimableRegularMission(candidate);
+                const readyByLocal = targetValue > 0 && localProgress >= targetValue;
+                if (!serverClaimable && !readyByLocal) {
+                    this.logger.info("AUTO_MISSION_REWARD_NOT_READY", {
+                        ...ctx,
+                        category,
+                        scope,
+                        missionId,
+                        status: missionStatus,
+                        currentValue: candidate?.currentValue ?? null,
+                        targetValue: candidate?.targetValue ?? null,
+                        localProgress,
+                        serverClaimable
+                    });
+                    continue;
+                }
+                const failureField = this.getRegularClaimFailureField(category, scope, Number(missionId));
+                if (await this.hasClaimFailure(phone, failureField)) {
+                    this.logger.info("AUTO_MISSION_REWARD_CLAIM_FAILED_CACHED", {
+                        ...ctx,
+                        category,
+                        scope,
+                        missionId,
+                        status: missionStatus
+                    });
+                    continue;
+                }
                 const balanceRes = await missionApiService_1.MissionApiService.getPointBalance(accessToken, h, this.proxyAgent);
                 const balanceData = balanceRes.data?.data || balanceRes.data || {};
-                const dailyPointState = this.recordDailyPointBalance(phone, balanceData);
+                const dailyPointState = await this.recordDailyPointBalance(phone, balanceData);
                 const dailyRemainingPoint = Number(dailyPointState.dailyRemainingPoint ?? 0);
                 if (dailyRemainingPoint <= 0) {
+                    dailyPointExhausted = true;
                     this.logger.info("AUTO_MISSION_REWARD_SKIPPED_NO_DAILY_POINT", {
                         ...ctx,
                         category,
@@ -471,14 +584,23 @@ class AccountActionRewardService {
                     status: missionStatus,
                     currentValue: candidate?.currentValue ?? null,
                     targetValue: candidate?.targetValue ?? null,
+                    localProgress,
+                    serverClaimable,
                     dailyRemainingPoint
                 });
                 const claimed = await this.claimRegularMission(candidate, accessToken, h, ctx, doMission, category, scope);
                 if (!claimed) {
+                    await this.recordClaimFailure(phone, failureField, {
+                        category,
+                        scope,
+                        missionId,
+                        status: missionStatus
+                    });
+                    planChanged = true;
                     continue;
                 }
                 const target = Number(candidate?.targetValue || 0);
-                const claimedCounters = this.markActionRewardClaimed(phone, category, scope, target);
+                const claimedCounters = await this.markActionRewardClaimed(phone, category, scope, target);
                 this.logger.info("AUTO_MISSION_REWARD_CLAIMED", {
                     ...ctx,
                     category,
@@ -488,6 +610,20 @@ class AccountActionRewardService {
                     counters: claimedCounters
                 });
                 claimedAny = true;
+                planChanged = true;
+                const pointAfterClaim = await this.getDailyPointState(phone);
+                if (pointAfterClaim && pointAfterClaim.dailyRemainingPoint !== null && Number(pointAfterClaim.dailyRemainingPoint) <= 0) {
+                    dailyPointExhausted = true;
+                    this.logger.info("AUTO_MISSION_REWARD_STOP_DAILY_POINT_EXHAUSTED", {
+                        ...ctx,
+                        category,
+                        scope,
+                        missionId,
+                        dailyRemainingPoint: pointAfterClaim.dailyRemainingPoint,
+                        dailyEarnedPoint: pointAfterClaim.dailyEarnedPoint,
+                        dailyPointLimit: pointAfterClaim.dailyPointLimit
+                    });
+                }
             }
             if (Object.keys(lastCandidates).length === 0) {
                 this.logger.info("AUTO_MISSION_REWARD_NO_CANDIDATE", {
@@ -496,7 +632,7 @@ class AccountActionRewardService {
                     totalMissions: missions.length
                 });
             }
-            return claimedAny;
+            return { claimedAny, dailyPointExhausted, planChanged };
         }
         catch (e) {
             this.logger.error("HANDLE_ACTION_REWARD_CLAIM_ERROR", {
@@ -504,7 +640,7 @@ class AccountActionRewardService {
                 category,
                 err: e.message || String(e)
             });
-            return false;
+            return emptyResult;
         }
     }
 }

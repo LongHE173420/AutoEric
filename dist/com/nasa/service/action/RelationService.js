@@ -41,6 +41,21 @@ class RelationService {
                     }
                 }
             }
+            const friendPlan = await missionSvc.getActionRewardPlan(accessToken, h, ctx, "FRIEND");
+            if (!friendPlan.shouldDoAction) {
+                this.logger.info(friendPlan.reason === "NO_DAILY_POINT"
+                    ? "ACTION_REWARD_ACTION_SKIPPED_NO_DAILY_POINT"
+                    : friendPlan.reason === "ALL_SCOPES_CLAIMED"
+                        ? "ACTION_REWARD_ACTION_SKIPPED_ALL_SCOPES_CLAIMED"
+                        : "ACTION_REWARD_ACTION_SKIPPED_NO_ACTIVE_MISSION", {
+                    ...ctx,
+                    category: "FRIEND",
+                    reason: friendPlan.reason || null,
+                    activeScopes: friendPlan.activeScopes,
+                    dailyPointState: friendPlan.dailyPointState || null
+                });
+                return;
+            }
             let targetUsers = [];
             await (0, mysqlStore_1.getUsersForFriendRequest)(this.currentPhone, 3).then(users => {
                 targetUsers = users;
