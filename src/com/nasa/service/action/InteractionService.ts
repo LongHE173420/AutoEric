@@ -1,8 +1,6 @@
 import { FeedApiService } from "../../api/feed/feedApiService";
 import { SurfApiService } from "../../api/surf/surfApiService";
 import { ReactionApiService } from "../../api/reaction/reactionApiService";
-import { CommentApiService } from "../../api/comment/commentApiService";
-import { OpenAiCommentService } from "../../api/openai/openAiCommentService";
 import { AccountMissionService } from "../missions/AccountMissionService";
 import { getSharedInteractionStateStore } from "../../storage/interactionStateStore";
 import { Log } from "../../utils/log";
@@ -25,17 +23,12 @@ export class InteractionService {
         return `interactedPosts:${String(this.currentPhone || "").trim().toLowerCase()}`;
     }
 
-    private getCommentedPostStoreKey() {
-        return `commentedPosts:${String(this.currentPhone || "").trim().toLowerCase()}`;
-    }
-
     private getReactedPostStoreKey() {
         return `reactedPosts:${String(this.currentPhone || "").trim().toLowerCase()}`;
     }
 
     private getStoreTypeFromKey(storeKey: string) {
         if (storeKey.startsWith("reactedPosts:")) return "reactedPosts";
-        if (storeKey.startsWith("commentedPosts:")) return "commentedPosts";
         if (storeKey.startsWith("interactedPosts:")) return "interactedPosts";
         return "unknown";
     }
@@ -76,32 +69,6 @@ export class InteractionService {
             this.logRedisStoreOperation("INTERACTION_REDIS_SAVE", key, snapshot.length);
         } catch (e: any) {
             this.logger.warn("SAVE_SEEN_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
-        }
-    }
-
-    private async getCommentedPostIds(): Promise<Set<string>> {
-        try {
-            const key = this.getCommentedPostStoreKey();
-            const values = await this.interactionStore.loadIds(key, {
-                legacyKeys: [this.getInteractionStoreKey()],
-                limit: 500
-            });
-            this.logRedisStoreOperation("INTERACTION_REDIS_LOAD", key, values.size);
-            return values;
-        } catch (e: any) {
-            this.logger.warn("LOAD_COMMENTED_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
-            return new Set();
-        }
-    }
-
-    private async saveCommentedPostIds(values: Iterable<string>) {
-        try {
-            const key = this.getCommentedPostStoreKey();
-            const snapshot = Array.from(values);
-            await this.interactionStore.saveIds(key, snapshot, { limit: 500 });
-            this.logRedisStoreOperation("INTERACTION_REDIS_SAVE", key, snapshot.length);
-        } catch (e: any) {
-            this.logger.warn("SAVE_COMMENTED_POST_IDS_FAILED", { phone: this.currentPhone, err: e.message || String(e) });
         }
     }
 
@@ -312,47 +279,6 @@ export class InteractionService {
         return this.sanitizePostText(rawContent).slice(0, 700);
     }
 
-    private async generateCommentForPost(input: { postText: string; authorName?: string; }, ctx: any) {
-        const openAiDebug = OpenAiCommentService.getDebugInfo();
-
-        if (!OpenAiCommentService.isEnabled()) {
-            this.logger.warn("OPENAI_COMMENT_DISABLED", { ...ctx, reason: "OPENAI_API_KEY_EMPTY", openAi: openAiDebug });
-            return null;
-        }
-
-        try {
-            const generated = await OpenAiCommentService.generateComment(input);
-
-            if (generated) {
-                this.logger.info("OPENAI_COMMENT_GENERATED", {
-                    ...ctx,
-                    length: generated.length,
-                    postTextPreview: input.postText.slice(0, 160),
-                    commentPreview: generated,
-                    openAi: openAiDebug
-                });
-                return generated;
-            }
-
-            this.logger.warn("OPENAI_COMMENT_EMPTY_RESPONSE", {
-                ...ctx,
-                openAi: openAiDebug,
-                responseMeta: OpenAiCommentService.getLastResponseMeta()
-            });
-        } catch (e: any) {
-            this.logger.warn("OPENAI_COMMENT_GENERATION_FAILED", {
-                ...ctx,
-                err: e.message || String(e),
-                status: e.response?.status,
-                responseData: e.response?.data,
-                openAi: openAiDebug,
-                responseMeta: OpenAiCommentService.getLastResponseMeta()
-            });
-        }
-
-        return null;
-    }
-
     async handleFeedAndInteract(accessToken: string, h: any, ctx: any, doMission: Function) {
         try {
             const missionSvc = new AccountMissionService(this.logger, this.proxyAgent);
@@ -465,23 +391,17 @@ export class InteractionService {
             if (allItems.length > 0) {
                 const uniqueItems = Array.from(new Map(allItems.map(i => [i.id, i])).values());
                 const seenPostIds = await this.getSeenPostIds();
-                const commentedPostIds = await this.getCommentedPostIds();
                 const reactedPostIds = await this.getReactedPostIds();
                 const unseenItems = uniqueItems.filter((item) => !seenPostIds.has(String(item?.id || "")));
                 const interactItems = uniqueItems;
                 let reactionPlan = await missionSvc.getActionRewardPlan(accessToken, h, ctx, "REACTION");
-                let commentPlan = await missionSvc.getActionRewardPlan(accessToken, h, ctx, "COMMENT");
                 const maxReactionsPerRun = Math.max(0, Number(ENV.INTERACTION_MAX_REACTIONS_PER_RUN || 0));
-                const maxCommentsPerRun = Math.max(0, Number(ENV.INTERACTION_MAX_COMMENTS_PER_RUN || 0));
                 let reactionsDoneThisRun = 0;
-                let commentsDoneThisRun = 0;
                 let reactionSkipLogged = false;
-                let commentSkipLogged = false;
                 let reactionLimitLogged = false;
-                let commentLimitLogged = false;
                 let stopForDailyPoint = false;
 
-                const logActionSkip = (category: "REACTION" | "COMMENT", plan: any) => {
+                const logActionSkip = (category: "REACTION", plan: any) => {
                     const skipEvent = plan?.reason === "NO_DAILY_POINT"
                         ? "ACTION_REWARD_ACTION_SKIPPED_NO_DAILY_POINT"
                         : plan?.reason === "ALL_SCOPES_CLAIMED"
@@ -504,8 +424,7 @@ export class InteractionService {
                     unseenItemCount: unseenItems.length,
                     seenItemCount: seenPostIds.size,
                     reactedPostCount: reactedPostIds.size,
-                    maxReactionsPerRun,
-                    maxCommentsPerRun
+                    maxReactionsPerRun
                 });
 
                 if (interactItems.length === 0) {
@@ -519,11 +438,10 @@ export class InteractionService {
 
                 for (let i = 0; i < interactItems.length; i++) {
                     const reactionLimitReached = reactionsDoneThisRun >= maxReactionsPerRun;
-                    const commentLimitReached = commentsDoneThisRun >= maxCommentsPerRun;
 
                     if (
                         stopForDailyPoint ||
-                        ((!reactionPlan.shouldDoAction || reactionLimitReached) && (!commentPlan.shouldDoAction || commentLimitReached))
+                        (!reactionPlan.shouldDoAction || reactionLimitReached)
                     ) {
                         break;
                     }
@@ -534,8 +452,6 @@ export class InteractionService {
                     const currentUserId = this.normalizeId(this.currentUserId);
                     const isOwnPost = Boolean(authorId && currentUserId && authorId === currentUserId);
                     const alreadyReacted = reactedPostIds.has(String(postId));
-                    const alreadyCommented = commentedPostIds.has(String(postId));
-                    const postText = this.extractPostText(post);
 
                     if (!reactionPlan.shouldDoAction) {
                         if (!reactionSkipLogged) {
@@ -576,73 +492,10 @@ export class InteractionService {
                         }
                     }
 
-                    if (!commentPlan.shouldDoAction) {
-                        if (!commentSkipLogged) {
-                            commentSkipLogged = true;
-                            logActionSkip("COMMENT", commentPlan);
-                        }
-                    } else if (commentLimitReached) {
-                        if (!commentLimitLogged) {
-                            commentLimitLogged = true;
-                            this.logger.info("ACTION_REWARD_ACTION_SKIPPED_RUN_LIMIT", {
-                                ...ctx,
-                                category: "COMMENT",
-                                done: commentsDoneThisRun,
-                                limit: maxCommentsPerRun
-                            });
-                        }
-                    } else if (alreadyCommented) {
-                        this.logger.info("SKIP_COMMENT_ALREADY_COMMENTED", { ...ctx, postId: String(postId) });
-                    } else if (isOwnPost) {
-                        this.logger.info("SKIP_COMMENT_OWN_POST", { ...ctx, postId: String(postId), authorId });
-                    } else if (!postText) {
-                        this.logger.info("SKIP_COMMENT_NO_CONTENT", { ...ctx, postId: String(postId) });
-                    } else {
-                        const commentText = await this.generateCommentForPost({
-                            postText,
-                            authorName: this.extractPostAuthorName(post)
-                        }, {
-                            ...ctx,
-                            postId: String(postId)
-                        });
-
-                        if (!commentText) {
-                            this.logger.warn("SKIP_COMMENT_NO_OPENAI_OUTPUT", { ...ctx, postId: String(postId) });
-                            continue;
-                        }
-
-                        await doMission(
-                            `PostComment_${postId}`,
-                            () => CommentApiService.createComment(accessToken, {
-                                postId: String(postId),
-                                parentId: "",
-                                level: "LEVEL_1",
-                                content: commentText,
-                                mentions: "",
-                                media: ""
-                            }, h, this.proxyAgent),
-                            ctx
-                        );
-                        commentedPostIds.add(String(postId));
-                        commentsDoneThisRun++;
-                        await this.saveCommentedPostIds(commentedPostIds);
-                        const rewardResult = await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "COMMENT");
-
-                        if (rewardResult.dailyPointExhausted) {
-                            stopForDailyPoint = true;
-                            break;
-                        }
-
-                        if (rewardResult.planChanged || rewardResult.claimedAny) {
-                            commentPlan = await missionSvc.getActionRewardPlan(accessToken, h, ctx, "COMMENT");
-                        }
-                    }
-
                     seenPostIds.add(String(postId));
                 }
 
                 await this.saveSeenPostIds(seenPostIds);
-                await this.saveCommentedPostIds(commentedPostIds);
                 await this.saveReactedPostIds(reactedPostIds);
             }
         } catch (e: any) {

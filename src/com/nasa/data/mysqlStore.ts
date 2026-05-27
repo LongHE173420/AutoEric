@@ -1,5 +1,4 @@
 import mysql from "mysql2/promise";
-import { randomUUID } from "crypto";
 import * as fs from "fs";
 import { ENV } from "../config/env";
 
@@ -39,36 +38,16 @@ const MAX_POSTS_PER_VIDEO = 1;
 
 async function resetQueuedVideoState(conn: mysql.Connection, videoId: number) {
     await conn.execute(
-        `UPDATE crawled_videos
+        `UPDATE crawled_videos1
          SET local_path = NULL,
-             downloaded = 0,
-             claim_token = NULL,
-             claim_by = NULL,
-             claim_expires_at = NULL
+             downloaded = 0
          WHERE id = ?`,
         [videoId]
     );
 }
 
 export async function releaseVideoReservation(videoId?: number | null, claimToken?: string | null) {
-    if (typeof videoId !== "number" || !Number.isFinite(videoId) || !claimToken) {
-        return;
-    }
-
-    const conn = await getConnection();
-    try {
-        await conn.execute(
-            `UPDATE crawled_videos
-             SET claim_token = NULL,
-                 claim_by = NULL,
-                 claim_expires_at = NULL
-             WHERE id = ?
-               AND claim_token = ?`,
-            [videoId, claimToken]
-        );
-    } finally {
-        await conn.end();
-    }
+    return;
 }
 
 export async function getAccountsBatchFromDb(lastSeenId: number, limit: number): Promise<any[]> {
@@ -76,6 +55,7 @@ export async function getAccountsBatchFromDb(lastSeenId: number, limit: number):
     try {
         const today = getLocalDateString();
         const maxDailyRuns = Math.max(1, ENV.ACCOUNT_DAILY_RUN_LIMIT);
+        const safeLastSeenId = Number.isFinite(Number(lastSeenId)) ? Number(lastSeenId) : 0;
         const [rows] = await connection.execute(
             `
             SELECT
@@ -100,7 +80,7 @@ export async function getAccountsBatchFromDb(lastSeenId: number, limit: number):
                 END AS daily_surf_count,
                 daily_limit_date,
                 last_run_date
-            FROM users
+            FROM user1
             WHERE id > ?
               AND (
                     daily_limit_date IS NULL
@@ -114,7 +94,7 @@ export async function getAccountsBatchFromDb(lastSeenId: number, limit: number):
                 today,
                 today,
                 today,
-                Math.max(0, Number(lastSeenId) || 0),
+                safeLastSeenId,
                 today,
                 maxDailyRuns,
                 Math.max(1, Number(limit) || 1)
@@ -129,7 +109,7 @@ export async function getAccountsBatchFromDb(lastSeenId: number, limit: number):
 export async function saveAppUserId(phone: string, appUserId: string) {
     const connection = await getConnection();
     try {
-        await connection.execute("UPDATE users SET app_user_id = ? WHERE phone = ?", [appUserId, phone]);
+        await connection.execute("UPDATE user1 SET app_user_id = ? WHERE phone = ?", [appUserId, phone]);
     } catch (e: any) {
         console.error("Failed to save app_user_id for", phone, e.message);
     } finally {
@@ -143,7 +123,7 @@ export async function getUsersForFriendRequest(currentPhone: string, limit: numb
         const [rows] = await connection.execute(
             `
             SELECT phone, app_user_id
-            FROM users
+            FROM user1
             WHERE app_user_id IS NOT NULL
               AND phone != ?
               AND phone NOT IN (
@@ -182,7 +162,7 @@ export async function recordFriendRequest(senderPhone: string, receiverPhone: st
 export async function saveTokensToDb(phone: string, accessToken: string, refreshToken: string) {
     const connection = await getConnection();
     try {
-        await connection.execute("UPDATE users SET accessToken = ?, refreshToken = ? WHERE phone = ?", [accessToken, refreshToken, phone]);
+        await connection.execute("UPDATE user1 SET accessToken = ?, refreshToken = ? WHERE phone = ?", [accessToken, refreshToken, phone]);
     } finally {
         await connection.end();
     }
@@ -195,7 +175,7 @@ export async function recordRunInDb(phone: string) {
         const maxDailyRuns = Math.max(1, ENV.ACCOUNT_DAILY_RUN_LIMIT);
         await connection.execute(
             `
-            UPDATE users
+            UPDATE user1
             SET
                 daily_run_count = CASE
                     WHEN daily_limit_date = ? THEN LEAST(?, COALESCE(daily_run_count, 0) + 1)
@@ -230,7 +210,7 @@ export async function recordDailyPublishInDb(phone: string, type: "post" | "surf
         const maxDailySurfs = Math.max(0, ENV.ACCOUNT_DAILY_SURF_LIMIT);
         await connection.execute(
             `
-            UPDATE users
+            UPDATE user1
             SET
                 daily_run_count = CASE
                     WHEN daily_limit_date = ? THEN COALESCE(daily_run_count, 0)
@@ -282,7 +262,7 @@ export async function recordDailyPublishInDb(phone: string, type: "post" | "surf
                     ELSE 0
                 END AS daily_surf_count,
                 daily_limit_date
-            FROM users
+            FROM user1
             WHERE phone = ?
             LIMIT 1
             `,
@@ -305,26 +285,19 @@ export async function getNextVideoToPost(accountPhone: string): Promise<{
     local_path: string;
     caption: string;
     hashtags: string;
-    claimToken: string;
+    claimToken?: string;
 } | null> {
     const conn = await getConnection();
     try {
-        const now = Date.now();
-        const claimExpiresAt = now + Math.max(30_000, ENV.VIDEO_CLAIM_TTL_MS);
         const [rows]: any = await conn.execute(
             `SELECT v.id, v.source_url, v.video_url, v.local_path, v.caption, v.hashtags
-             FROM crawled_videos v
+             FROM crawled_videos1 v
              WHERE v.downloaded = 1
                AND v.local_path IS NOT NULL
                AND COALESCE(v.post_count, 0) < ?
-               AND (v.claim_expires_at IS NULL OR v.claim_expires_at < ?)
-               AND NOT EXISTS (
-                 SELECT 1 FROM video_post_log l
-                 WHERE l.video_id = v.id AND l.account_phone = ?
-               )
              ORDER BY v.created_at ASC
              LIMIT 20`,
-            [MAX_POSTS_PER_VIDEO, now, accountPhone]
+            [MAX_POSTS_PER_VIDEO]
         );
         if (!rows || rows.length === 0) {
             return null;
@@ -342,23 +315,7 @@ export async function getNextVideoToPost(accountPhone: string): Promise<{
                 continue;
             }
 
-            const claimToken = randomUUID();
-            const [claimRes]: any = await conn.execute(
-                `UPDATE crawled_videos
-                 SET claim_token = ?,
-                     claim_by = ?,
-                     claim_expires_at = ?
-                 WHERE id = ?
-                   AND downloaded = 1
-                   AND local_path IS NOT NULL
-                   AND COALESCE(post_count, 0) < ?
-                   AND (claim_expires_at IS NULL OR claim_expires_at < ?)`,
-                [claimToken, accountPhone, claimExpiresAt, videoId, MAX_POSTS_PER_VIDEO, now]
-            );
-
-            if (Number(claimRes?.affectedRows || 0) > 0) {
-                return { ...row, claimToken };
-            }
+            return { ...row };
         }
 
         return null;
@@ -376,36 +333,28 @@ export async function markVideoPosted(
     try {
         await conn.beginTransaction();
 
-        if (claimToken) {
-            const [claimRows]: any = await conn.execute(
-                `SELECT id
-                 FROM crawled_videos
-                 WHERE id = ?
-                   AND claim_token = ?
-                 FOR UPDATE`,
-                [videoId, claimToken]
-            );
-
-            if (!Array.isArray(claimRows) || claimRows.length === 0) {
-                await conn.rollback();
-                return { localPath: null, fullyPosted: false };
-            }
-        }
-
-        const [insertRes]: any = await conn.execute(
-            `INSERT IGNORE INTO video_post_log (video_id, account_phone) VALUES (?, ?)`,
-            [videoId, accountPhone]
+        const [lockedRows]: any = await conn.execute(
+            `SELECT id
+             FROM crawled_videos1
+             WHERE id = ?
+             FOR UPDATE`,
+            [videoId]
         );
-        const inserted = Number(insertRes?.affectedRows || 0) > 0;
-        if (inserted) {
-            await conn.execute(
-                `UPDATE crawled_videos SET post_count = COALESCE(post_count, 0) + 1 WHERE id = ?`,
-                [videoId]
-            );
+
+        if (!Array.isArray(lockedRows) || lockedRows.length === 0) {
+            await conn.rollback();
+            return { localPath: null, fullyPosted: false };
         }
+
+        await conn.execute(
+            `UPDATE crawled_videos1
+             SET post_count = GREATEST(COALESCE(post_count, 0), ?)
+             WHERE id = ?`,
+            [MAX_POSTS_PER_VIDEO, videoId]
+        );
 
         const [rows]: any = await conn.execute(
-            `SELECT local_path, post_count FROM crawled_videos WHERE id = ?`,
+            `SELECT local_path, post_count FROM crawled_videos1 WHERE id = ?`,
             [videoId]
         );
         const row = rows?.[0];
@@ -413,17 +362,12 @@ export async function markVideoPosted(
 
         await conn.execute(
             fullyPosted && row?.local_path
-                ? `UPDATE crawled_videos
+                ? `UPDATE crawled_videos1
                    SET local_path = NULL,
-                       downloaded = 0,
-                       claim_token = NULL,
-                       claim_by = NULL,
-                       claim_expires_at = NULL
+                       downloaded = 0
                    WHERE id = ?`
-                : `UPDATE crawled_videos
-                   SET claim_token = NULL,
-                       claim_by = NULL,
-                       claim_expires_at = NULL
+                : `UPDATE crawled_videos1
+                   SET downloaded = downloaded
                    WHERE id = ?`,
             [videoId]
         );
@@ -448,7 +392,7 @@ export async function syncQueuedVideosWithLocalFiles(limit: number = 200): Promi
         const safeLimit = Math.max(1, Math.min(1000, Number(limit) || 200));
         const [rows]: any = await conn.execute(
             `SELECT id, local_path
-             FROM crawled_videos
+             FROM crawled_videos1
              WHERE downloaded = 1
                AND local_path IS NOT NULL
                AND COALESCE(post_count, 0) < ?
@@ -485,15 +429,11 @@ export async function deleteVideoFromQueue(videoId: number, claimToken?: string 
     const conn = await getConnection();
     try {
         await conn.execute(
-            `UPDATE crawled_videos
+            `UPDATE crawled_videos1
              SET local_path = NULL,
-                 downloaded = 0,
-                 claim_token = NULL,
-                 claim_by = NULL,
-                 claim_expires_at = NULL
-             WHERE id = ?
-               AND (? IS NULL OR claim_token = ?)`,
-            [videoId, claimToken ?? null, claimToken ?? null]
+                 downloaded = 0
+             WHERE id = ?`,
+            [videoId]
         );
     } finally {
         await conn.end();
@@ -506,7 +446,7 @@ export async function updateFriendRequestStatus(senderId: string, receiverPhone:
         await connection.execute(
             `
             UPDATE friend f
-            INNER JOIN users u ON u.phone = f.sender_phone
+            INNER JOIN user1 u ON u.phone = f.sender_phone
             SET f.status = ?
             WHERE f.receiver_phone = ? AND u.app_user_id = ?
             `,

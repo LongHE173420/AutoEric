@@ -229,13 +229,40 @@ class SurfService {
                         });
                         const completeSurfResponse = await surfApiService_1.SurfApiService.completeSurf(accessToken, completePayload, h, this.proxyAgent);
                         this.logger.info("SURF_COMPLETE_RESPONSE", { ...ctx, surfId: String(surfId), responseData: completeSurfResponse?.data, status: completeSurfResponse?.status });
-                        const posted = await (0, mysqlStore_1.markVideoPosted)(video.id, phone, video.claimToken).catch(() => null);
+                        const posted = await (0, mysqlStore_1.markVideoPosted)(video.id, phone, video.claimToken).catch((err) => {
+                            this.logger.error("MARK_SURF_VIDEO_POSTED_FAILED", {
+                                ...ctx,
+                                videoId: video.id,
+                                err: err?.message || String(err)
+                            });
+                            return null;
+                        });
                         if (posted?.fullyPosted && posted.localPath && fs.existsSync(posted.localPath)) {
                             try {
-                                fs.unlinkSync(posted.localPath);
-                                this.logger.info("SOURCE_SURF_VIDEO_DELETED_AFTER_POST", { videoId: video.id });
+                                fs.rmSync(posted.localPath, { force: true });
+                                const existsAfterDelete = fs.existsSync(posted.localPath);
+                                this.logger.info("SOURCE_SURF_VIDEO_DELETED_AFTER_POST", {
+                                    ...ctx,
+                                    videoId: video.id,
+                                    localPath: posted.localPath,
+                                    existsAfterDelete
+                                });
+                                if (existsAfterDelete) {
+                                    this.logger.warn("SOURCE_SURF_VIDEO_STILL_EXISTS_AFTER_DELETE", {
+                                        ...ctx,
+                                        videoId: video.id,
+                                        localPath: posted.localPath
+                                    });
+                                }
                             }
-                            catch (e) { }
+                            catch (err) {
+                                this.logger.warn("SOURCE_SURF_VIDEO_DELETE_FAILED_AFTER_POST", {
+                                    ...ctx,
+                                    videoId: video.id,
+                                    localPath: posted.localPath,
+                                    err: err?.message || String(err)
+                                });
+                            }
                         }
                         return { action: "success", data: completeSurfResponse };
                     }, ctx).catch(handleVideoFailure);

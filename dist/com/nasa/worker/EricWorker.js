@@ -212,20 +212,27 @@ class EricWorker {
                 if (runDecision.postJitterMs > 0) {
                     await (0, async_1.sleep)(runDecision.postJitterMs);
                 }
-                const postCounters = await (0, mysqlStore_1.recordDailyPublishInDb)(String(this.acc.phone || this.acc.username || "").trim(), "post");
-                await this.plannerStateStore.recordActionRun(runDecision.dayKey, String(this.acc.phone || this.acc.username || "").trim(), "post", runDecision.runIndex).catch(() => { });
-                this.logger.info("ACCOUNT_DAILY_POST_ATTEMPT_RECORDED", {
-                    ...ctx,
-                    runIndex: runDecision.runIndex,
-                    postsDone: Number(postCounters?.daily_post_count || 0),
-                    surfsDone: Number(postCounters?.daily_surf_count || 0),
-                    postLimit: env_1.ENV.ACCOUNT_DAILY_POST_LIMIT
-                });
                 const posted = await this.runMissionStage("CREATE_VIDEO_POST", ctx, () => postSvc.handleAutoCreatePost(accessToken, h, ctx, boundDoMission));
                 if (posted) {
+                    const postCounters = await (0, mysqlStore_1.recordDailyPublishInDb)(String(this.acc.phone || this.acc.username || "").trim(), "post");
+                    await this.plannerStateStore.recordActionRun(runDecision.dayKey, String(this.acc.phone || this.acc.username || "").trim(), "post", runDecision.runIndex).catch(() => { });
+                    this.logger.info("ACCOUNT_DAILY_POST_PUBLISH_RECORDED", {
+                        ...ctx,
+                        runIndex: runDecision.runIndex,
+                        postsDone: Number(postCounters?.daily_post_count || 0),
+                        surfsDone: Number(postCounters?.daily_surf_count || 0),
+                        postLimit: env_1.ENV.ACCOUNT_DAILY_POST_LIMIT
+                    });
                     this.logger.info("ACCOUNT_DAILY_POST_ATTEMPT_SUCCEEDED", {
                         ...ctx,
                         runIndex: runDecision.runIndex
+                    });
+                }
+                else {
+                    this.logger.info("ACCOUNT_DAILY_POST_ATTEMPT_NOT_RECORDED", {
+                        ...ctx,
+                        runIndex: runDecision.runIndex,
+                        reason: "POST_NOT_PUBLISHED"
                     });
                 }
             }

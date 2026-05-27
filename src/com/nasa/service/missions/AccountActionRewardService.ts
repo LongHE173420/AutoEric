@@ -556,7 +556,7 @@ export class AccountActionRewardService {
             const serverClaimable = this.isClaimableRegularMission(candidate);
             const readyByLocal = targetValue > 0 && localProgress >= targetValue;
 
-            if (!serverClaimable && !readyByLocal) {
+            if (!readyByLocal) {
                 activeScopes.push(scope);
             }
         }
@@ -698,7 +698,7 @@ export class AccountActionRewardService {
                 const serverClaimable = this.isClaimableRegularMission(candidate);
                 const readyByLocal = targetValue > 0 && localProgress >= targetValue;
 
-                if (!serverClaimable && !readyByLocal) {
+                if (!readyByLocal) {
                     this.logger.info("AUTO_MISSION_REWARD_NOT_READY", {
                         ...ctx,
                         category,

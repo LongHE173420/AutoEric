@@ -190,9 +190,9 @@
     "weeklyPostProgress": 0,
     "weeklyCommentProgress": 30
   },
-  "refresh:trongphuong318@proton.me": "eyJraWQiOiJmMThkZjA4MS1mYWI4LTRhYmItODkwMy01YzA2ZWM1MTMwYzIiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0cm9uZ3BodW9uZy4xNzc5MDk3MjA2OTQxNjQ5NzI2IiwiY2xpZW50VHlwZSI6Im1vYmlsZSIsInJvbGVzIjpbIlVTRVIiXSwiaXAiOiIxMC4yMDAuMi4yIiwiaXNzIjoiYXV0aC1zZXJ2aWNlIiwiaWQiOjMxNDY5ODY1ODIzNjk5MzUzNiwiZXhwIjoxNzc5NzY1MzkzLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3OTE1ODc5MywiZGV2aWNlSWQiOiJBN0MyRDlFMS00QjhGLTRDNkEtOUUzRC0yRjFCN0E1QzhEOTAifQ.OsjaFJVizONzllLtRRkbhyjllgctqd-Ccc_Y7RiYzS7UeGwhFfc_9uu_xZFth_1XLcyQDIRPdtOpleKQS2fIfV8Lsk1gLW07FCJjhZ9wCcAxtWPWk8WnnbPOAv9kMlgqcEd9UCfRoEP8naluoyrqlCi39emRMy1mrXwiZ6K_ZYeVdWGy7EvZdyb7c0GavPybNhEgHnmRLKpIZmE-LRd88QtsTC0Il9Lw5fPIweNCCMUiNTJWqUMuVFlT_02YunmGXjlegY8ANu2u2S_-6WinpRGCnCLq2oFhAO882q6hNtnq7CjZuU5u2xhzM8Fa0rlJOdVnM9qYdNtO8NJ-c1kUcA",
+  "refresh:trongphuong318@proton.me": "eyJraWQiOiJmMThkZjA4MS1mYWI4LTRhYmItODkwMy01YzA2ZWM1MTMwYzIiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0cm9uZ3BodW9uZy4xNzc5MDk3MjA2OTQxNjQ5NzI2IiwiY2xpZW50VHlwZSI6Im1vYmlsZSIsInJvbGVzIjpbIlVTRVIiXSwiaXAiOiIxMC4yMDAuMi4yIiwiaXNzIjoiYXV0aC1zZXJ2aWNlIiwiaWQiOjMxNDY5ODY1ODIzNjk5MzUzNiwiZXhwIjoxNzc5NzY0ODI2LCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3OTE1ODIyNiwiZGV2aWNlSWQiOiJBN0MyRDlFMS00QjhGLTRDNkEtOUUzRC0yRjFCN0E1QzhEOTAifQ.dgXaHUAyiC6Y9yVKthxXdEGLvriGDTPGA9FbCuBM-tFIXXSriyT0OeiMCjqn3Ar6MAwyyoPCEXzO7FU6ki_N8sTan5B70VN2tRzWhBwPR7rUnrBgya_Ed8lRuYWX0_M24oJ3nxiYW-1yUVwYTjwn9Pgzzgxqg-dA1CB10bTC8bKC9cISyuy1yu6fHQ2ylevxZd0jyYSXEQT6DfKSHdcDpz_DnU0teOt7MpeeNQvC_XbxlmmC-6SsfBC1sqvsfw5sjQPFgt2b9TYAlm-E5webTmxJVnU5rAZ4euTw3nv7jdYpOp2tkuEKw6Gr9j1u7l1S1YicY1fhzUYnm3LR421l2A",
   "meta:trongphuong318@proton.me": {
-    "savedAt": 1779158793878,
+    "savedAt": 1779158226350,
     "deviceId": "A7C2D9E1-4B8F-4C6A-9E3D-2F1B7A5C8D90",
     "userAgent": "ERIC/1.0.0 (Android; 14; Samsung Galaxy S24 Ultra)"
   },
@@ -208,10 +208,36 @@
     "deviceId": "1A3E5F9C-2B8D-470A-A1F3-8C2E4D9B6A1F",
     "userAgent": "ERIC/1.2.0 (Android; 13; Oppo Find X6)"
   },
-  "refresh:nguyennam8386@proton.me": "eyJraWQiOiI5YTgyOWNjYS02NzM3LTQyZmYtOTZiZS0zMGQ3YmQyM2Y3MWQiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJuYW1uZ3V5ZW4uMTc3NzM5MjQwMDk1MzE2MDQ4MyIsImNsaWVudFR5cGUiOiJtb2JpbGUiLCJyb2xlcyI6WyJVU0VSIl0sImlwIjoiMTAuMjAwLjIuMiIsImlzcyI6ImF1dGgtc2VydmljZSIsImlkIjozMDc1NDgxODM2NTgxMDY4ODAsImV4cCI6MTc3OTkzNzkzMywidHlwZSI6InJlZnJlc2giLCJpYXQiOjE3NzkzMzEzMzMsImRldmljZUlkIjoiNUU5QTNDN0QtMkYxQi00QTZFLThDM0QtMUI3RjJBOUU1Qzc3In0.S7WDwNDxIUMge81318nWESNMbBpL5ZeaTIY--VN3AKoleI97V5_6U5wUw2V8PK_jnwD336NOpXwjNPyfBWSyPf-4fcw3yaAM19lKr1LnSCfllmfOC4I8_x8iayncuudjuN8ke6Wq6PHlh_PpDkaPy6_kx7jrKO-viI9-mAYuW43mqmVn9Vq4eF2Z022hgY5PhoaOZLWhaBPFSwAnqq2a2NaeN4d1TetwCiq21IX944tDCl5JiKvpv7C6O8EL1uJCdIqx7OO6de-1W4XmyJEHy9kKEWaoIxm1wwDLOG8dc-zTOkaOR2Dg5UUOeEpUJFJRHAjjAmbBaXYgTFjYKf_J9A",
-  "meta:nguyennam8386@proton.me": {
-    "savedAt": 1779331600798,
-    "deviceId": "5E9A3C7D-2F1B-4A6E-8C3D-1B7F2A9E5C77",
+  "actionRewardCounters:trongphuong318@proton.me": {
+    "dayKey": "2026-05-18",
+    "weekKey": "2026-05-18",
+    "reaction": 0,
+    "friend": 0,
+    "post": 0,
+    "comment": 0,
+    "reactionProgress": 21,
+    "friendProgress": 0,
+    "postProgress": 0,
+    "commentProgress": 20,
+    "weeklyReaction": 0,
+    "weeklyFriend": 0,
+    "weeklyPost": 0,
+    "weeklyComment": 0,
+    "weeklyReactionProgress": 21,
+    "weeklyFriendProgress": 0,
+    "weeklyPostProgress": 0,
+    "weeklyCommentProgress": 20
+  },
+  "refresh:trongphuong@proton.me": "eyJraWQiOiIyODliN2NmNi1hZGEyLTQ2ZmQtYTliZC05MWY3Zjk0ZmIxZGMiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0cm9uZ3BodW9uZy4xNzc5MTg1NTg1MjQ3NTg2OTMzIiwiY2xpZW50VHlwZSI6Im1vYmlsZSIsInJvbGVzIjpbIlVTRVIiXSwiaXAiOiIxMC4yMDAuMi4yIiwiaXNzIjoiYXV0aC1zZXJ2aWNlIiwiaWQiOjMxNTA2OTM0MzcyMzU1Njg2NCwiZXhwIjoxNzgwMzA1ODA2LCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3OTY5OTIwNiwiZGV2aWNlSWQiOiJGOUEzQzdFMi0xQjVELTRBMkMtOEY2RS05RDNCNEExQzVGMkQifQ.donx0eQ1OK3oYmVH7RAVNkIbymWI1I67Giud62wba0VOKsphbtD8WwxIdBHRJBuf-t_7a0zzLzdAfUhNF4EcJmzl49VSvSgsUGS4igS8nrnrMwsG_LxfI--pnDt3BWYcTArd0BI5O9CYXYYy9DOP5xyHuvCd0KIimPeJNAXqtwdlGdtHvcDg1_ANZZlv1WhWvvhcwWNHkHSr4x6EmSQ5sK0juWg0irpP8dPlkIu2JeeV1nZEobJk6j6PbHpG1p9rI2Y-gximq__2QZ9OAXKsPPRlE3j9OH-G6HiSR04eRAPi0s48w08WnQs5YRVGaPYo8qLB9nKH_545o7OVy8r6vg",
+  "meta:trongphuong@proton.me": {
+    "savedAt": 1779699797186,
+    "deviceId": "F9A3C7E2-1B5D-4A2C-8F6E-9D3B4A1C5F2D",
+    "userAgent": "ERIC/1.0.0 (Android; 14; Samsung Galaxy S24 Ultra)"
+  },
+  "refresh:trongphuong@protontechnologies.uk": "eyJraWQiOiIyODliN2NmNi1hZGEyLTQ2ZmQtYTliZC05MWY3Zjk0ZmIxZGMiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJuZ3V5ZW50cm9uZ3BodW9uZy4xNzc5Njk1MTg3NTkyNDczNzU4IiwiY2xpZW50VHlwZSI6Im1vYmlsZSIsInJvbGVzIjpbIlVTRVIiXSwiaXAiOiIxMC4yMDAuMi4yIiwiaXNzIjoiYXV0aC1zZXJ2aWNlIiwiaWQiOjMxNzIwNjc3MDg2OTIxMTEzNiwiZXhwIjoxNzgwMzA4NzcxLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3OTcwMjE3MSwiZGV2aWNlSWQiOiIzQThGMkU0RC03QzFCLTQ1QTktODJGMy02RDFBOUI0QzVFN0YifQ.MT3qLvQJgqwk39SY2P-3fyc_L3RCo4AvJeaRIWyGWTvuxOBTW5tp4ZqodWvPI1efw-WoyViRD7AkhtPnQvSL5L_ktpN1fE3N4rahiaE6RdOFuso0qijvxVcBIAYPcyST0Smqwy4Q7RgpolBVRdFba3K0tzj0IF5jas4encq3T75vnP3fEiKaztfwS0iq_0oINYU19R5kLUDcjbiJ-6I5VU-1trLEW0oYdDZmcdUuUGyTdTNSuH4tozvQ4m_CIHHaaXVw4peP1oETgs8yPWyitjh5izhdEhNZ0GXV101v8mVQbIa1cbnCydTyNz_fBHx4jBPuENrSovS3XTFjdIx_BA",
+  "meta:trongphuong@protontechnologies.uk": {
+    "savedAt": 1779702171763,
+    "deviceId": "3A8F2E4D-7C1B-45A9-82F3-6D1A9B4C5E7F",
     "userAgent": "ERIC/1.0.0 (Android; 14; Samsung Galaxy S24 Ultra)"
   }
 }

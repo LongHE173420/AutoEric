@@ -427,7 +427,7 @@ class AccountActionRewardService {
             const localProgress = this.getActionRewardProgressValue(counters, category, scope);
             const serverClaimable = this.isClaimableRegularMission(candidate);
             const readyByLocal = targetValue > 0 && localProgress >= targetValue;
-            if (!serverClaimable && !readyByLocal) {
+            if (!readyByLocal) {
                 activeScopes.push(scope);
             }
         }
@@ -536,7 +536,7 @@ class AccountActionRewardService {
                 const localProgress = this.getActionRewardProgressValue(progress.counters, category, scope);
                 const serverClaimable = this.isClaimableRegularMission(candidate);
                 const readyByLocal = targetValue > 0 && localProgress >= targetValue;
-                if (!serverClaimable && !readyByLocal) {
+                if (!readyByLocal) {
                     this.logger.info("AUTO_MISSION_REWARD_NOT_READY", {
                         ...ctx,
                         category,

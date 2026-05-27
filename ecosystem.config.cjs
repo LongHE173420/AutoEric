@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "auto-eric",
+      name: "auto-eric-1",
       cwd: __dirname,
       script: "dist/index.js",
       exec_mode: "fork",

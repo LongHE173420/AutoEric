@@ -299,15 +299,57 @@ class PostService {
                         postId: String(postId),
                         videoFileName: uploadedVideoFileName
                     });
-                    await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "POST");
-                    const posted = await (0, mysqlStore_1.markVideoPosted)(video.id, phone, video.claimToken).catch(() => null);
-                    if (posted?.fullyPosted && posted.localPath && fs.existsSync(posted.localPath)) {
+                    const posted = await (0, mysqlStore_1.markVideoPosted)(video.id, phone, video.claimToken).catch((err) => {
+                        this.logger.error("MARK_VIDEO_POSTED_FAILED", {
+                            ...ctx,
+                            videoId: video.id,
+                            err: err?.message || String(err)
+                        });
+                        return null;
+                    });
+                    const postedLocalExists = !!(posted?.localPath && fs.existsSync(posted.localPath));
+                    this.logger.info("MARK_VIDEO_POSTED_RESULT", {
+                        ...ctx,
+                        videoId: video.id,
+                        fullyPosted: !!posted?.fullyPosted,
+                        localPath: posted?.localPath || null,
+                        localExists: postedLocalExists
+                    });
+                    if (posted?.fullyPosted && posted.localPath && postedLocalExists) {
                         try {
-                            fs.unlinkSync(posted.localPath);
-                            this.logger.info("SOURCE_VIDEO_DELETED_AFTER_POST", { videoId: video.id });
+                            fs.rmSync(posted.localPath, { force: true });
+                            const existsAfterDelete = fs.existsSync(posted.localPath);
+                            this.logger.info("SOURCE_VIDEO_DELETED_AFTER_POST", {
+                                ...ctx,
+                                videoId: video.id,
+                                localPath: posted.localPath,
+                                existsAfterDelete
+                            });
+                            if (existsAfterDelete) {
+                                this.logger.warn("SOURCE_VIDEO_STILL_EXISTS_AFTER_DELETE", {
+                                    ...ctx,
+                                    videoId: video.id,
+                                    localPath: posted.localPath
+                                });
+                            }
                         }
-                        catch (e) { }
+                        catch (err) {
+                            this.logger.warn("SOURCE_VIDEO_DELETE_FAILED_AFTER_POST", {
+                                ...ctx,
+                                videoId: video.id,
+                                localPath: posted.localPath,
+                                err: err?.message || String(err)
+                            });
+                        }
                     }
+                    else if (posted?.fullyPosted && posted?.localPath && !postedLocalExists) {
+                        this.logger.warn("SOURCE_VIDEO_NOT_FOUND_AFTER_POST", {
+                            ...ctx,
+                            videoId: video.id,
+                            localPath: posted.localPath
+                        });
+                    }
+                    await missionSvc.handleActionRewardClaim(accessToken, h, ctx, doMission, "POST");
                     return { action: "success", data: completePostResponse };
                 }, ctx).catch(handleVideoFailure);
                 if (executionResult?.action === "continue")
